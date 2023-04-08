@@ -23,7 +23,7 @@ loop(Map) ->
             % check if key exist
             Check = maps:find(Key, Map),
             case Check of
-                {error} -> 
+                {error} ->
                     Client ! {self(), {keyNotExist}},
                     loop(Map);
                 {ok, Value} ->

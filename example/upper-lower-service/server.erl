@@ -7,11 +7,12 @@ start() ->
 loop() ->
     receive
         % pattern matching
-        {Client, {Str, uppercase}} -> 
+        {Client, {Str, uppercase}} ->
             Client ! {self(), string:to_upper(Str)};
-        {Client, {Str, lowercase}} -> 
+        {Client, {Str, lowercase}} ->
             Client ! {self(), string:to_lower(Str)};
-        {Client, {_, _}} -> 
+        {Client, {_, _}} ->
             Client ! {self(), "Invalid mode"}
     end,
-    loop(). % using recursion will result in an infinite loop 
+    % using recursion will result in an infinite loop
+    loop().

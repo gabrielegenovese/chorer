@@ -1,8 +1,0 @@
-# Usage
-```erlang
-# erl
-1> c(server).
-{ok,server}
-2> c(client).
-{ok,client}
-```
