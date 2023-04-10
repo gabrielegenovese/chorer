@@ -1,5 +1,5 @@
 -module(ifcases).
--compile(export_all).
+-export([main/0, a/0, b/0, c/0]).
 
 a() ->
     receive
@@ -34,7 +34,6 @@ c() ->
             c()
     end.
 
-
 main() ->
     R0 = rand:uniform(),
     R1 = rand:uniform(),
@@ -44,15 +43,15 @@ main() ->
     C = spawn(?MODULE, c, []),
     if
         R0 > R1 ->
+            io:fwrite("Codition 1~n"),
             A ! B,
             B ! C,
             C ! A;
         R1 > R2 ->
+            io:fwrite("Codition 2~n"),
             A ! C,
             C ! B,
             B ! A;
-        R2 > R0 -> % todo check
-            C ! A,
-            B ! C,
-            A ! B
+        true ->
+            io:fwrite("else~n")
     end.
