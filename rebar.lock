@@ -1,0 +1,8 @@
+{"1.2.0",
+[{<<"digraph_export">>,{pkg,<<"digraph_export">>,<<"1.0.1">>},0}]}.
+[
+{pkg_hash,[
+ {<<"digraph_export">>, <<"C1143E1B62F3380E5E0EC7D402AF8DF7449122BCD4B1C6CBF964EAC1379EBD0D">>}]},
+{pkg_hash_ext,[
+ {<<"digraph_export">>, <<"BB508B1D9A9E24CF33E08EB2A4F2A45319AB6414C56DB7D948F5689980B6A748">>}]}
+].
