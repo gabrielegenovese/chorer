@@ -2,7 +2,7 @@
 -export([start/0, loop/0]).
 
 start() ->
-    spawn(server, loop, []).
+    _Pid = spawn(server, loop, []).
 
 loop() ->
     receive
