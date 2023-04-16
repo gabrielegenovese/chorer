@@ -1,10 +1,13 @@
 -module(simple).
--export([main/0, dummy/0]).
+-export([dummy/1, main/0]).
 
-dummy() -> 
-    done.
+dummy([]) ->
+    done;
+dummy(N) when not N ->
+    receive
+        a -> done;
+        _ -> spawn(?MODULE, main, [])
+    end,
+    spawn(?MODULE, main, []).
 
-main() -> 
-    _A = spawn(?MODULE, dummy, []),
-    spawn(?MODULE, dummy, []).
-    
+main() -> done.
