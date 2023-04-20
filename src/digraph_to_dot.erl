@@ -7,7 +7,7 @@
 %%% @end
 %%%-------------------------------------------------------------------
 -module(digraph_to_dot).
--include("common.hrl").
+-include("common_data.hrl").
 
 %% API
 -export([convert/3]).
