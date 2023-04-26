@@ -15,70 +15,104 @@ generate([H | T], OutputDir) ->
 eval_code_line(Line, Dir) ->
     case Line of
         {function, _, Name, Args, FunAst} ->
-            {G, _} = explore_fun(Name, FunAst),
+            Gr = get_graph(Name, FunAst),
+            done = minimize(Gr),
             FunName = atom_to_list(Name),
-            S = digraph_to_dot:convert(G, FunName, Args),
+            Data = digraph_to_dot:convert(Gr, FunName, Args),
             FileName = FunName ++ integer_to_list(Args),
-            common_fun:save_to_file(S, Dir, FileName, local);
+            common_fun:save_to_file(Data, Dir, FileName, local);
         % necessario per linee non coperte
         _ ->
             unrecognized_line
     end.
 
-explore_fun(FunName, L) when is_list(L) ->
-    G = digraph:new(),
-    V = digraph:add_vertex(G, 1, 1),
-    explore_fun(FunName, L, G, V).
-% return function
-explore_fun(_, [], G, VLast) ->
-    {G, VLast};
-% G = Graph, VLast = last vertex inserted
-explore_fun(FunName, [H | T], G, VLast) ->
-    VNew = eval(FunName, H, G, VLast),
-    explore_fun(FunName, T, G, VNew).
+% TODO fare meglio
+minimize(G) ->
+    Edges = digraph:edges(G),
+    remove_epsilon_moves(G, Edges).
 
-explore_pm([], _, _, L, _) ->
-    L;
-explore_pm([H | T], G, VLast, L, FunName) ->
+remove_epsilon_moves(_, []) ->
+    done;
+remove_epsilon_moves(G, [H | T]) ->
+    E = digraph:edge(G, H),
+    case E of
+        {H, V1, V2, Label} ->
+            if
+                % do not delete start state
+                V1 =/= 1 ->
+                    case Label of
+                        'ɛ' ->
+                            EL = digraph:in_edges(G, V1),
+                            done = replace_epsilon_edges(G, EL, V2);
+                        _ ->
+                            nothing
+                    end;
+                true ->
+                    done
+            end;
+        false ->
+            done
+    end,
+    remove_epsilon_moves(G, T).
+
+replace_epsilon_edges(_, [], _) ->
+    done;
+replace_epsilon_edges(G, [H | T], V) ->
+    {H, V1, V2, Label} = digraph:edge(G, H),
+    digraph:add_edge(G, V1, V, Label),
+    true = digraph:del_edge(G, H),
+    digraph:del_vertex(G, V2),
+    replace_epsilon_edges(G, T, V).
+
+get_graph(FunName, Code) when is_list(Code) ->
+    Gr = digraph:new(),
+    % Data = #node_data{is_start = true, current_operation = init, label = 1},
+    VStart = digraph:add_vertex(Gr, 1, 1),
+    get_graph(Code, Gr, FunName, VStart).
+
+get_graph([], G, _, _) ->
+    G;
+% G = Graph, VLast = last vertex inserted
+get_graph([H | T], G, FunName, VStart) ->
     case H of
         {clause, _, Vars, Guard, Content} ->
-            VNew = add_vertex(G),
-            EdLabel = format_label_pm_edge(Vars, Guard, "match: "),
-            digraph:add_edge(G, VLast, VNew, list_to_atom(EdLabel)),
-            {_, VRet} = explore_fun(FunName, Content, G, VNew),
-            NewL = L ++ [VRet],
-            explore_pm(T, G, VLast, NewL, FunName);
-        _ ->
-            explore_pm(T, G, VLast, L, FunName)
-    end.
+            VN = add_vertex(G),
+            EdLabel = format_label_pm_edge(Vars, Guard, "match "),
+            digraph:add_edge(G, list_to_atom(EdLabel), VStart, VN, 'ɛ'),
+            VFinal = eval_pm_function(Content, G, FunName, VN),
+            set_as_final(G, VFinal);
+        Tmp ->
+            io:fwrite("No match in get_graph ~p~n", Tmp)
+    end,
+    get_graph(T, G, FunName, VStart).
 
-eval(FunName, L, G, VLast) ->
+eval_pm_function([], _, _, VLast) ->
+    VLast;
+eval_pm_function([H | T], G, FunName, VLast) ->
+    VNew = eval(H, G, FunName, VLast),
+    eval_pm_function(T, G, FunName, VNew).
+
+eval(L, G, FunName, VLast) ->
     case L of
-        {clause, _, Vars, Guard, Content} ->
-            VNew = add_vertex(G),
-            EdLabel = format_label_pm_edge(Vars, Guard, "match: "),
-            digraph:add_edge(G, VLast, VNew, list_to_atom(EdLabel)),
-            {_, VFinal} = explore_fun(FunName, Content, G, VNew),
-            set_as_final(G, VFinal),
-            VLast;
         {match, _, _RightContent, LeftContent} ->
-            VNew = eval(FunName, LeftContent, G, VLast),
+            VNew = eval(LeftContent, G, FunName, VLast),
             VNew;
+        % recursion
         {call, _, {atom, _, FunName}, _} ->
-            digraph:add_edge(G, VLast, 1, loop),
+            digraph:add_edge(G, VLast, 1, 'ɛ'),
+            % return to start
             1;
         {call, _, {atom, _, spawn}, _} ->
             VNew = add_vertex(G),
             digraph:add_edge(G, VLast, VNew, spawn),
             VNew;
         % PMList = PatternMatchingList
+        {'case', _, {var, _, Var}, PMList} ->
+            parse_pm(PMList, G, VLast, FunName, atom_to_list(Var) ++ " case ");
+        {'if', _, PMList} ->
+            parse_pm(PMList, G, VLast, FunName, "if ");
         {'receive', _, PMList} ->
-            VNew = add_vertex(G),
-            digraph:add_edge(G, VLast, VNew, 'receive'),
-            List = explore_pm(PMList, G, VNew, [], FunName),
-            VR = add_vertex(G),
-            add_edges_recursive(G, List, VR),
-            VR;
+            parse_pm(PMList, G, VLast, FunName, "receive ");
         {op, _, '!', {var, _, Var}, _DataSent} ->
             VNew = add_vertex(G),
             S = "send to " ++ atom_to_list(Var),
@@ -88,6 +122,29 @@ eval(FunName, L, G, VLast) ->
         _ ->
             VLast
     end.
+
+parse_pm(PMList, G, VLast, FunName, Label) ->
+    List = explore_pm(PMList, G, VLast, [], FunName, Label),
+    VR = add_vertex(G),
+    add_edges_recursive(G, List, VR, 'ɛ'),
+    VR.
+
+explore_pm([], _, _, L, _, _) ->
+    L;
+explore_pm([H | T], G, VLast, L, FunName, Base) ->
+    NewL =
+        case H of
+            {clause, _, Vars, Guard, Content} ->
+                VNew = add_vertex(G),
+                EdLabel = format_label_pm_edge(Vars, Guard, Base),
+                digraph:add_edge(G, VLast, VNew, list_to_atom(EdLabel)),
+                VRet = eval_pm_function(Content, G, FunName, VNew),
+                NL = L ++ [VRet],
+                NL;
+            _ ->
+                L
+        end,
+    explore_pm(T, G, VLast, NewL, FunName, Base).
 
 format_label_pm_edge([], [], Label) ->
     Label;
@@ -115,22 +172,22 @@ format_label_pm_edge([V1 | V], [], L) ->
             _ ->
                 L
         end,
-    format_label_pm_edge([], V, NewL);
+    format_label_pm_edge(V, [], NewL);
 format_label_pm_edge(V, G, L) when is_list(L) ->
     NewL = format_label_pm_edge(V, [], L),
     format_label_pm_edge([], G, NewL).
 
-add_edges_recursive(_, [], _) ->
+add_edges_recursive(_, [], _, _) ->
     ok;
-add_edges_recursive(G, [H | T], V) ->
+add_edges_recursive(G, [H | T], V, Label) ->
     if
         % if H is not the start vertex
         H =/= 1 ->
-            digraph:add_edge(G, H, V);
+            digraph:add_edge(G, H, V, Label);
         true ->
             nothing
     end,
-    add_edges_recursive(G, T, V).
+    add_edges_recursive(G, T, V, Label).
 
 add_vertex(G) ->
     Label = common_fun:new_label(G),

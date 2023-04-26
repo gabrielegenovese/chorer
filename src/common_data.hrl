@@ -7,6 +7,6 @@
 -record(fsa_states, {all_states, start_state, final_states}).
 
 %% graph node data, a structure to help the creation of the fsa
--record(node_data, {is_start, is_final, data, current_operation, label}).
+-record(node_data, {is_start = false, is_final = false, guard, current_operation, label}).
 
 %%%----END FILE----

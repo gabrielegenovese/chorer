@@ -1,17 +1,26 @@
 -module(simple).
--export([dummy/0, dummy/1, main/0]).
-
-dummy() -> bella.
+-export([dummy/1]).
 
 dummy([]) ->
     done;
-dummy(N) when not N ->
-    receive
-        a -> done;
-        b -> dummy(N);
-        _ -> spawn(?MODULE, main, [])
+dummy(N) ->
+    case N of
+        a ->
+            spawn(?MODULE, main, []);
+        b ->
+            dummy(N);
+        _ ->
+            N ! "ciao"
     end,
-    spawn(?MODULE, main, []),
-    N ! hello.
+    send(N, "ciao"),
+    receive
+        a ->
+            N ! ciao;
+        c ->
+            dummy(N);
+        b ->
+            N ! addio
+    end.
 
-main() -> done.
+send(A, Data) ->
+    A ! Data.
