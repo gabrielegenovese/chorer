@@ -3,66 +3,37 @@
 -export([generate/2]).
 
 %% API
-
-generate([], _) ->
-    ok;
 generate([H | T], OutputDir) ->
-    eval_code_line(H, OutputDir),
-    generate(T, OutputDir).
+    generate([H | T], OutputDir, []).
 
 %% Internal Functions
+
+generate([], _, L) ->
+    L;
+generate([H | T], OutputDir, L) ->
+    G = eval_code_line(H, OutputDir),
+    NewL =
+        if
+            G =:= [] -> L;
+            true -> L ++ G
+        end,
+    generate(T, OutputDir, NewL).
 
 eval_code_line(Line, Dir) ->
     case Line of
         {function, _, Name, Args, FunAst} ->
             Gr = get_graph(Name, FunAst),
-            done = minimize(Gr),
+            io:fwrite("Name: ~p~n", [Name]),
+            done = fsa:minimize(Gr),
             FunName = atom_to_list(Name),
             Data = digraph_to_dot:convert(Gr, FunName, Args),
             FileName = FunName ++ integer_to_list(Args),
-            common_fun:save_to_file(Data, Dir, FileName, local);
+            common_fun:save_to_file(Data, Dir, FileName, local),
+            [Gr];
         % necessario per linee non coperte
         _ ->
-            unrecognized_line
+            []
     end.
-
-% TODO fare meglio
-minimize(G) ->
-    Edges = digraph:edges(G),
-    remove_epsilon_moves(G, Edges).
-
-remove_epsilon_moves(_, []) ->
-    done;
-remove_epsilon_moves(G, [H | T]) ->
-    E = digraph:edge(G, H),
-    case E of
-        {H, V1, V2, Label} ->
-            if
-                % do not delete start state
-                V1 =/= 1 ->
-                    case Label of
-                        'ɛ' ->
-                            EL = digraph:in_edges(G, V1),
-                            done = replace_epsilon_edges(G, EL, V2);
-                        _ ->
-                            nothing
-                    end;
-                true ->
-                    done
-            end;
-        false ->
-            done
-    end,
-    remove_epsilon_moves(G, T).
-
-replace_epsilon_edges(_, [], _) ->
-    done;
-replace_epsilon_edges(G, [H | T], V) ->
-    {H, V1, V2, Label} = digraph:edge(G, H),
-    digraph:add_edge(G, V1, V, Label),
-    true = digraph:del_edge(G, H),
-    digraph:del_vertex(G, V2),
-    replace_epsilon_edges(G, T, V).
 
 get_graph(FunName, Code) when is_list(Code) ->
     Gr = digraph:new(),
@@ -72,13 +43,12 @@ get_graph(FunName, Code) when is_list(Code) ->
 
 get_graph([], G, _, _) ->
     G;
-% G = Graph, VLast = last vertex inserted
 get_graph([H | T], G, FunName, VStart) ->
     case H of
         {clause, _, Vars, Guard, Content} ->
             VN = add_vertex(G),
-            EdLabel = format_label_pm_edge(Vars, Guard, "match "),
-            digraph:add_edge(G, list_to_atom(EdLabel), VStart, VN, 'ɛ'),
+            EdLabel = format_label_pm_edge(Vars, Guard, "arg "),
+            digraph:add_edge(G, VStart, VN, list_to_atom(EdLabel)),
             VFinal = eval_pm_function(Content, G, FunName, VN),
             set_as_final(G, VFinal);
         Tmp ->
@@ -108,7 +78,7 @@ eval(L, G, FunName, VLast) ->
             VNew;
         % PMList = PatternMatchingList
         {'case', _, {var, _, Var}, PMList} ->
-            parse_pm(PMList, G, VLast, FunName, atom_to_list(Var) ++ " case ");
+            parse_pm(PMList, G, VLast, FunName, atom_to_list(Var) ++ " match ");
         {'if', _, PMList} ->
             parse_pm(PMList, G, VLast, FunName, "if ");
         {'receive', _, PMList} ->

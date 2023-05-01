@@ -12,10 +12,9 @@ gen_chor(InputFile, OutputDir) ->
         [InputFile, OutputDir]
     ),
     AST = get_ast(InputFile),
-    ok = gen_local_view:generate(AST, OutputDir),
-    ok = gen_global_view:generate(AST, OutputDir),
-    % todo remove in the future
-    AST.
+    _LocalViewList = gen_local_view:generate(AST, OutputDir),
+    % gen_global_view:generate(LocalViewList, OutputDir, EntryPoint),
+    done.
 
 %% internal functions
 

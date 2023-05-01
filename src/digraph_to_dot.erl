@@ -10,11 +10,27 @@
 -include("common_data.hrl").
 
 %% API
--export([convert/3]).
+-export([convert/1, convert/3]).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
+
+-spec convert(Graph) -> Serialized when
+    Graph :: digraph:graph(),
+    Serialized :: unicode:charlist().
+convert(Graph) ->
+    Ids = ids(Graph),
+    Vertices = [format_vertex(V, Ids) || V <- vertices(Graph)],
+    Edges = [format_edge(E, Ids) || E <- edges(Graph)],
+    io_lib:format(
+        "digraph global {~n"
+        % graph left to right
+        "\trankdir=\"LR\";~n"
+        "\tn_0 [label=\"global\", shape=\"plaintext\"];~n"
+        "~ts~n~ts}~n",
+        [Vertices, Edges]
+    ).
 
 -spec convert(Graph, Name, Args) -> Serialized when
     Graph :: digraph:graph(),

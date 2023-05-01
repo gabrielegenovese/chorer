@@ -1,26 +1,20 @@
 -module(simple).
--export([dummy/1]).
+-export([tick/0, tack/1]).
 
-dummy([]) ->
-    done;
-dummy(N) ->
-    case N of
-        a ->
-            spawn(?MODULE, main, []);
-        b ->
-            dummy(N);
-        _ ->
-            N ! "ciao"
-    end,
-    send(N, "ciao"),
+tack(Tick) ->
     receive
-        a ->
-            N ! ciao;
-        c ->
-            dummy(N);
-        b ->
-            N ! addio
-    end.
+        tick ->
+            Tick ! tack
+    end,
+    tack(Tick).
 
-send(A, Data) ->
-    A ! Data.
+tick() ->
+    Tack = spawn(?MODULE, tack, [self()]),
+    loop(Tack).
+
+loop(Tack) ->
+    Tack ! tick,
+    receive
+        tick ->
+            loop(Tack)
+    end.

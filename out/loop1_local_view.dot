@@ -1,0 +1,12 @@
+digraph loop {
+	rankdir="LR";
+	n_0 [label="loop/1", shape="plaintext"];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="2", shape=circle, label="2"];
+	n_3 [id="3", shape=circle, label="3"];
+
+	n_3 -> n_1 [id="[$e|4]", label="receive tick"];
+	n_1 -> n_2 [id="[$e|0]", label="arg Tack"];
+	n_2 -> n_3 [id="[$e|1]", label="send to Tack"];
+}
