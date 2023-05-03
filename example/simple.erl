@@ -11,6 +11,7 @@ tack(Tick) ->
 tick() ->
     Tack = spawn(?MODULE, tack, [self()]),
     loop(Tack).
+    % Tack ! something. % errore nel produrre il grafo se questa linea viene decommentanta
 
 loop(Tack) ->
     Tack ! tick,

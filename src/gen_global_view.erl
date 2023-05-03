@@ -27,28 +27,5 @@ generate_global(List, MainGraph, Name, Dir) ->
 
 get_graph(L, _G) ->
     fsa:product(L),
+    fsa:presync(L),
     fsa:syncronize(L).
-
-
-%%% L'idea è di spawnare tot processi quanti grafi e fare gestire tutto a un server che in automatico
-%%% mandi avanti i vari processi attraverso il message passing, in modo da simulare in tutto e per tutto
-%%% l'esecuzione del programma (modo brigoso e difficile, se capisco come fare con il prodotto e la sincronizzazione
-%%% è meglio)
-
-%% IDEA SCARTATA
-proc(G, VState) ->
-    receive
-        {Server, op} ->
-            E = digraph:edges(G, VState),
-            Server ! {self(), G, E},
-            proc(G, VState);
-        {Server, use, E} ->
-            {E, VState, VNext, Label} = digraph:edge(G, E),
-            Server ! {self(), G, Label},
-            proc(G, VNext);
-        {Server, get} ->
-            Server ! {self(), G, VState},
-            proc(G, VState)
-    end.
-
-

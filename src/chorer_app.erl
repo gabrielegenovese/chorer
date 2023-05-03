@@ -3,16 +3,16 @@
 %% @end
 %%%-------------------------------------------------------------------
 -module(chorer_app).
--export([gen_chor/2, get_ast/1]).
+-export([gen_chor/3, get_ast/1]).
 
-gen_chor(InputFile, OutputDir) ->
+gen_chor(InputFile, OutputDir, EntryPoint) ->
     io:format(
         "Input file: ~s~n"
         "Output directory: ~s~n",
         [InputFile, OutputDir]
     ),
     AST = get_ast(InputFile),
-    _LocalViewList = gen_local_view:generate(AST, OutputDir),
+    _LocalViewList = gen_local_view:generate(AST, OutputDir, EntryPoint),
     % gen_global_view:generate(LocalViewList, OutputDir, EntryPoint),
     done.
 

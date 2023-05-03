@@ -7,6 +7,6 @@ digraph tack {
 	n_3 [id="3", shape=circle, label="3"];
 
 	n_1 -> n_2 [id="[$e|0]", label="arg Tick"];
-	n_3 -> n_1 [id="[$e|6]", label="send to Tick"];
+	n_3 -> n_1 [id="[$e|7]", label="send to Tick"];
 	n_2 -> n_3 [id="[$e|1]", label="receive tick"];
 }

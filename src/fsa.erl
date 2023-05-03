@@ -38,7 +38,6 @@ for_each_l([H | T], L) ->
 
 remove_epsilon_moves(G) ->
     E = digraph:edges(G),
-    io:fwrite("AllEdge: ~p~n", [E]),
     remove_epsilon_moves(G, E).
 
 remove_epsilon_moves(_, []) ->
