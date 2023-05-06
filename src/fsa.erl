@@ -1,9 +1,8 @@
 -module(fsa).
 -include("common_data.hrl").
--export([product/1, syncronize/1, presync/1, minimize/1]).
+-export([minimize/1]).
 
 %%% API
-% TODO
 minimize(G) ->
     % NFA to DFA
     remove_epsilon_moves(G),
@@ -11,30 +10,7 @@ minimize(G) ->
     remove_nondistinguishable(G),
     done.
 
-product(FSAList) ->
-    % prodotto cartesiano ma escludendo coppie uguali
-    ProdCart = [{X, Y} || X <- FSAList, Y <- FSAList, X =/= Y],
-    for_each_l(ProdCart).
-
-presync(_) ->
-    ok.
-
-syncronize(_) ->
-    ok.
-
 %%% internal functions
-
-for_each_l(P) ->
-    for_each_l(P, []).
-
-for_each_l([], L) ->
-    L;
-for_each_l([H | T], L) ->
-    {LView, OView} = H,
-    LStates = digraph:vertex(LView),
-    OStates = digraph:vertex(OView),
-    F = [{{LView, A}, {OView, B}} || A <- LStates, B <- OStates],
-    for_each_l(T, L ++ F).
 
 remove_epsilon_moves(G) ->
     E = digraph:edges(G),

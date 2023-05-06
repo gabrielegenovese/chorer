@@ -4,18 +4,23 @@
 tack(Tick) ->
     receive
         tick ->
-            Tick ! tack
-    end,
-    tack(Tick).
+            Tick ! tack,
+            tack(Tick);
+        stop ->
+            done
+    end.
 
 tick() ->
     Tack = spawn(?MODULE, tack, [self()]),
-    loop(Tack).
-    % Tack ! something. % errore nel produrre il grafo se questa linea viene decommentanta
+    loop(Tack),
+    % errore nel produrre il grafo se questa linea viene decommentanta
+    Tack ! stop.
 
 loop(Tack) ->
     Tack ! tick,
     receive
         tick ->
-            loop(Tack)
+            loop(Tack);
+        stop ->
+            done
     end.

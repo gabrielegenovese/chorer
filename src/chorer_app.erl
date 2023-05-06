@@ -8,13 +8,13 @@
 gen_chor(InputFile, OutputDir, EntryPoint) ->
     io:format(
         "Input file: ~s~n"
-        "Output directory: ~s~n",
-        [InputFile, OutputDir]
+        "Output directory: ~s~n"
+        "Entrypoint: ~p~n",
+        [InputFile, OutputDir, EntryPoint]
     ),
     AST = get_ast(InputFile),
-    _LocalViewList = gen_local_view:generate(AST, OutputDir, EntryPoint),
-    % gen_global_view:generate(LocalViewList, OutputDir, EntryPoint),
-    done.
+    LocalViewList = gen_local_view:generate(AST, OutputDir, EntryPoint),
+    gen_global_view:generate(LocalViewList, OutputDir, EntryPoint).
 
 %% internal functions
 

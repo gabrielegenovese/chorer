@@ -5,21 +5,15 @@
 %% API
 generate(L, OutputDir, EntryPoint) ->
     ActorList = gen_actor_list(L, EntryPoint),
-    % io:fwrite("List ~p~n", [ActorList]),
-    generate(L, L, OutputDir, ActorList, []).
+    generate(L, L, OutputDir, ActorList, maps:new()).
 
 %% Internal Functions
 
 generate([], _, _, _, L) ->
     L;
-generate([H | T], Ast, OutputDir, ActorList, L) ->
-    G = eval_code_line(H, {Ast, OutputDir, ActorList}),
-    NewL =
-        if
-            G =:= [] -> L;
-            true -> L ++ G
-        end,
-    generate(T, Ast, OutputDir, ActorList, NewL).
+generate([H | T], Ast, OutputDir, ActorList, Map) ->
+    GM = eval_code_line(H, {Ast, OutputDir, ActorList}),
+    generate(T, Ast, OutputDir, ActorList, maps:merge(Map, GM)).
 
 gen_actor_list(L, EP) ->
     gen_actor_list(L, EP, [EP]).
@@ -81,18 +75,18 @@ eval_code_line(Line, Data) ->
                     WData = digraph_to_dot:convert(Gr, FunName, Args),
                     FileName = FunName ++ integer_to_list(Args),
                     common_fun:save_to_file(WData, Dir, FileName, local),
-                    [Gr];
+                    #{Name => Gr};
                 true ->
-                    []
+                    #{}
             end;
         % necessario per linee non coperte
         _ ->
-            []
+            #{}
     end.
 
 get_graph(Code, Data) when is_list(Code) ->
     Gr = digraph:new(),
-    VStart = digraph:add_vertex(Gr, 1, 1),
+    VStart = common_fun:add_vertex(Gr),
     get_graph(Code, Gr, Data, VStart).
 
 get_graph([], G, _, _) ->
@@ -100,7 +94,7 @@ get_graph([], G, _, _) ->
 get_graph([H | T], G, Data, VStart) ->
     case H of
         {clause, _, Vars, Guard, Content} ->
-            VN = add_vertex(G),
+            VN = common_fun:add_vertex(G),
             EdLabel = format_label_pm_edge(Vars, Guard, "arg "),
             digraph:add_edge(G, VStart, VN, list_to_atom(EdLabel)),
             VFinal = eval_pm_function(Content, G, Data, VN),
@@ -112,19 +106,21 @@ get_graph([H | T], G, Data, VStart) ->
 
 get_fun_graph(Code, D) when is_list(Code) ->
     {Ast, Name, G} = D,
-    VStart = digraph:add_vertex(G, 1, 1),
+    VStart = common_fun:add_vertex(G),
     get_fun_graph(Code, G, {Ast, Name}, VStart).
 
-get_fun_graph([], G, _, _) ->
-    G;
+get_fun_graph([], _, _, V) ->
+    V;
 get_fun_graph([H | T], G, Data, VStart) ->
-    case H of
-        {clause, _, _, _, Content} ->
-            eval_pm_function(Content, G, Data, VStart);
-        Tmp ->
-            io:fwrite("No match in get_graph ~p~n", Tmp)
-    end,
-    get_fun_graph(T, G, Data, VStart).
+    VNew =
+        case H of
+            {clause, _, _, _, Content} ->
+                eval_pm_function(Content, G, Data, VStart);
+            Tmp ->
+                io:fwrite("No match in get_graph ~p~n", Tmp),
+                VStart
+        end,
+    get_fun_graph(T, G, Data, VNew).
 
 eval_pm_function([], _, _, VLast) ->
     VLast;
@@ -144,13 +140,15 @@ eval(L, G, Data, VLast) ->
             % return to start
             1;
         % call spawn
-        {call, _, {atom, _, spawn}, _ArgList} ->
-            VNew = add_vertex(G),
-            digraph:add_edge(G, VLast, VNew, spawn),
+        {call, _, {atom, _, spawn}, [_, {atom, _, Name}, _]} ->
+            VNew = common_fun:add_vertex(G),
+            % todo: refactor
+            digraph:add_edge(G, VLast, VNew, list_to_atom("spawn " ++ atom_to_list(Name))),
             VNew;
         % call a genericfunction
         {call, _, {atom, _, Name}, _ArgList} ->
-            NewG = get_func_graph(Ast, Name),
+            % todo capire perché funziona (caso più unico che raro)
+            {NewG, _VNew} = get_func_graph(Ast, Name),
             merge_graph(G, NewG, VLast);
         % PMList = PatternMatchingList
         {'case', _, {var, _, Var}, PMList} ->
@@ -159,9 +157,11 @@ eval(L, G, Data, VLast) ->
             parse_pm(PMList, G, VLast, Data, "if ");
         {'receive', _, PMList} ->
             parse_pm(PMList, G, VLast, Data, "receive ");
-        {op, _, '!', {var, _, Var}, _DataSent} ->
-            VNew = add_vertex(G),
-            S = "send to " ++ atom_to_list(Var),
+        % send of atom supported, send of variabile ignored
+        % TODO: implementare anche la send di variabili e tuple
+        {op, _, '!', {var, _, Var}, {atom, _, DataSent}} ->
+            VNew = common_fun:add_vertex(G),
+            S = "send " ++ atom_to_list(DataSent) ++ " to " ++ atom_to_list(Var),
             digraph:add_edge(G, VLast, VNew, list_to_atom(S)),
             VNew;
         % se è un caso non coperto vado avanti
@@ -174,7 +174,7 @@ for_each_merge_graph(L, G) ->
 for_each_merge_graph([], _, M) ->
     M;
 for_each_merge_graph([H | T], G, M) ->
-    NewM = maps:put(H, add_vertex(G), M),
+    NewM = maps:put(H, common_fun:add_vertex(G), M),
     for_each_merge_graph(T, G, NewM).
 
 merge_graph(G1, G2, VLast) ->
@@ -194,29 +194,29 @@ merge_graph(G1, G2, VLast) ->
 
 get_func_graph(Ast, Fun) ->
     G = digraph:new(),
-    get_func_graph(Ast, Ast, Fun, G).
+    get_func_graph(Ast, Ast, Fun, G, 1).
 
-get_func_graph([], _, _, G) ->
-    G;
-get_func_graph([H | T], Ast, Fun, G) ->
-    case H of
-        {function, _, Name, _, FunAst} ->
-            if
-                Name =:= Fun ->
-                    get_fun_graph(FunAst, {Ast, Name, G}),
-                    done = fsa:minimize(G);
-                true ->
-                    nothing
-            end;
-        % necessario per linee non coperte
-        _ ->
-            nothing
-    end,
-    get_func_graph(T, Ast, Fun, G).
+get_func_graph([], _, _, G, V) ->
+    {G, V};
+get_func_graph([H | T], Ast, Fun, G, VLast) ->
+    VNew =
+        case H of
+            {function, _, Name, _, FunAst} ->
+                if
+                    Name =:= Fun ->
+                        get_fun_graph(FunAst, {Ast, Name, G});
+                    true ->
+                        VLast
+                end;
+            % necessario per linee non coperte
+            _ ->
+                VLast
+        end,
+    get_func_graph(T, Ast, Fun, G, VNew).
 
 parse_pm(PMList, G, VLast, Data, Label) ->
     List = explore_pm(PMList, G, VLast, [], Data, Label),
-    VR = add_vertex(G),
+    VR = common_fun:add_vertex(G),
     add_edges_recursive(G, List, VR, 'ɛ'),
     VR.
 
@@ -226,7 +226,7 @@ explore_pm([H | T], G, VLast, L, Data, Base) ->
     NewL =
         case H of
             {clause, _, Vars, Guard, Content} ->
-                VNew = add_vertex(G),
+                VNew = common_fun:add_vertex(G),
                 EdLabel = format_label_pm_edge(Vars, Guard, Base),
                 digraph:add_edge(G, VLast, VNew, list_to_atom(EdLabel)),
                 VRet = eval_pm_function(Content, G, Data, VNew),
@@ -270,10 +270,6 @@ add_edges_recursive(G, [H | T], V, Label) ->
         true -> nothing
     end,
     add_edges_recursive(G, T, V, Label).
-
-add_vertex(G) ->
-    Label = common_fun:new_label(G),
-    digraph:add_vertex(G, Label, Label).
 
 set_as_final(G, V) ->
     {_, LastLabel} = digraph:vertex(G, V),

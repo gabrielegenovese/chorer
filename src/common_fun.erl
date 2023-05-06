@@ -1,5 +1,5 @@
 -module(common_fun).
--export([save_to_file/4, new_label/1, list_max/1]).
+-export([save_to_file/4, add_vertex/1, new_label/1]).
 
 % Convert the graph to dot and save it into a file
 save_to_file(S, Dir, File, Type) ->
@@ -13,6 +13,10 @@ save_to_file(S, Dir, File, Type) ->
     end,
     file:write_file(FilePath, Data).
 
+add_vertex(G) ->
+    Label = common_fun:new_label(G),
+    digraph:add_vertex(G, Label, Label).
+
 new_label(G) ->
     length(digraph:vertices(G)) + 1.
 
@@ -21,10 +25,3 @@ format_local_name(Name) ->
 
 format_global_name(Name) ->
     Name ++ "_global_view.dot".
-
-list_max([]) -> empty;
-list_max([H | T]) -> {ok, list_max(H, T)}.
-
-list_max(X, []) -> X;
-list_max(X, [H | T]) when X < H -> list_max(H, T);
-list_max(X, [_ | T]) -> list_max(X, T).
