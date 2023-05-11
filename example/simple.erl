@@ -12,11 +12,15 @@ tack() ->
     end.
 
 tick() ->
+    spawn_process(),
+    tack ! tick.
+
+spawn_process() ->
     Tack = spawn(?MODULE, tack, []),
     register(tack, Tack),
     Loop = spawn(?MODULE, loop, []),
-    register(tick, Loop),
-    tack ! tick.
+    spawn(?MODULE, random, []),
+    register(tick, Loop).
 
 loop() ->
     receive
@@ -31,3 +35,6 @@ loop() ->
 
 stop_tick() ->
     tick ! stop.
+
+random() ->
+    done.

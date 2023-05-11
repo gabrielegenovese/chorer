@@ -27,5 +27,13 @@ generate_chor_automata(InputFile, OutputDir, EntryPoint) ->
 %%%===================================================================
 
 init_db() ->
-    DBMPid = spawn(map_manager, loop, []),
-    register(?DBMANAGER, DBMPid).
+    Ret = whereis(?DBMANAGER),
+    case Ret of
+        % if the pid of the dbmenager is not defined, initialize it
+        'undefined' ->
+            DBMPid = spawn(map_manager, loop, []),
+            register(?DBMANAGER, DBMPid);
+        % otherwise do nothing, because is already defined
+        _ ->
+            ?UNDEFINED
+    end.

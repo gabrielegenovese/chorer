@@ -31,24 +31,39 @@ remove_epsilon_moves(G, [Edge | T]) ->
         {_, VToDel, VToLink, Label} ->
             case Label of
                 'ɛ' ->
-                    EL = digraph:edges(G, VToDel),
-                    % for each edge in the list create a copy of it but with different vertex
-                    lists:foreach(
-                        fun(EToDel) ->
-                            {_, V, _, ELabel} = digraph:edge(G, EToDel),
-                            digraph:add_edge(G, V, VToLink, ELabel)
-                        end,
-                        EL
-                    ),
-                    % this call will delete also all the edges attached to the vertex
-                    digraph:del_vertex(G, VToDel),
-                    % recursive call with new edge list bacause edges could be added and there could be an epsilon transition
-                    remove_epsilon_moves(G, digraph:edges(G));
+                    if
+                        VToDel =:= 1 ->
+                            EL = digraph:out_edges(G, VToLink),
+                            lists:foreach(
+                                fun(EToDel) ->
+                                    {_, _, V, ELabel} = digraph:edge(G, EToDel),
+                                    digraph:add_edge(G, VToDel, V, ELabel)
+                                end,
+                                EL
+                            ),
+                            digraph:del_vertex(G, VToLink),
+                            remove_epsilon_moves(G, digraph:edges(G));
+                        true ->
+                            EL = digraph:in_edges(G, VToDel),
+                            % for each edge in the list create a copy of it but with different vertex
+                            lists:foreach(
+                                fun(EToDel) ->
+                                    {_, V, _, ELabel} = digraph:edge(G, EToDel),
+                                    digraph:add_edge(G, V, VToLink, ELabel)
+                                end,
+                                EL
+                            ),
+                            % this call will delete also all the edges attached to the vertex
+
+                            digraph:del_vertex(G, VToDel),
+                            % recursive call with new edge list bacause edges could be added and there could be an epsilon transition
+                            remove_epsilon_moves(G, digraph:edges(G))
+                    end;
                 _ ->
                     remove_epsilon_moves(G, T)
             end;
         false ->
-            digraph:del_edge(G, Edge),
+            % digraph:del_edge(G, Edge),
             remove_epsilon_moves(G, T)
     end.
 
@@ -63,4 +78,4 @@ remove_unreachable(G) ->
     ].
 
 remove_nondistinguishable(_G) ->
-    done.
+    ok.

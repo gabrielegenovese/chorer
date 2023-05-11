@@ -6,8 +6,8 @@
 generate(OutputDir, EntryPoint) ->
     MainGraph = common_fun:get_fun_graph_from_db(EntryPoint),
     case MainGraph of
-        no_entry_point ->
-            no_entry_point;
+        no_graph_found ->
+            no_entry_point_found;
         _ ->
             generate_global(MainGraph, EntryPoint, OutputDir)
     end.
@@ -15,19 +15,17 @@ generate(OutputDir, EntryPoint) ->
 %% Internal Functions
 
 generate_global(MainGraph, Name, Dir) ->
-    Gr = get_graph(MainGraph),
+    Gr = get_graph(MainGraph, Name),
     % fsa:minimize(Gr),
-    Data = digraph_to_dot:convert(Gr),
-    common_fun:save_to_file(Data, Dir, atom_to_list(Name), global),
-    done.
+    common_fun:save_graph_to_file(Gr, Dir, atom_to_list(Name), global).
 
-get_graph(MainGraph) ->
+get_graph(MainGraph, Name) ->
     RetGraph = digraph:new(),
     VNew = common_fun:add_vertex(RetGraph),
-    get_graph({MainGraph, RetGraph}, maps:new(), 1, VNew, []).
+    get_graph({MainGraph, Name, RetGraph}, maps:new(), 1, VNew, []).
 
 get_graph(Data, ProcMap, VCurrent, VLast, MarkedE) ->
-    {MainGraph, RetGraph} = Data,
+    {MainGraph, _, RetGraph} = Data,
     OutDegree = digraph:out_degree(MainGraph, VCurrent),
     if
         % no possible transitions
@@ -53,7 +51,7 @@ stop_proc(ProcMap) ->
     maps:foreach(fun(_K, V) -> V ! stop end, ProcMap).
 
 main_take_transition(TransitionEdge, FuncData, ProcMap, VLast) ->
-    {MainGraph, RetGraph} = FuncData,
+    {MainGraph, Name, RetGraph} = FuncData,
     E = digraph:edge(MainGraph, TransitionEdge),
     {_, _, VT, Label} = E,
     io:fwrite("This label: ~p~n", [Label]),
@@ -69,10 +67,6 @@ main_take_transition(TransitionEdge, FuncData, ProcMap, VLast) ->
             ProcName = string:prefix(SLabel, "spawn "),
             ProcGraph = common_fun:get_fun_graph_from_db(list_to_atom(ProcName)),
             P = spawn(?MODULE, proc, [ProcGraph, 1]),
-            % todo cambia
-            [FirstEE | _] = get_proc_edges(P),
-            P ! {use_transition, FirstEE},
-            % end
             NewM = maps:merge(ProcMap, #{ProcName => P}),
             VNew = common_fun:add_vertex(RetGraph),
             NewLabel = list_to_atom(ProcName ++ " spawned"),
@@ -85,11 +79,13 @@ main_take_transition(TransitionEdge, FuncData, ProcMap, VLast) ->
                     OE = get_proc_edges(V),
                     Found = find_receive_data(DataSent, OE, V),
                     case Found of
-                        none ->
+                        ?UNDEFINED ->
                             Acc;
                         ok ->
                             VNew = common_fun:add_vertex(RetGraph),
-                            NewLabel = list_to_atom("main " ++ K ++ " ! " ++ DataSent),
+                            NewLabel = list_to_atom(
+                                atom_to_list(Name) ++ "->" ++ K ++ ":" ++ DataSent
+                            ),
                             digraph:add_edge(RetGraph, VLast, VNew, NewLabel),
                             VNew
                     end
@@ -142,7 +138,7 @@ recv() ->
 find_receive_data(Data, E, P) ->
     case for_each_f(E, "receive", Data, P) of
         false ->
-            none;
+            ?UNDEFINED;
         Ed ->
             P ! {use_transition, Ed},
             ok
@@ -151,7 +147,7 @@ find_receive_data(Data, E, P) ->
 find_send_data(Data, E, P) ->
     case for_each_f(E, "send", Data, P) of
         false ->
-            none;
+            ?UNDEFINED;
         Ed ->
             P ! {use_transition, Ed},
             ok
@@ -192,5 +188,5 @@ proc(G, VCurrent) ->
             P ! {digraph:edge(G, E)},
             proc(G, VCurrent);
         stop ->
-            done
+            ok
     end.

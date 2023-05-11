@@ -10,7 +10,7 @@
 -include("common_data.hrl").
 
 %%% API
--export([convert/1, convert/3]).
+-export([convert/1, convert/2]).
 
 %%%===================================================================
 %%% API
@@ -25,19 +25,18 @@ convert(Graph) ->
     Edges = [format_edge(E, Ids) || E <- edges(Graph)],
     io_lib:format(
         "digraph global {~n"
-        % graph left to right
+        % graph direction left to right
         "\trankdir=\"LR\";~n"
         "\tn_0 [label=\"global\", shape=\"plaintext\"];~n"
         "~ts~n~ts}~n",
         [Vertices, Edges]
     ).
 
--spec convert(Graph, Name, Args) -> Serialized when
+-spec convert(Graph, Name) -> Serialized when
     Graph :: digraph:graph(),
     Name :: unicode:charlist(),
-    Args :: integer(),
     Serialized :: unicode:charlist().
-convert(Graph, Name, Args) ->
+convert(Graph, Name) ->
     Ids = ids(Graph),
     Vertices = [format_vertex(V, Ids) || V <- vertices(Graph)],
     Edges = [format_edge(E, Ids) || E <- edges(Graph)],
@@ -45,9 +44,9 @@ convert(Graph, Name, Args) ->
         "digraph ~ts{~n"
         % graph left to right
         "\trankdir=\"LR\";~n"
-        "\tn_0 [label=\"~s/~w\", shape=\"plaintext\"];~n"
+        "\tn_0 [label=\"~s\", shape=\"plaintext\"];~n"
         "~ts~n~ts}~n",
-        [pad(Name), Name, Args, Vertices, Edges]
+        [pad(Name), Name, Vertices, Edges]
     ).
 
 %%%===================================================================

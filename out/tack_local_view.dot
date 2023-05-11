@@ -1,6 +1,6 @@
 digraph tack {
 	rankdir="LR";
-	n_0 [label="tack/0", shape="plaintext"];
+	n_0 [label="tack", shape="plaintext"];
 	n_1 [id="5", shape=doublecircle, label="5"];
 	n_2 [id="1", shape=circle, label="1"];
 	n_0 -> n_2 [arrowhead=none];
@@ -8,5 +8,5 @@ digraph tack {
 
 	n_2 -> n_1 [id="[$e|5]", label="receive stop"];
 	n_2 -> n_3 [id="[$e|0]", label="receive tick"];
-	n_3 -> n_2 [id="[$e|7]", label="send tack to tick"];
+	n_3 -> n_2 [id="[$e|6]", label="send tack to tick"];
 }

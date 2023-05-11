@@ -3,7 +3,7 @@
 
 %% API
 -export([
-    save_to_file/4,
+    save_graph_to_file/4,
     add_vertex/1,
     get_entrypoit_from_db/0,
     get_exported_fun_from_db/0,
@@ -18,15 +18,22 @@
 %%%===================================================================
 
 % Save some content into the specified directory with a formatted filename
--spec save_to_file(FileContent, Dir, FileName, Type) -> ok when
-    FileContent :: string(),
+-spec save_graph_to_file(Graph, Dir, FileName, Type) -> ok when
+    Graph :: digraph:graph(),
     Dir :: string(),
     FileName :: string(),
     Type :: atom().
-save_to_file(FileContent, Dir, FileName, Type) ->
-    ToWriteData = unicode:characters_to_binary(FileContent),
+save_graph_to_file(Graph, Dir, FileName, Type) ->
+    case Type of
+        local ->
+            GraphDotStr = digraph_to_dot:convert(Graph, FileName),
+            FilePath = filename:join([Dir, format_local_name(FileName)]);
+        global ->
+            GraphDotStr = digraph_to_dot:convert(Graph),
+            FilePath = filename:join([Dir, format_global_name(FileName)])
+    end,
+    ToWriteData = unicode:characters_to_binary(GraphDotStr),
     file:make_dir(Dir),
-    FilePath = format_filename(Dir, FileName, Type),
     file:write_file(FilePath, ToWriteData).
 
 -spec add_vertex(G) -> digraph:vertex() when
@@ -66,14 +73,6 @@ get_fun_graph_from_db(Key) ->
 %%%===================================================================
 %%% Internal Functions
 %%%===================================================================
-
-format_filename(Dir, FileName, Type) ->
-    case Type of
-        local ->
-            filename:join([Dir, format_local_name(FileName)]);
-        global ->
-            filename:join([Dir, format_global_name(FileName)])
-    end.
 
 format_local_name(Name) ->
     Name ++ "_local_view.dot".

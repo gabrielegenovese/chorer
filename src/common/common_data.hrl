@@ -2,6 +2,7 @@
 
 -define(FINALSTATE, "final").
 -define(DBMANAGER, dbmanager).
+-define(UNDEFINED, none).
 
 %%% fsa_states, a structure to keep track of all the state of a Finite State Automata
 %%% start_state: a singlular starting poin, final_states: list of states

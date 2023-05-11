@@ -80,7 +80,7 @@ loop(CommonMap, FunAstMap, GraphMap) ->
             NewGraphMap = maps:put(Key, Ast, GraphMap),
             loop(CommonMap, FunAstMap, NewGraphMap);
         {P, get_fun_graph, Key} ->
-            IsKey = lists:member(Key, maps:keys(FunAstMap)),
+            IsKey = lists:member(Key, maps:keys(GraphMap)),
             if
                 IsKey ->
                     P ! {maps:get(Key, GraphMap)};
