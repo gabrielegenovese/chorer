@@ -1,26 +1,33 @@
 -module(simple).
--export([tick/0, tack/1]).
+-export([stop_tick/0, loop/0, tick/0, tack/0]).
 
-tack(Tick) ->
+tack() ->
     receive
         tick ->
-            Tick ! tack,
-            tack(Tick);
+            io:fwrite("Received tick~n"),
+            tick ! tack,
+            tack();
         stop ->
-            done
+            io:fwrite("Process ended~n")
     end.
 
 tick() ->
-    Tack = spawn(?MODULE, tack, [self()]),
-    loop(Tack),
-    % errore nel produrre il grafo se questa linea viene decommentanta
-    Tack ! stop.
+    Tack = spawn(?MODULE, tack, []),
+    register(tack, Tack),
+    Loop = spawn(?MODULE, loop, []),
+    register(tick, Loop),
+    tack ! tick.
 
-loop(Tack) ->
-    Tack ! tick,
+loop() ->
     receive
-        tick ->
-            loop(Tack);
+        tack ->
+            io:fwrite("Received tack~n"),
+            tack ! tick,
+            loop();
         stop ->
-            done
+            io:fwrite("Process ended~n"),
+            tack ! stop
     end.
+
+stop_tick() ->
+    tick ! stop.

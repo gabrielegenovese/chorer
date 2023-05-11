@@ -1,23 +1,31 @@
-%%%-------------------------------------------------------------------
-%% @doc ChorEr public API
-%% @end
-%%%-------------------------------------------------------------------
 -module(chorer_app).
--export([gen_chor/3, get_ast/1]).
+-include("common/common_data.hrl").
 
-gen_chor(InputFile, OutputDir, EntryPoint) ->
-    io:format(
-        "Input file: ~s~n"
-        "Output directory: ~s~n"
-        "Entrypoint: ~p~n",
-        [InputFile, OutputDir, EntryPoint]
-    ),
-    AST = get_ast(InputFile),
-    LocalViewList = gen_local_view:generate(AST, OutputDir, EntryPoint),
-    gen_global_view:generate(LocalViewList, OutputDir, EntryPoint).
+%%% API
+-export([generate_chor_automata/3]).
 
-%% internal functions
+%%%===================================================================
+%%% API
+%%%===================================================================
 
-get_ast(File) ->
-    {ok, AST} = epp_dodger:quick_parse_file(File),
-    AST.
+-spec generate_chor_automata(InputFile, OutputDir, EntryPoint) -> no_entry_point | done when
+    InputFile :: string(),
+    OutputDir :: string(),
+    EntryPoint :: atom().
+generate_chor_automata(InputFile, OutputDir, EntryPoint) ->
+    io:format("Entrypoint: ~p~n", [EntryPoint]),
+    % initialize code manager as a key based database
+    init_db(),
+    % get all the metadata info such as exported functions, spawn done and actors
+    metadata:extract(EntryPoint, InputFile),
+    % generate local and global view and save them int the output directory
+    local_view:generate(OutputDir),
+    global_view:generate(OutputDir, EntryPoint).
+
+%%%===================================================================
+%%% Internal Functions
+%%%===================================================================
+
+init_db() ->
+    DBMPid = spawn(map_manager, loop, []),
+    register(?DBMANAGER, DBMPid).

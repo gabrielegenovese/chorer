@@ -1,18 +1,13 @@
 digraph tick {
 	rankdir="LR";
 	n_0 [label="tick/0", shape="plaintext"];
-	n_1 [id="5", shape=circle, label="5"];
-	n_2 [id="6", shape=circle, label="6"];
-	n_3 [id="1", shape=circle, label="1"];
-	n_0 -> n_3 [arrowhead=none];
-	n_4 [id="9", shape=doublecircle, label="9"];
-	n_5 [id="2", shape=circle, label="2"];
-	n_6 [id="4", shape=circle, label="4"];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="2", shape=circle, label="2"];
+	n_3 [id="4", shape=doublecircle, label="4"];
+	n_4 [id="3", shape=circle, label="3"];
 
-	n_1 -> n_2 [id="[$e|5]", label="send tick to Tack"];
-	n_6 -> n_4 [id="[$e|8]", label="send stop to Tack"];
-	n_3 -> n_5 [id="[$e|0]", label="arg "];
-	n_5 -> n_1 [id="[$e|11]", label="spawn tack"];
-	n_2 -> n_1 [id="[$e|9]", label="receive tick"];
-	n_2 -> n_6 [id="[$e|13]", label="receive stop"];
+	n_4 -> n_3 [id="[$e|2]", label="send tick to tack"];
+	n_1 -> n_2 [id="[$e|0]", label="spawn tack"];
+	n_2 -> n_4 [id="[$e|1]", label="spawn loop"];
 }

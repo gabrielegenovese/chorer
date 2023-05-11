@@ -9,7 +9,7 @@
 -module(digraph_to_dot).
 -include("common_data.hrl").
 
-%% API
+%%% API
 -export([convert/1, convert/3]).
 
 %%%===================================================================
