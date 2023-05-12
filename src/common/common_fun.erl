@@ -1,10 +1,11 @@
 -module(common_fun).
 -include("common_data.hrl").
 
-%% API
+%%% API
 -export([
     save_graph_to_file/4,
     add_vertex/1,
+    del_vertex/2,
     get_entrypoit_from_db/0,
     get_exported_fun_from_db/0,
     get_ast_from_db/0,
@@ -17,7 +18,7 @@
 %%% API
 %%%===================================================================
 
-% Save some content into the specified directory with a formatted filename
+%%% Save some content into the specified directory with a formatted filename
 -spec save_graph_to_file(Graph, Dir, FileName, Type) -> ok when
     Graph :: digraph:graph(),
     Dir :: string(),
@@ -42,8 +43,13 @@ add_vertex(G) ->
     Label = new_label(G),
     digraph:add_vertex(G, Label, Label).
 
+del_vertex(G, V) ->
+    % TODO questa funzione cambia solo le label, l'ideale sarebbe cambiare anche il contenuto del vertice ma è difficile come funzione
+    [digraph:add_vertex(G, Ver, Ver - 1) || Ver <- digraph:vertices(G), Ver > V],
+    digraph:del_vertex(G, V).
+
 %%%===================================================================
-%%% Set of functions to interract with the dbmanager
+%%% Functions to interract with the dbmanager
 %%%===================================================================
 
 get_entrypoit_from_db() ->

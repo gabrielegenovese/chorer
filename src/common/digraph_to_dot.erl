@@ -59,7 +59,7 @@ pad(String) ->
     [String, " "].
 
 is_final_state(Label) when not is_integer(Label) ->
-    NewLabel = re:replace(Label, ?FINALSTATE, "", [{return, list}]),
+    NewLabel = re:replace(Label, ?FINALTAG, "", [{return, list}]),
     {list_to_integer(NewLabel), "double"};
 is_final_state(L) when is_integer(L) ->
     {L, ""}.

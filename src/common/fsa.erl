@@ -9,9 +9,9 @@
 %%%===================================================================
 
 minimize(G) ->
-    % NFA to DFA
+    % convert a NFA to a DFA
     remove_epsilon_moves(G),
-    % Minimization
+    % Minimization of the DFA
     remove_unreachable(G),
     remove_nondistinguishable(G).
 
@@ -20,54 +20,91 @@ minimize(G) ->
 %%%===================================================================
 
 remove_epsilon_moves(G) ->
-    E = digraph:edges(G),
-    remove_epsilon_moves(G, E).
+    EdgeList = digraph:edges(G),
+    remove_epsilon_moves(G, EdgeList).
+
+%%% TODO: capire correttezza algoritmo
+%%%
+%%% L'algoritmo potrebbe creare problemi con loop
+%%% Attualmente crea problemi con le label
 
 remove_epsilon_moves(_, []) ->
     done;
 remove_epsilon_moves(G, [Edge | T]) ->
     EdgeInfo = digraph:edge(G, Edge),
     case EdgeInfo of
-        {_, VToDel, VToLink, Label} ->
+        {EpsEdgeToDel, VLeft, VRight, Label} ->
             case Label of
                 'ɛ' ->
                     if
-                        VToDel =:= 1 ->
-                            EL = digraph:out_edges(G, VToLink),
+                        %%% If the Left Vertex is NOT the start node, then we can delete it
+                        VLeft =/= 1 ->
+                            %%% We want to delete the Left Vertex of the transaction
+                            %%% But we also want to preserve all the other edges
+                            EOut = digraph:out_edges(G, VLeft),
+                            EIn = digraph:in_edges(G, VLeft),
+                            %%% Any in edge of the Left Vertex is now an in edge of the Right Vertex
                             lists:foreach(
-                                fun(EToDel) ->
-                                    {_, _, V, ELabel} = digraph:edge(G, EToDel),
-                                    digraph:add_edge(G, VToDel, V, ELabel)
+                                fun(EToAdd) ->
+                                    {EToAdd, V, VLeft, ELabel} = digraph:edge(G, EToAdd),
+                                    digraph:add_edge(G, V, VRight, ELabel)
                                 end,
-                                EL
+                                EIn
                             ),
-                            digraph:del_vertex(G, VToLink),
-                            remove_epsilon_moves(G, digraph:edges(G));
-                        true ->
-                            EL = digraph:in_edges(G, VToDel),
-                            % for each edge in the list create a copy of it but with different vertex
+                            %%% Same for the out edges
                             lists:foreach(
-                                fun(EToDel) ->
-                                    {_, V, _, ELabel} = digraph:edge(G, EToDel),
-                                    digraph:add_edge(G, V, VToLink, ELabel)
+                                fun(EToAdd) ->
+                                    if
+                                        %%% Attention! We don't want to re-add the epsilon edge
+                                        EToAdd =/= EpsEdgeToDel ->
+                                            {EToAdd, VLeft, V, ELabel} = digraph:edge(G, EToAdd),
+                                            digraph:add_edge(G, VRight, V, ELabel);
+                                        true ->
+                                            nothing
+                                    end
                                 end,
-                                EL
+                                EOut
                             ),
-                            % this call will delete also all the edges attached to the vertex
-
-                            digraph:del_vertex(G, VToDel),
-                            % recursive call with new edge list bacause edges could be added and there could be an epsilon transition
-                            remove_epsilon_moves(G, digraph:edges(G))
-                    end;
+                            %%% Finally, delete the vertex
+                            digraph:del_vertex(G, VLeft);
+                        %%% If the Left Vertex IS the start node, then we can't delete it
+                        %%% We will delete the Right Vertex insted
+                        VLeft =:= 1 ->
+                            EOut = digraph:out_edges(G, VRight),
+                            EIn = digraph:in_edges(G, VRight),
+                            lists:foreach(
+                                fun(EToAdd) ->
+                                    {EToAdd, VRight, V, ELabel} = digraph:edge(G, EToAdd),
+                                    digraph:add_edge(G, VLeft, V, ELabel)
+                                end,
+                                EOut
+                            ),
+                            lists:foreach(
+                                fun(EToAdd) ->
+                                    if
+                                        EToAdd =/= EpsEdgeToDel ->
+                                            {EToAdd, V, VRight, ELabel} = digraph:edge(G, EToAdd),
+                                            digraph:add_edge(G, V, VLeft, ELabel);
+                                        true ->
+                                            nothing
+                                    end
+                                end,
+                                EIn
+                            ),
+                            digraph:del_vertex(G, VRight)
+                    end,
+                    %%% We want to call remove_epsilon_moves with a new edge list because
+                    %%% above we created and deleted many edges. So, we need a new edege list.
+                    NewEdgeList = digraph:edges(G),
+                    remove_epsilon_moves(G, NewEdgeList);
                 _ ->
                     remove_epsilon_moves(G, T)
             end;
         false ->
-            % digraph:del_edge(G, Edge),
             remove_epsilon_moves(G, T)
     end.
 
-%%% if the number of edges incident on that vertex is 0, then delete the vertex
+%%% if the number of incident edges on a vertex is 0, then delete it
 remove_unreachable(G) ->
     VList = digraph:vertices(G),
     [
@@ -77,5 +114,6 @@ remove_unreachable(G) ->
         digraph:in_degree(G, V) =:= 0
     ].
 
+% Future TODO
 remove_nondistinguishable(_G) ->
     ok.

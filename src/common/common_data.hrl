@@ -1,6 +1,6 @@
 %%%----FILE common_data.hrl----
 
--define(FINALSTATE, "final").
+-define(FINALTAG, "final").
 -define(DBMANAGER, dbmanager).
 -define(UNDEFINED, none).
 
