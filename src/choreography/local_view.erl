@@ -51,12 +51,12 @@ get_graph(FunName, Code, SetFinal, SetPm) when is_list(Code) ->
     ),
     Gr.
 
-add_args_to_graph(Gr, Vars, Guard, VStart, Bool) ->
+add_args_to_graph(Gr, Vars, Guard, VStart, SetPm) ->
     if
-        Bool ->
+        SetPm ->
             VN = common_fun:add_vertex(Gr),
-            EdLabel = format_label_pm_edge(Vars, Guard, "arg "),
-            digraph:add_edge(Gr, VStart, VN, list_to_atom(EdLabel)),
+            EdLabel = format_label_pm_edge(SetPm, Vars, Guard, "arg "),
+            digraph:add_edge(Gr, VStart, VN, EdLabel),
             VN;
         true ->
             VStart
@@ -129,7 +129,7 @@ get_base_label(SetPm, Label) ->
         SetPm ->
             Label;
         not SetPm ->
-            'ɛ'
+            "ɛ"
     end.
 
 %%% We have a main graph G1, a graph G2 and a G1's vertex.
@@ -153,13 +153,16 @@ merge_graph(MainG, GToAdd, VLast) ->
     lists:foreach(
         fun(Item) ->
             {Item, V1, V2, Label} = digraph:edge(GToAdd, Item),
+            %%% We use the map to rebuild the exact same edge but in G1
             digraph:add_edge(MainG, maps:get(V1, VEquiMap), maps:get(V2, VEquiMap), Label)
         end,
         EdgesGToAdd
     ),
-    % return last added vertex, which is the max number
+    % return last added vertex, which is the max number in the key list
     maps:get(lists:max(maps:keys(VEquiMap)), VEquiMap).
 
+%%% This function returns an FSA graph of the function if the ast exist,
+%%% otherwise return error.
 eval_func(FuncName, SetPm) ->
     FunAst = common_fun:get_fun_ast_from_db(FuncName),
     case FunAst of
@@ -171,20 +174,28 @@ eval_func(FuncName, SetPm) ->
     end.
 
 eval_pm(PMList, G, VLast, FunName, Label, SetPm) ->
-    List = explore_pm(PMList, G, VLast, FunName, Label, SetPm),
-    VR = common_fun:add_vertex(G),
-    add_edges_recursive(G, List, VR, 'ɛ'),
-    VR.
+    VLastList = explore_pm(PMList, G, VLast, FunName, Label, SetPm),
+    VRet = common_fun:add_vertex(G),
+    add_edges_recursive(G, VLastList, VRet, 'ɛ'),
+    VRet.
 
+%%% This function explore every pm's branch and returns the list of last added vertex
 explore_pm(PMList, G, VLast, FunName, Base, SetPm) ->
     lists:foldl(
         fun(CodeLine, AddedVertexList) ->
             case CodeLine of
                 {clause, _, Vars, Guard, Content} ->
                     VNew = common_fun:add_vertex(G),
-                    EdLabel = format_label_pm_edge(Vars, Guard, Base),
-                    digraph:add_edge(G, VLast, VNew, list_to_atom(EdLabel)),
+                    %%% if it's a receive pm, then the label must be written
+                    IsReceive = is_list(string:find(Base, "receive")),
+                    EdLabel =
+                        if
+                            IsReceive -> format_label_pm_edge(true, Vars, Guard, Base);
+                            true -> format_label_pm_edge(SetPm, Vars, Guard, Base)
+                        end,
+                    digraph:add_edge(G, VLast, VNew, EdLabel),
                     VRet = eval_pm_clause(Content, FunName, G, VNew, SetPm),
+                    %%% Ruturn the vertex appended to the accumulator list
                     AddedVertexList ++ [VRet];
                 _ ->
                     AddedVertexList
@@ -194,24 +205,37 @@ explore_pm(PMList, G, VLast, FunName, Base, SetPm) ->
         PMList
     ).
 
-format_label_pm_edge(VarList, GuardList, BaseLabel) when is_list(BaseLabel) ->
-    VFun = fun(V, L) ->
-        case V of
-            {var, _, '_'} -> L ++ "_";
-            {var, _, Var} -> L ++ atom_to_list(Var);
-            {atom, _, Atom} -> L ++ atom_to_list(Atom);
-            {nil, _} -> L ++ "null";
-            _ -> L
-        end
-    end,
-    GFun = fun(G, L) ->
-        case G of
-            {op, _, _, _} -> L ++ " (guards)";
-            _ -> L
-        end
-    end,
-    VarsString = lists:foldl(fun(V, Acc) -> VFun(V, Acc) end, BaseLabel, VarList),
-    lists:foldl(fun(G, Acc) -> GFun(G, Acc) end, VarsString, GuardList).
+%%% This function format the Variables with the guards in a label for the FSA
+format_label_pm_edge(SetPm, VarList, GuardList, BaseLabel) when is_list(BaseLabel) ->
+    RetString =
+        if
+            SetPm ->
+                %%% Very basic functions
+                VFun = fun(V, L) ->
+                    case V of
+                        %%% TODO: add more infos
+                        {var, _, '_'} -> L ++ "_";
+                        {var, _, Var} -> L ++ atom_to_list(Var);
+                        {atom, _, Atom} -> L ++ atom_to_list(Atom);
+                        {nil, _} -> L ++ "null";
+                        _ -> L
+                    end
+                end,
+                GFun = fun(G, L) ->
+                    case G of
+                        %%% Add guards if there's a guard
+                        %%% TODO: add more infos
+                        {op, _, _, _} -> L ++ " (guards)";
+                        _ -> L
+                    end
+                end,
+                VarsString = lists:foldl(fun(V, Acc) -> VFun(V, Acc) end, BaseLabel, VarList),
+                lists:foldl(fun(G, Acc) -> GFun(G, Acc) end, VarsString, GuardList);
+            not SetPm ->
+                "ɛ"
+        end,
+    %%% Returns an atom because labels are atoms
+    list_to_atom(RetString).
 
 add_edges_recursive(G, VertexList, VertexToLink, Label) ->
     %%% Link every V in the VertexList to the VertexToLink, with a specified label

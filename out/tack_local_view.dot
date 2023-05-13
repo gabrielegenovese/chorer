@@ -8,5 +8,5 @@ digraph tack {
 
 	n_2 -> n_1 [id="[$e|5]", label="receive stop"];
 	n_2 -> n_3 [id="[$e|0]", label="receive tick"];
-	n_3 -> n_2 [id="[$e|6]", label="send tack to tick"];
+	n_3 -> n_2 [id="[$e|6]", label="send tack to ptick"];
 }

@@ -35,7 +35,7 @@ remove_epsilon_moves(G, [Edge | T]) ->
     case EdgeInfo of
         {EpsEdgeToDel, VLeft, VRight, Label} ->
             case Label of
-                'ɛ' ->
+                'ɛ' when (VLeft =/= VRight) ->
                     if
                         %%% If the Left Vertex is NOT the start node, then we can delete it
                         VLeft =/= 1 ->

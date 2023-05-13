@@ -1,129 +1,189 @@
 -module(global_view).
 -include("../common/common_data.hrl").
--export([generate/2, proc/2]).
 
-%% API
+%%% API
+-export([generate/2, proc_loop/2]).
+
+%%%===================================================================
+%%% API
+%%%===================================================================
+
 generate(OutputDir, EntryPoint) ->
     MainGraph = common_fun:get_fun_graph_from_db(EntryPoint),
     case MainGraph of
-        no_graph_found ->
-            no_entry_point_found;
-        _ ->
-            generate_global(MainGraph, EntryPoint, OutputDir)
+        no_graph_found -> no_entry_point_found;
+        _ -> generate_global(EntryPoint, OutputDir)
     end.
 
-%% Internal Functions
+%%%===================================================================
+%%% Internal Functions
+%%%===================================================================
 
-generate_global(MainGraph, Name, Dir) ->
-    Gr = get_graph(MainGraph, Name),
+generate_global(EntryPoint, Dir) ->
+    Gr = create_globalview(EntryPoint),
     % fsa:minimize(Gr),
-    common_fun:save_graph_to_file(Gr, Dir, atom_to_list(Name), global).
+    common_fun:save_graph_to_file(Gr, Dir, atol(EntryPoint), global).
 
-get_graph(MainGraph, Name) ->
-    RetGraph = digraph:new(),
-    VNew = common_fun:add_vertex(RetGraph),
-    get_graph({MainGraph, Name, RetGraph}, maps:new(), 1, VNew, []).
+create_globalview(Name) ->
+    RetG = digraph:new(),
+    VNew = common_fun:add_vertex(RetG),
+    MainProcPid = spawn(?MODULE, proc_loop, [Name, 1]),
+    ProcPidMap = #{Name => MainProcPid},
+    progress_proc({RetG, VNew, ProcPidMap, [], []}, 0).
 
-get_graph(Data, ProcMap, VCurrent, VLast, MarkedE) ->
-    {MainGraph, _, RetGraph} = Data,
-    OutDegree = digraph:out_degree(MainGraph, VCurrent),
-    if
-        % no possible transitions
-        OutDegree =:= 0 ->
-            stop_proc(ProcMap),
-            RetGraph;
-        true ->
-            % take random edge
-            [E | _] = digraph:out_edges(MainGraph, VCurrent),
-            IsMarked = lists:member(E, MarkedE),
+progress_proc(Data, Turn) ->
+    io:fwrite("Turn ~p~n", [Turn]),
+    {RetG, _, ProcPidMap, _, _} = Data,
+    {NewData, OpDone} = maps:fold(
+        fun(ProcName, ProcPid, AccData) ->
+            ProcOD = get_proc_out_degree(ProcPid),
+            EToEval = choose_edge(ProcPid),
             if
-                not IsMarked ->
-                    {NewMap, NewCurr, NewV} = main_take_transition(E, Data, ProcMap, VLast),
-                    get_graph(Data, NewMap, NewCurr, NewV, MarkedE ++ [E]);
-                true ->
-                    digraph:del_edge(MainGraph, E),
-                    get_graph(Data, ProcMap, VCurrent, VLast, MarkedE)
+                %%% TODO: verify this -> No out edges equals to final state?
+                ProcOD =:= 0 -> AccData;
+                ProcOD =/= 0 -> eval_edge(EToEval, ProcName, ProcPid, AccData)
             end
-    end.
+        end,
+        {Data, false},
+        ProcPidMap
+    ),
+    if
+        OpDone -> progress_proc(NewData, Turn + 1);
+        not OpDone -> stop_proc(ProcPidMap)
+    end,
+    RetG.
 
-% stop other processes
-stop_proc(ProcMap) ->
-    maps:foreach(fun(_K, V) -> V ! stop end, ProcMap).
+choose_edge(ProcPid) ->
+    EdgeList = get_proc_edges(ProcPid),
+    %%% pick an edge
+    E = first(EdgeList),
+    get_proc_edge_info(ProcPid, E).
 
-main_take_transition(TransitionEdge, FuncData, ProcMap, VLast) ->
-    {MainGraph, Name, RetGraph} = FuncData,
-    E = digraph:edge(MainGraph, TransitionEdge),
-    {_, _, VT, Label} = E,
-    io:fwrite("This label: ~p~n", [Label]),
-    SLabel = atom_to_list(Label),
+%%% pick methods
+pick_random(X) -> lists:nth(rand:uniform(length(X)), X).
+first([]) -> [];
+first([H | _]) -> H.
+
+eval_edge(EdgeInfo, ProcName, ProcPid, AccData) ->
+    {Data, OpDone} = AccData,
+    {RetG, VLast, ProcPidMap, RecvL, SendL} = Data,
+    {Edge, V1, V2, PLabel} = EdgeInfo,
+    io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
+    SLabel = atol(PLabel),
+    IsEps = string:find(SLabel, "ɛ"),
     IsArg = string:find(SLabel, "arg"),
     IsSpawn = string:find(SLabel, "spawn"),
     IsSend = string:find(SLabel, "send"),
     IsReceive = string:find(SLabel, "receive"),
     if
+        is_list(IsEps) ->
+            ProcPid ! {use_transition, Edge},
+            {Data, true};
         is_list(IsArg) ->
-            {ProcMap, VT, VLast};
+            ProcPid ! {use_transition, Edge},
+            {Data, true};
         is_list(IsSpawn) ->
-            ProcName = string:prefix(SLabel, "spawn "),
-            ProcGraph = common_fun:get_fun_graph_from_db(list_to_atom(ProcName)),
-            P = spawn(?MODULE, proc, [ProcGraph, 1]),
-            NewM = maps:merge(ProcMap, #{ProcName => P}),
-            VNew = common_fun:add_vertex(RetGraph),
-            NewLabel = list_to_atom(ProcName ++ " spawned"),
-            digraph:add_edge(RetGraph, VLast, VNew, NewLabel),
-            {NewM, VT, VNew};
+            {VNew, NewM} = add_spawn_to_global(SLabel, ProcName, Data),
+            ProcPid ! {use_transition, Edge},
+            NewData = {RetG, VNew, NewM, RecvL, SendL},
+            {NewData, true};
         is_list(IsSend) ->
-            DataSent = lists:nth(2, string:split(SLabel, " ", all)),
-            VNew = maps:fold(
-                fun(K, V, Acc) ->
-                    OE = get_proc_edges(V),
-                    Found = find_receive_data(DataSent, OE, V),
-                    case Found of
-                        ?UNDEFINED ->
-                            Acc;
-                        ok ->
-                            VNew = common_fun:add_vertex(RetGraph),
-                            NewLabel = list_to_atom(
-                                atom_to_list(Name) ++ "->" ++ K ++ ":" ++ DataSent
-                            ),
-                            digraph:add_edge(RetGraph, VLast, VNew, NewLabel),
-                            VNew
-                    end
+            DataSent = get_data_from_label(SLabel),
+            PL = [{PName, E, DataR} || {PName, E, DataR} <- RecvL, DataR =:= DataSent],
+            {VNew, NewRL, NewSL, NewOp} =
+                if
+                    PL =:= [] ->
+                        AlreadyMember = lists:member({ProcName, Edge, DataSent}, SendL),
+                        if
+                            AlreadyMember ->
+                                {VLast, RecvL, SendL, OpDone};
+                            not AlreadyMember ->
+                                {VLast, RecvL, SendL ++ [{ProcName, Edge, DataSent}], true}
+                        end;
+                    PL =/= [] ->
+                        [Entry | _] = PL,
+                        {ProcNRecv, ProcRecvE, _} = Entry,
+                        VAdded = common_fun:add_vertex(RetG),
+                        NewL = ltoa(atol(ProcName) ++ "->" ++ atol(ProcNRecv) ++ ":" ++ DataSent),
+                        digraph:add_edge(RetG, VLast, VAdded, NewL),
+                        PPid = maps:get(ProcNRecv, ProcPidMap),
+                        % {_, PV1, PV2, _} = get_proc_edge_info(PPid, ProcRecvE),
+                        % IsBack = V1 < V2,
+                        % IsPBack = PV1 < PV2,
+                        PPid ! {use_transition, ProcRecvE},
+                        ProcPid ! {use_transition, Edge},
+                        {VAdded, lists:delete(Entry, RecvL), SendL, true}
                 end,
-                VLast,
-                ProcMap
-            ),
-            {ProcMap, VT, VNew};
+            NewData = {RetG, VNew, ProcPidMap, NewRL, NewSL},
+            {NewData, NewOp};
         is_list(IsReceive) ->
-            DataRecv = lists:nth(2, string:split(SLabel, " ", all)),
-            VNew = maps:fold(
-                fun(K, V, _Acc) ->
-                    OE = get_proc_edges(V),
-                    Found = find_send_data(DataRecv, OE, V),
-                    case Found of
-                        none ->
-                            VNew = common_fun:add_vertex(RetGraph),
-                            NewLabel = list_to_atom("user main ! " ++ DataRecv),
-                            digraph:add_edge(RetGraph, VLast, VNew, NewLabel),
-                            VNew;
-                        ok ->
-                            VNew = common_fun:add_vertex(RetGraph),
-                            NewLabel = list_to_atom(K ++ " main ! " ++ DataRecv),
-                            digraph:add_edge(RetGraph, VLast, VNew, NewLabel),
-                            VNew
-                    end
+            DataRecv = get_data_from_label(SLabel),
+            PL = [{PName, E, DataS} || {PName, E, DataS} <- SendL, DataS =:= DataRecv],
+            {VNew, NewRL, NewSL, NewOp} =
+                if
+                    PL =:= [] ->
+                        AlreadyMember = lists:member({ProcName, Edge, DataRecv}, RecvL),
+                        if
+                            AlreadyMember ->
+                                {VLast, RecvL, SendL, OpDone};
+                            not AlreadyMember ->
+                                {VLast, RecvL ++ [{ProcName, Edge, DataRecv}], SendL, true}
+                        end;
+                    PL =/= [] ->
+                        [Entry | _] = PL,
+                        {ProcSent, ProcSentE, _} = Entry,
+                        VAdded = common_fun:add_vertex(RetG),
+                        NewL = ltoa(atol(ProcSent) ++ "->" ++ atol(ProcName) ++ ":" ++ DataRecv),
+                        digraph:add_edge(RetG, VLast, VAdded, NewL),
+                        PPid = maps:get(ProcSent, ProcPidMap),
+                        % {_, PV1, PV2, _} = get_proc_edge_info(PPid, ProcSentE),
+                        % IsBack = V1 < V2,
+                        % IsPBack = PV1 < PV2,
+                        PPid ! {use_transition, ProcSentE},
+                        ProcPid ! {use_transition, Edge},
+                        {VAdded, lists:delete(Entry, RecvL), SendL, true}
                 end,
-                VLast,
-                ProcMap
-            ),
-            {ProcMap, VT, VNew};
+            NewData = {RetG, VNew, ProcPidMap, NewRL, NewSL},
+            {NewData, NewOp};
         true ->
-            io:fwrite("other op detected: ~p~n", [SLabel]),
-            {ProcMap, VT, VLast}
+            {Data, OpDone}
     end.
 
+%%% Δ = spawned
+add_spawn_to_global(SLabel, ProcName, Data) ->
+    {RetG, VLast, ProcPidMap, _, _} = Data,
+    NewProcName = string:prefix(SLabel, "spawn "),
+    NewProcPid = spawn(?MODULE, proc_loop, [ltoa(NewProcName), 1]),
+    NewMap = maps:put(ltoa(NewProcName), NewProcPid, ProcPidMap),
+    VNew = common_fun:add_vertex(RetG),
+    NewLabel = ltoa(atol(ProcName) ++ " Δ " ++ NewProcName),
+    digraph:add_edge(RetG, VLast, VNew, NewLabel),
+    {VNew, NewMap}.
+
+get_data_from_label(S) ->
+    lists:nth(2, string:split(S, " ", all)).
+
+% stop other processes
+stop_proc(ProcMap) ->
+    maps:foreach(fun(_K, V) -> V ! stop end, ProcMap).
+
+ltoa(L) -> list_to_atom(L).
+atol(A) -> atom_to_list(A).
+
 get_proc_edges(P) ->
-    P ! {self(), get_transitions},
+    P ! {self(), get_edges},
+    recv().
+
+get_proc_current_v(P) ->
+    P ! {self(), get_current_vertex},
+    recv().
+
+get_proc_marked(P) ->
+    P ! {self(), get_marked},
+    recv().
+
+get_proc_out_degree(P) ->
+    P ! {self(), get_out_degree},
     recv().
 
 get_proc_edge_info(P, E) ->
@@ -135,58 +195,43 @@ recv() ->
         {D} -> D
     end.
 
-find_receive_data(Data, E, P) ->
-    case for_each_f(E, "receive", Data, P) of
-        false ->
-            ?UNDEFINED;
-        Ed ->
-            P ! {use_transition, Ed},
-            ok
-    end.
-
-find_send_data(Data, E, P) ->
-    case for_each_f(E, "send", Data, P) of
-        false ->
-            ?UNDEFINED;
-        Ed ->
-            P ! {use_transition, Ed},
-            ok
-    end.
-
-for_each_f(E, Op, Data, P) ->
-    lists:foldl(
-        fun(Ev, Acc) ->
-            {_, _V1, _V2, Label} = get_proc_edge_info(P, Ev),
-            SLabel = atom_to_list(Label),
-            IsOp = is_list(string:find(SLabel, Op)),
-            if
-                IsOp ->
-                    IsData = is_list(string:find(SLabel, Data)),
-                    if
-                        IsData ->
-                            Ev;
-                        true ->
-                            Acc
-                    end;
-                true ->
-                    Acc
-            end
-        end,
-        false,
-        E
-    ).
-
-proc(G, VCurrent) ->
+proc_loop(ProcName, VCurrent) ->
+    proc_loop(ProcName, VCurrent, []).
+proc_loop(ProcName, VCurrent, MarkedEdge) ->
+    G = common_fun:get_fun_graph_from_db(ProcName),
+    % wait(1),
     receive
         {use_transition, E} ->
-            {E, VCurrent, VNew, _Label} = digraph:edge(G, E),
-            proc(G, VNew);
-        {P, get_transitions} ->
-            P ! {digraph:out_edges(G, VCurrent)},
-            proc(G, VCurrent);
+            Cond = not lists:member(E, MarkedEdge),
+            case digraph:edge(G, E) of
+                {E, VCurrent, VNew, _Label} when Cond ->
+                    proc_loop(ProcName, VNew, MarkedEdge ++ [E]);
+                false ->
+                    io:fwrite("Edge ~p non trovato in ~p~n", [E, ProcName])
+            end;
+        {P, get_current_vertex} ->
+            P ! {VCurrent},
+            proc_loop(ProcName, VCurrent, MarkedEdge);
+        {P, get_edges} ->
+            EL = digraph:out_edges(G, VCurrent),
+            ERet = [E || E <- EL, not lists:member(E, MarkedEdge)],
+            P ! {ERet},
+            proc_loop(ProcName, VCurrent, MarkedEdge);
+        {P, get_out_degree} ->
+            P ! {digraph:out_degree(G, VCurrent)},
+            proc_loop(ProcName, VCurrent, MarkedEdge);
+        {P, get_marked} ->
+            P ! {MarkedEdge},
+            proc_loop(ProcName, VCurrent, MarkedEdge);
         {P, get_edge_info, E} ->
             P ! {digraph:edge(G, E)},
-            proc(G, VCurrent);
+            proc_loop(ProcName, VCurrent, MarkedEdge);
         stop ->
             ok
+    end.
+
+wait(Sec) ->
+    receive
+    after (Sec * 1000) ->
+        ok
     end.

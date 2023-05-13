@@ -1,11 +1,11 @@
 -module(simple).
--export([stop_tick/0, loop/0, tick/0, tack/0]).
+-export([tickl/0, tick/0, tack/0, random/0]).
 
 tack() ->
     receive
         tick ->
             io:fwrite("Received tick~n"),
-            tick ! tack,
+            ptick ! tack,
             tack();
         stop ->
             io:fwrite("Process ended~n")
@@ -13,28 +13,31 @@ tack() ->
 
 tick() ->
     spawn_process(),
-    tack ! tick.
+    ptack ! tick,
+    started.
 
 spawn_process() ->
     Tack = spawn(?MODULE, tack, []),
-    register(tack, Tack),
-    Loop = spawn(?MODULE, loop, []),
-    spawn(?MODULE, random, []),
-    register(tick, Loop).
+    register(ptack, Tack),
+    TLoop = spawn(?MODULE, tickl, []),
+    register(ptick, TLoop),
+    spawn(?MODULE, random, []).
 
-loop() ->
+tickl() ->
     receive
         tack ->
             io:fwrite("Received tack~n"),
-            tack ! tick,
-            loop();
+            ptack ! tick,
+            tickl();
         stop ->
             io:fwrite("Process ended~n"),
-            tack ! stop
+            ptack ! stop
     end.
 
-stop_tick() ->
-    tick ! stop.
-
 random() ->
-    done.
+    RandInt = rand:uniform(10),
+    io:fwrite("~p~n", [RandInt]),
+    if
+        RandInt > 9 -> ptick ! stop;
+        true -> random()
+    end.

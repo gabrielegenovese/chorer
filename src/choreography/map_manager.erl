@@ -70,7 +70,7 @@ loop(CommonMap, FunAstMap, GraphMap) ->
                 IsKey ->
                     P ! {maps:get(Key, FunAstMap)};
                 not IsKey ->
-                    io:fwrite("No ast found for ~p~n", [Key]),
+                    % io:fwrite("No ast found for ~p~n", [Key]),
                     P ! {no_ast_found}
             end,
             loop(CommonMap, FunAstMap, GraphMap);
