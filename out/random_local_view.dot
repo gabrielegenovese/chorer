@@ -5,6 +5,6 @@ digraph random {
 	n_2 [id="1", shape=circle, label="1"];
 	n_0 -> n_2 [arrowhead=none];
 
-	n_2 -> n_1 [id="[$e|7]", label="send stop to ptick"];
+	n_2 -> n_1 [id="[$e|7]", label="send stop to tickl"];
 	n_2 -> n_2 [id="[$e|6]", label="ɛ"];
 }

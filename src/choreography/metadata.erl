@@ -58,10 +58,8 @@ gen_fun_ast_and_exported() ->
 gen_actor_list(EntryPoint) ->
     FunAst = common_fun:get_fun_ast_from_db(EntryPoint),
     case FunAst of
-        no_ast_found ->
-            [];
-        _ ->
-            find_actors(EntryPoint, FunAst)
+        no_ast_found -> [];
+        _ -> find_actors(EntryPoint, FunAst)
     end.
 
 %%% Find recursively all the spawn called, starting from a function and its code

@@ -12,10 +12,7 @@ generate(OutputDir) ->
     ActorList = common_fun:get_actors_from_db(),
     %%% For each actor, create and save the local view
     lists:foreach(
-        fun(ActorName) ->
-            ActorAst = common_fun:get_fun_ast_from_db(ActorName),
-            create_localview(ActorName, ActorAst, OutputDir)
-        end,
+        fun(Actor) -> create_localview(Actor, OutputDir) end,
         ActorList
     ).
 
@@ -23,9 +20,11 @@ generate(OutputDir) ->
 %%% Internal Functions
 %%%===================================================================
 
-create_localview(ActorName, ActorAst, OutputDir) ->
+create_localview(ActorName, OutputDir) ->
+    ActorAst = common_fun:get_fun_ast_from_db(ActorName),
     %%% TODO: ultimi parametri da chiedere all'utente
-    Gr = get_graph(ActorName, ActorAst, true, false),
+    {SetFinal, SetInfo} = {true, false},
+    Gr = get_graph(ActorName, ActorAst, SetFinal, SetInfo),
     fsa:minimize(Gr),
     %%% Send the graph to the dbmanager
     ?DBMANAGER ! {set_fun_graph, ActorName, Gr},
@@ -52,22 +51,20 @@ get_graph(FunName, Code, SetFinal, SetPm) when is_list(Code) ->
     Gr.
 
 add_args_to_graph(Gr, Vars, Guard, VStart, SetPm) ->
-    if
-        SetPm ->
+    case SetPm of
+        true ->
             VN = common_fun:add_vertex(Gr),
             EdLabel = format_label_pm_edge(SetPm, Vars, Guard, "arg "),
             digraph:add_edge(Gr, VStart, VN, EdLabel),
             VN;
-        true ->
+        false ->
             VStart
     end.
 
 %%% This function returns the last vertex added
 eval_pm_clause(Code, FunName, Gr, VStart, SetPm) ->
     lists:foldl(
-        fun(Line, VLast) ->
-            eval_codeline(Line, FunName, Gr, VLast, SetPm)
-        end,
+        fun(Line, VLast) -> eval_codeline(Line, FunName, Gr, VLast, SetPm) end,
         VStart,
         Code
     ).
@@ -125,11 +122,9 @@ eval_codeline(CodeLine, FunName, G, VLast, SetPm) ->
     end.
 
 get_base_label(SetPm, Label) ->
-    if
-        SetPm ->
-            Label;
-        not SetPm ->
-            "ɛ"
+    case SetPm of
+        true -> Label;
+        false -> "ɛ"
     end.
 
 %%% We have a main graph G1, a graph G2 and a G1's vertex.
@@ -166,11 +161,9 @@ merge_graph(MainG, GToAdd, VLast) ->
 eval_func(FuncName, SetPm) ->
     FunAst = common_fun:get_fun_ast_from_db(FuncName),
     case FunAst of
-        no_ast_found ->
-            no_graph;
-        _ ->
-            %%% get the graph but don't set the final state
-            get_graph(FuncName, FunAst, false, SetPm)
+        no_ast_found -> no_graph;
+        %%% get the graph but don't set the final state
+        _ -> get_graph(FuncName, FunAst, false, SetPm)
     end.
 
 eval_pm(PMList, G, VLast, FunName, Label, SetPm) ->

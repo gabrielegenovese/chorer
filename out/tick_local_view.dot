@@ -8,8 +8,8 @@ digraph tick {
 	n_4 [id="4", shape=circle, label="4"];
 	n_5 [id="3", shape=circle, label="3"];
 
-	n_4 -> n_2 [id="[$e|4]", label="send tick to ptack"];
-	n_3 -> n_5 [id="[$e|5]", label="spawn tack"];
+	n_4 -> n_2 [id="[$e|4]", label="send tack to tickl"];
+	n_3 -> n_5 [id="[$e|5]", label="spawn tackl"];
 	n_5 -> n_1 [id="[$e|3]", label="spawn tickl"];
 	n_1 -> n_4 [id="[$e|1]", label="spawn random"];
 }

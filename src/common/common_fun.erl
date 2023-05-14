@@ -52,29 +52,12 @@ del_vertex(G, V) ->
 %%% Functions to interract with the dbmanager
 %%%===================================================================
 
-get_entrypoit_from_db() ->
-    ?DBMANAGER ! {self(), get_entrypoint},
-    recv().
-
-get_ast_from_db() ->
-    ?DBMANAGER ! {self(), get_ast},
-    recv().
-
-get_exported_fun_from_db() ->
-    ?DBMANAGER ! {self(), get_exported_fun},
-    recv().
-
-get_actors_from_db() ->
-    ?DBMANAGER ! {self(), get_actor_list},
-    recv().
-
-get_fun_ast_from_db(Key) ->
-    ?DBMANAGER ! {self(), get_fun_ast, Key},
-    recv().
-
-get_fun_graph_from_db(Key) ->
-    ?DBMANAGER ! {self(), get_fun_graph, Key},
-    recv().
+get_entrypoit_from_db() -> get_from_db({self(), get_entrypoint}).
+get_ast_from_db() -> get_from_db({self(), get_ast}).
+get_exported_fun_from_db() -> get_from_db({self(), get_exported_fun}).
+get_actors_from_db() -> get_from_db({self(), get_actor_list}).
+get_fun_ast_from_db(Key) -> get_from_db({self(), get_fun_ast, Key}).
+get_fun_graph_from_db(Key) -> get_from_db({self(), get_fun_graph, Key}).
 
 %%%===================================================================
 %%% Internal Functions
@@ -88,6 +71,10 @@ format_global_name(Name) ->
 
 new_label(G) ->
     length(digraph:vertices(G)) + 1.
+
+get_from_db(Data) ->
+    ?DBMANAGER ! Data,
+    recv().
 
 recv() ->
     receive
