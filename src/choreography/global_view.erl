@@ -29,6 +29,7 @@ create_globalview(Name) ->
     VNew = common_fun:add_vertex(RetG),
     MainProcPid = spawn(?MODULE, proc_loop, [Name, 1]),
     ProcPidMap = #{Name => MainProcPid},
+    %%% initialize data structures
     progress_proc({RetG, VNew, ProcPidMap, [], [], #{}}, 0).
 
 progress_proc(Data, Turn) ->
@@ -78,6 +79,7 @@ eval_edge(EdgeInfo, ProcName, ProcPid, AccData) ->
     if
         is_list(IsEps) ->
             ProcPid ! {use_transition, Edge},
+            ProcPid ! {use_transition, Edge},
             {Data, true};
         is_list(IsArg) ->
             ProcPid ! {use_transition, Edge},
@@ -103,22 +105,23 @@ add_spawn_to_global(SLabel, ProcName, Data) ->
     NewProcPid = spawn(?MODULE, proc_loop, [ltoa(NewProcName), 1]),
     NewMap = maps:put(ltoa(NewProcName), NewProcPid, ProcPidMap),
     VNew = common_fun:add_vertex(RetG),
-    %%% Δ = spawned
-    NewLabel = ltoa(atol(ProcName) ++ " Δ " ++ NewProcName),
+    %%% Δ means spawned
+    NewLabel = ltoa(atol(ProcName) ++ "Δ" ++ NewProcName),
     digraph:add_edge(RetG, VLast, VNew, NewLabel),
     {VNew, NewMap}.
 
 manage_send(SLabel, Data, ProcName, ProcPid, EdgeInfo) ->
-    {Edge, V1, V2, _} = EdgeInfo,
+    {Edge, _, _, _} = EdgeInfo,
     {RetG, VLast, ProcPidMap, RecvL, SendL, StateM} = Data,
     DataSent = get_data_from_label(SLabel),
     PL = [{PName, E, DataR} || {PName, E, DataR} <- RecvL, DataR =:= DataSent],
     {VNew, NewRL, NewSL, NewStateM, NewOp} =
         if
             PL =:= [] ->
+                ProcPid ! {use_transition, Edge},
                 AlreadyMember = lists:member({ProcName, Edge, DataSent}, SendL),
                 case AlreadyMember of
-                    true -> {VLast, RecvL, SendL, StateM, false};
+                    true -> {VLast, RecvL, SendL, StateM, true};
                     false -> {VLast, RecvL, SendL ++ [{ProcName, Edge, DataSent}], StateM, true}
                 end;
             PL =/= [] ->
@@ -126,30 +129,10 @@ manage_send(SLabel, Data, ProcName, ProcPid, EdgeInfo) ->
                 Entry = pick_random(PL),
                 {ProcNRecv, ProcRecvE, _} = Entry,
                 PPid = maps:get(ProcNRecv, ProcPidMap),
-                {_, PV1, PV2, _} = get_proc_edge_info(PPid, ProcRecvE),
+                E2Info = get_proc_edge_info(PPid, ProcRecvE),
                 NewL = ltoa(atol(ProcName) ++ "->" ++ atol(ProcNRecv) ++ ":" ++ DataSent),
-                V = maps:get({ProcName, V2}, StateM, ?UNDEFINED),
-                io:fwrite("V2 ~p PV2 ~p~n", [V2, PV2]),
-                {VNA, NewSMap} =
-                    case V of
-                        ?UNDEFINED ->
-                            Vsecond = maps:get({ProcNRecv, PV2}, StateM, ?UNDEFINED),
-                            case Vsecond of
-                                ?UNDEFINED ->
-                                    VAdded = common_fun:add_vertex(RetG),
-                                    digraph:add_edge(RetG, VLast, VAdded, NewL),
-                                    NewM = maps:put({ProcName, V1}, VAdded, StateM),
-                                    NewM2 = maps:put({ProcNRecv, PV1}, VAdded, NewM),
-                                    io:fwrite("StateM ~p~n", [NewM2]),
-                                    {VAdded, NewM2};
-                                _ ->
-                                    digraph:add_edge(RetG, VLast, Vsecond, NewL),
-                                    {Vsecond, StateM}
-                            end;
-                        _ ->
-                            digraph:add_edge(RetG, VLast, V, NewL),
-                            {V, StateM}
-                    end,
+                DForFunc = {StateM, RetG, VLast, NewL},
+                {VNA, NewSMap} = decide_vertex(ProcName, EdgeInfo, ProcNRecv, E2Info, DForFunc),
                 PPid ! {use_transition, ProcRecvE},
                 ProcPid ! {use_transition, Edge},
                 {VNA, lists:delete(Entry, RecvL), SendL, NewSMap, true}
@@ -158,7 +141,7 @@ manage_send(SLabel, Data, ProcName, ProcPid, EdgeInfo) ->
     {NewData, NewOp}.
 
 manage_recv(SLabel, Data, ProcName, ProcPid, EdgeInfo) ->
-    {Edge, V1, V2, _} = EdgeInfo,
+    {Edge, _, _, _} = EdgeInfo,
     {RetG, VLast, ProcPidMap, RecvL, SendL, StateM} = Data,
     DataRecv = get_data_from_label(SLabel),
     PL = [{PName, E, DataS} || {PName, E, DataS} <- SendL, DataS =:= DataRecv],
@@ -175,34 +158,38 @@ manage_recv(SLabel, Data, ProcName, ProcPid, EdgeInfo) ->
                 Entry = pick_random(PL),
                 {ProcSent, ProcSentE, _} = Entry,
                 PPid = maps:get(ProcSent, ProcPidMap),
-                {_, PV1, PV2, _} = get_proc_edge_info(PPid, ProcSentE),
+                E2Info = get_proc_edge_info(PPid, ProcSentE),
                 NewL = ltoa(atol(ProcSent) ++ "->" ++ atol(ProcName) ++ ":" ++ DataRecv),
-                V = maps:get({ProcName, V2}, StateM, ?UNDEFINED),
-                {VNA, NewSMap} =
-                    case V of
-                        ?UNDEFINED ->
-                            Vsecond = maps:get({ProcSent, PV2}, StateM, ?UNDEFINED),
-                            case Vsecond of
-                                ?UNDEFINED ->
-                                    VAdded = common_fun:add_vertex(RetG),
-                                    digraph:add_edge(RetG, VLast, VAdded, NewL),
-                                    NewM = maps:put({ProcName, V1}, VAdded, StateM),
-                                    NewM2 = maps:put({ProcSent, PV1}, VAdded, NewM),
-                                    {VAdded, NewM2};
-                                _ ->
-                                    digraph:add_edge(RetG, VLast, Vsecond, NewL),
-                                    {Vsecond, StateM}
-                            end;
-                        _ ->
-                            digraph:add_edge(RetG, VLast, V, NewL),
-                            {V, StateM}
-                    end,
-                PPid ! {use_transition, ProcSentE},
+                DForFunc = {StateM, RetG, VLast, NewL},
+                {VNA, NewSMap} = decide_vertex(ProcName, EdgeInfo, ProcSent, E2Info, DForFunc),
                 ProcPid ! {use_transition, Edge},
-                {VNA, lists:delete(Entry, RecvL), SendL, NewSMap, true}
+                {VNA, RecvL, lists:delete(Entry, SendL), NewSMap, true}
         end,
     NewData = {RetG, VNew, ProcPidMap, NewRL, NewSL, NewStateM},
     {NewData, NewOp}.
+
+decide_vertex(Proc1, Edge1, Proc2, Edge2, Data) ->
+    {StateM, RetG, VLast, Label} = Data,
+    {_, V1, V2, _} = Edge1,
+    {_, PV1, PV2, _} = Edge2,
+    Vfirst = maps:get({{Proc1, V2}, {Proc2, PV2}}, StateM, ?UNDEFINED),
+    case Vfirst of
+        ?UNDEFINED ->
+            Vsecond = maps:get({{Proc2, PV2}, {Proc1, V2}}, StateM, ?UNDEFINED),
+            case Vsecond of
+                ?UNDEFINED ->
+                    VAdded = common_fun:add_vertex(RetG),
+                    digraph:add_edge(RetG, VLast, VAdded, Label),
+                    NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
+                    {VAdded, NewM};
+                _ ->
+                    digraph:add_edge(RetG, VLast, Vsecond, Label),
+                    {Vsecond, StateM}
+            end;
+        _ ->
+            digraph:add_edge(RetG, VLast, Vfirst, Label),
+            {Vfirst, StateM}
+    end.
 
 get_data_from_label(S) -> lists:nth(2, string:split(S, " ", all)).
 
@@ -231,9 +218,9 @@ proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE) ->
     % wait(1),
     receive
         {use_transition, E} ->
-            Cond = lists:member(E, FirstMarkedE),
+            IsAlreadyMarkedOnce = lists:member(E, FirstMarkedE),
             case digraph:edge(G, E) of
-                {E, VCurrent, VNew, _Label} when Cond ->
+                {E, VCurrent, VNew, _Label} when IsAlreadyMarkedOnce ->
                     proc_loop(ProcName, VNew, FirstMarkedE, SecondMarkedE ++ [E]);
                 {E, VCurrent, VNew, _Label} ->
                     proc_loop(ProcName, VNew, FirstMarkedE ++ [E], SecondMarkedE);

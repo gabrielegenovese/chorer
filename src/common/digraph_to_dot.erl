@@ -89,10 +89,8 @@ format_vertex({V, Label}, Ids) ->
     #{V := Id} = Ids,
     {NewLabel, FinalState} = is_final_state(Label),
     if
-        NewLabel =:= 1 ->
-            Str = "\n\tn_0 -> " ++ Id ++ " [arrowhead=none];";
-        true ->
-            Str = ""
+        NewLabel =:= 1 -> Str = "\n\tn_0 -> " ++ Id ++ " [arrowhead=none];";
+        true -> Str = ""
     end,
     io_lib:format(
         "\t~ts [id=~ts, shape=~tscircle, label=~ts];~s~n",

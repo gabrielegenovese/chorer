@@ -22,14 +22,19 @@ generate(OutputDir) ->
 
 create_localview(ActorName, OutputDir) ->
     ActorAst = common_fun:get_fun_ast_from_db(ActorName),
-    %%% TODO: ultimi parametri da chiedere all'utente
-    {SetFinal, SetInfo} = {true, false},
-    Gr = get_graph(ActorName, ActorAst, SetFinal, SetInfo),
-    fsa:minimize(Gr),
-    %%% Send the graph to the dbmanager
-    ?DBMANAGER ! {set_fun_graph, ActorName, Gr},
-    FileName = atom_to_list(ActorName),
-    common_fun:save_graph_to_file(Gr, OutputDir, FileName, local).
+    case ActorAst of
+        no_ast_found ->
+            no_entry_point_found;
+        _ ->
+            %%% TODO: ultimi parametri da chiedere all'utente
+            {SetFinal, SetInfo} = {true, false},
+            Gr = get_graph(ActorName, ActorAst, SetFinal, SetInfo),
+            fsa:minimize(Gr),
+            %%% Send the graph to the dbmanager
+            ?DBMANAGER ! {set_fun_graph, ActorName, Gr},
+            FileName = atom_to_list(ActorName),
+            common_fun:save_graph_to_file(Gr, OutputDir, FileName, local)
+    end.
 
 get_graph(FunName, Code, SetFinal, SetPm) when is_list(Code) ->
     Gr = digraph:new(),
@@ -117,9 +122,18 @@ eval_codeline(CodeLine, FunName, G, VLast, SetPm) ->
             SLabel = "send " ++ atom_to_list(DataSent) ++ " to " ++ atom_to_list(VarOrAtomName),
             digraph:add_edge(G, VLast, VNew, list_to_atom(SLabel)),
             VNew;
+        {op, _, '!', {_, _, VarOrAtomName}, ComplicatedSend} ->
+            VNew = common_fun:add_vertex(G),
+            DataSent = get_what_is_sent(ComplicatedSend),
+            SLabel = "send " ++ DataSent ++ " to " ++ atom_to_list(VarOrAtomName),
+            digraph:add_edge(G, VLast, VNew, list_to_atom(SLabel)),
+            VNew;
         _ ->
             VLast
     end.
+
+get_what_is_sent(_C) ->
+    "Num".
 
 get_base_label(SetPm, Label) ->
     case SetPm of
