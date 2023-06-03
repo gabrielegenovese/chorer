@@ -5,7 +5,10 @@ tackl() ->
     receive
         tick ->
             io:fwrite("Received tick~n"),
-            tickl ! tack,
+            case whereis(tickl) of
+                'undefined' -> done;
+                _ -> tickl ! tack
+            end,
             tackl();
         stop ->
             io:fwrite("Process ended~n")
@@ -38,6 +41,6 @@ random() ->
     RandInt = rand:uniform(10),
     io:fwrite("~p~n", [RandInt]),
     if
-        RandInt > 9 -> tickl ! stop;
+        RandInt > 1 -> tickl ! stop;
         true -> random()
     end.

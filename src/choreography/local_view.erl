@@ -29,11 +29,11 @@ create_localview(ActorName, OutputDir) ->
             %%% TODO: ultimi parametri da chiedere all'utente
             {SetFinal, SetInfo} = {true, false},
             Gr = get_graph(ActorName, ActorAst, SetFinal, SetInfo),
-            fsa:minimize(Gr),
-            %%% Send the graph to the dbmanager
-            ?DBMANAGER ! {set_fun_graph, ActorName, Gr},
             FileName = atom_to_list(ActorName),
-            common_fun:save_graph_to_file(Gr, OutputDir, FileName, local)
+            %%% Send the graph to the dbmanager
+            MG = fsa:minimize(Gr),
+            ?DBMANAGER ! {set_fun_graph, ActorName, MG},
+            common_fun:save_graph_to_file(MG, OutputDir, FileName, local)
     end.
 
 get_graph(FunName, Code, SetFinal, SetPm) when is_list(Code) ->
@@ -110,6 +110,9 @@ eval_codeline(CodeLine, FunName, G, VLast, SetPm) ->
             end;
         {'case', _, {var, _, Var}, PMList} ->
             BaseLabel = get_base_label(SetPm, atom_to_list(Var) ++ " match "),
+            eval_pm(PMList, G, VLast, FunName, BaseLabel, SetPm);
+        {'case', _, _, PMList} ->
+            BaseLabel = get_base_label(SetPm, "match smt"),
             eval_pm(PMList, G, VLast, FunName, BaseLabel, SetPm);
         {'if', _, PMList} ->
             BaseLabel = get_base_label(SetPm, "if "),
@@ -192,18 +195,28 @@ explore_pm(PMList, G, VLast, FunName, Base, SetPm) ->
         fun(CodeLine, AddedVertexList) ->
             case CodeLine of
                 {clause, _, Vars, Guard, Content} ->
-                    VNew = common_fun:add_vertex(G),
-                    %%% if it's a receive pm, then the label must be written
                     IsReceive = is_list(string:find(Base, "receive")),
+                    %%% if it's a receive pm, then the label must be written
                     EdLabel =
                         if
                             IsReceive -> format_label_pm_edge(true, Vars, Guard, Base);
                             true -> format_label_pm_edge(SetPm, Vars, Guard, Base)
                         end,
-                    digraph:add_edge(G, VLast, VNew, EdLabel),
-                    VRet = eval_pm_clause(Content, FunName, G, VNew, SetPm),
-                    %%% Ruturn the vertex appended to the accumulator list
-                    AddedVertexList ++ [VRet];
+                    VL =
+                        if
+                            IsReceive or SetPm ->
+                                VNew = common_fun:add_vertex(G),
+                                digraph:add_edge(G, VLast, VNew, EdLabel),
+                                VNew;
+                            true ->
+                                VLast
+                        end,
+                    VRet = eval_pm_clause(Content, FunName, G, VL, SetPm),
+                    if
+                        VRet =:= VL -> AddedVertexList;
+                        %%% Ruturn the vertex appended to the accumulator list
+                        true -> AddedVertexList ++ [VRet]
+                    end;
                 _ ->
                     AddedVertexList
             end

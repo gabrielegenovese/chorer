@@ -3,6 +3,8 @@
 
 %%% API
 -export([
+    first/1,
+    pick_random/1,
     save_graph_to_file/4,
     add_vertex/1,
     del_vertex/2,
@@ -17,6 +19,10 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+
+pick_random(X) -> lists:nth(rand:uniform(length(X)), X).
+first([]) -> [];
+first([H | _]) -> H.
 
 %%% Save some content into the specified directory with a formatted filename
 -spec save_graph_to_file(Graph, Dir, FileName, Type) -> ok when

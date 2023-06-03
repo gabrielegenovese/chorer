@@ -1,17 +1,15 @@
 -module(metadata).
 -include("../common/common_data.hrl").
 %%% Api
--export([extract/2]).
+-export([extract/1]).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
-extract(EntryPoint, InputFile) ->
+extract(InputFile) ->
     gen_ast(InputFile),
-    gen_fun_ast_and_exported(),
-    %%% Generate the actor list from an entry point and append also the entry point
-    ActorList = [EntryPoint] ++ gen_actor_list(EntryPoint),
+    ActorList = gen_fun_ast_and_exported(),
     %%% Send the actor list to the dbmanager
     ?DBMANAGER ! {set_actor_list, ActorList}.
 
@@ -45,54 +43,4 @@ gen_fun_ast_and_exported() ->
         end,
         [],
         Ast
-    ).
-
-%%% Generate the actor list, that is the list of function spawned from the entrypoint
--spec gen_actor_list(EntryPoint) -> [string()] when
-    EntryPoint :: atom().
-
-%%% SI ASSUME CHE LA FUNZIONE SIA NELLO STESSO FILE DI INPUT
-%%% TODO: un caso realistico è che alcune funzioni non si trovino nello stesso file ma
-%%%       in un altro file quindi bisognerebbe caricare il modulo e cercare la funzione
-
-gen_actor_list(EntryPoint) ->
-    FunAst = common_fun:get_fun_ast_from_db(EntryPoint),
-    case FunAst of
-        no_ast_found -> [];
-        _ -> find_actors(EntryPoint, FunAst)
-    end.
-
-%%% Find recursively all the spawn called, starting from a function and its code
-find_actors(FunName, FunCode) when is_list(FunCode) ->
-    lists:foldl(
-        fun(Item, PrevList) ->
-            RetL =
-                case Item of
-                    {clause, _, _, _, Content} ->
-                        find_actors(FunName, Content);
-                    {match, _, _, LeftContent} ->
-                        find_actors(FunName, [LeftContent]);
-                    {'case', _, _, PMList} ->
-                        find_actors(FunName, PMList);
-                    {'if', _, PMList} ->
-                        find_actors(FunName, PMList);
-                    {'receive', _, PMList} ->
-                        find_actors(FunName, PMList);
-                    %%% If a spawn is called, append the function name to the actor list of the function
-                    {call, _, {atom, _, spawn}, [_, {atom, _, Name}, _]} ->
-                        [Name] ++ gen_actor_list(Name);
-                    % stop recursive call
-                    {call, _, {atom, _, FunName}, _} ->
-                        [];
-                    %%% Attention: don't change the position of this pattern matching
-                    %%% If a function is called, get the actor list of the function
-                    {call, _, {atom, _, Name}, _} ->
-                        gen_actor_list(Name);
-                    _ ->
-                        []
-                end,
-            PrevList ++ RetL
-        end,
-        [],
-        FunCode
     ).

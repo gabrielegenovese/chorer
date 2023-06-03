@@ -14,11 +14,11 @@
     EntryPoint :: atom().
 generate_chor_automata(InputFile, OutputDir, EntryPoint) ->
     io:format("Entrypoint: ~p~n", [EntryPoint]),
-    % Initialize code manager as a key based database
+    %%% Initialize code manager as a key based database
     init_db(),
-    % Get all the metadata info such as exported functions, spawn done and actors
-    metadata:extract(EntryPoint, InputFile),
-    % Generate local and global view and save them int the output directory
+    %%% Get all the metadata info such as exported functions, spawn done and actors
+    metadata:extract(InputFile),
+    %%% Generate local and global view and save them int the output directory
     local_view:generate(OutputDir),
     global_view:generate(OutputDir, EntryPoint).
 
