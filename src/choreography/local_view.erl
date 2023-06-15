@@ -266,6 +266,7 @@ add_edges_recursive(G, VertexList, VertexToLink, Label) ->
         V =/= 1
     ].
 
+% Set a state as a final state
 set_as_final(ShouldBeSet, G, V) ->
     {V, LastLabel} = digraph:vertex(G, V),
     if

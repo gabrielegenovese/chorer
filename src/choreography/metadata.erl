@@ -23,7 +23,8 @@ extract(InputFile) ->
     InputFile :: string().
 gen_ast(InputFile) ->
     {ok, AST} = epp_dodger:quick_parse_file(InputFile),
-    ?DBMANAGER ! {set_ast, AST}.
+    ?DBMANAGER ! {set_ast, AST},
+    done.
 
 %%% Generate the list of exported function and send it to the dbmanager.
 %%% It also send the ast of every function.

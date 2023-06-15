@@ -8,7 +8,7 @@
 %%% API
 %%%===================================================================
 
--spec generate_chor_automata(InputFile, OutputDir, EntryPoint) -> no_entry_point | done when
+-spec generate_chor_automata(InputFile, OutputDir, EntryPoint) -> atom() when
     InputFile :: string(),
     OutputDir :: string(),
     EntryPoint :: atom().
