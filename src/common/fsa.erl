@@ -9,7 +9,7 @@
 %%%===================================================================
 
 minimize(NFA) ->
-    % convert a NFA to a DFA
+    % Convert a NFA to a DFA
     DFA = subset_construction(NFA),
     % Minimization of the DFA
     remove_unreachable(DFA),
@@ -20,62 +20,55 @@ minimize(NFA) ->
 %%% Internal Functions
 %%%===================================================================
 
-eps_clos(G, VL) when is_list(VL) ->
-    lists:foldl(fun(V, A) -> sets:union(eps_clos(G, V, []), A) end, sets:new(), VL).
-eps_clos(G, V, ME) when not is_list(V) ->
-    EL = digraph:out_edges(G, V),
-    S = sets:new(),
+%%% The Epsilon Closure function: given a state (or a set of state),
+%%% it returns all the states reachable with an ɛ transition.
+eps_clos(Graph, VertexL) when is_list(VertexL) ->
     lists:foldl(
-        fun(E, Acc) ->
-            C = not lists:member(E, ME),
-            case digraph:edge(G, E) of
-                {E, V, V2, L} when ((L =:= 'ɛ') and (C)) ->
-                    sets:union(Acc, eps_clos(G, V2, ME ++ [E]));
-                _ ->
-                    Acc
-            end
+        fun(Vertex, AccS) ->
+            NewSet = eps_clos(Graph, Vertex, []),
+            %%% Return the union between the new set and the previous set
+            sets:union(NewSet, AccS)
         end,
-        sets:add_element(V, S),
-        EL
+        sets:new(),
+        VertexL
     ).
+eps_clos(Graph, Vertex, MarkedEdges) when not is_list(Vertex) ->
+    %%% Get outer transitions
+    OutTransitions = digraph:out_edges(Graph, Vertex),
+    %%% Create a set with the base vertex
+    RetS = sfroml([Vertex]),
+    %%% For all transition check if marked and Label == ɛ
+    FoldlFun = fun(Edge, AccS) ->
+        %%% Marking states is used to avoid loopss
+        Cond = not lists:member(Edge, MarkedEdges),
+        case digraph:edge(Graph, Edge) of
+            {Edge, Vertex, V2, Label} when ((Label =:= 'ɛ') and (Cond)) ->
+                NewS = eps_clos(Graph, V2, MarkedEdges ++ [Edge]),
+                sets:union(AccS, NewS);
+            _ ->
+                AccS
+        end
+    end,
+    lists:foldl(FoldlFun, RetS, OutTransitions).
 
-subset_construction(G) ->
-    X = eps_clos(G, [1]),
-    S = sets:new(),
-    {StateL, TransitionsL} = subset_construction(
-        G, sets:add_element(X, S), sets:new(), sets:new()
-    ),
+%%% The Subset Construction algorith is used to convert a NFA to a DFA.
+subset_construction(NFA) ->
     DFA = digraph:new(),
-    Mtemp = #{X => common_fun:add_vertex(DFA)},
-    VEquivM = sets:fold(
-        fun(Item, M) ->
-            case Item =:= X of
-                true ->
-                    M;
-                false ->
-                    DfaV = common_fun:add_vertex(DFA),
-                    NewM = maps:put(Item, DfaV, M),
-                    case is_final_state(G, sets:to_list(Item)) of
-                        true -> set_as_final(DFA, DfaV);
-                        false -> ?UNDEFINED
-                    end,
-                    NewM
-            end
-        end,
-        Mtemp,
-        StateL
-    ),
-    sets:fold(
-        fun(E, _) ->
-            {V1, V2, L} = E,
-            digraph:add_edge(DFA, maps:get(V1, VEquivM), maps:get(V2, VEquivM), L)
-        end,
-        ?UNDEFINED,
-        TransitionsL
-    ),
+    FirstDFAState = eps_clos(NFA, [1]),
+    %%% Create a list of DFA states and transitions
+    {DFAStateL, DFATransitionsL} = subset_construction(NFA, sfroml([FirstDFAState])),
+    %%% Convert the list of DFA state in the DFA graph vertex
+    VertexEquivalanceM = convert_statel_to_graph(NFA, DFA, FirstDFAState, DFAStateL),
+    %%% Convert the list of DFA transition in the DFA graph edges
+    convert_transl_to_graph(DFA, VertexEquivalanceM, DFATransitionsL),
     DFA.
 
-subset_construction(G, StateS, MarkedS, TransS) ->
+%%% This function initialize new sets for subset_construction/4
+subset_construction(NFA, StateS) ->
+    subset_construction(NFA, StateS, sets:new(), sets:new()).
+
+%%% This recursive function create a list of DFA states and transactions, given an NFA graph
+subset_construction(NFA, StateS, TransS, MarkedS) ->
     NotMarkedS = get_not_marked(StateS, MarkedS),
     case NotMarkedS =:= [] of
         true ->
@@ -84,78 +77,109 @@ subset_construction(G, StateS, MarkedS, TransS) ->
             NewM = sets:add_element(NotMarkedS, MarkedS),
             {NewS, NewT} = sets:fold(
                 fun(VElem, Data) ->
-                    EOL = digraph:out_edges(G, VElem),
-                    lists:foldl(
-                        fun(E, AData) ->
-                            {S, T} = AData,
-                            {_, _, V, L} = digraph:edge(G, E),
-                            case L of
-                                'ɛ' ->
-                                    AData;
-                                _ ->
-                                    R = eps_clos(G, [V]),
-                                    Cond = sets:is_element(R, S),
-                                    NeoT = sets:add_element({NotMarkedS, R, L}, T),
-                                    case Cond of
-                                        true -> {S, NeoT};
-                                        false -> {sets:add_element(R, S), NeoT}
-                                    end
-                            end
-                        end,
-                        Data,
-                        EOL
-                    )
+                    EOL = digraph:out_edges(NFA, VElem),
+                    LFoldlFun = fun(E, AData) ->
+                        {S, T} = AData,
+                        {_, _, V, L} = digraph:edge(NFA, E),
+                        case L of
+                            'ɛ' ->
+                                AData;
+                            _ ->
+                                R = eps_clos(NFA, [V]),
+                                Cond = sets:is_element(R, S),
+                                NeoT = sets:add_element({NotMarkedS, R, L}, T),
+                                case Cond of
+                                    true -> {S, NeoT};
+                                    false -> {sets:add_element(R, S), NeoT}
+                                end
+                        end
+                    end,
+                    lists:foldl(LFoldlFun, Data, EOL)
                 end,
                 {StateS, TransS},
                 NotMarkedS
             ),
-            subset_construction(G, NewS, NewM, NewT)
+            subset_construction(NFA, NewS, NewT, NewM)
     end.
 
-get_not_marked(S, Marked) ->
-    Diff = sets:subtract(S, Marked),
-    common_fun:first(sets:to_list(Diff)).
+%%% Convert a list of DFA state in a given DFA graph:
+%%% a set of NFA states equals to a graph vertex
+convert_statel_to_graph(NFA, DFA, FirstDFAState, DFAStateL) ->
+    RetM = #{FirstDFAState => common_fun:add_vertex(DFA)},
+    FoldFun = fun(DFAState, AccM) ->
+        case DFAState =:= FirstDFAState of
+            true ->
+                AccM;
+            false ->
+                DFAVertex = common_fun:add_vertex(DFA),
+                NewM = maps:put(DFAState, DFAVertex, AccM),
+                case is_final_state(NFA, sets:to_list(DFAState)) of
+                    true -> set_as_final(DFA, DFAVertex);
+                    false -> ?UNDEFINED
+                end,
+                NewM
+        end
+    end,
+    sets:fold(FoldFun, RetM, DFAStateL).
 
+%%% Covert a DFA transition list to equivalents graph edges in the DFA graph
+convert_transl_to_graph(DFA, DFAVertexEquivM, DFATransitionsL) ->
+    lists:foreach(
+        fun(DFATransition) ->
+            {V1, V2, L} = DFATransition,
+            digraph:add_edge(DFA, maps:get(V1, DFAVertexEquivM), maps:get(V2, DFAVertexEquivM), L)
+        end,
+        stol(DFATransitionsL)
+    ).
+
+%%% Returns an unmarked state if present, otherwise returns an empty list
+get_not_marked(AllStateS, MarkedStateS) ->
+    DiffS = sets:subtract(AllStateS, MarkedStateS),
+    common_fun:first(stol(DiffS)).
+
+%%% Given a graph G, this function will delete every unreachable vertex, that is
 %%% if the number of incident edges on a vertex is 0, then delete it
 remove_unreachable(G) ->
-    VList = digraph:vertices(G),
+    VertexList = digraph:vertices(G),
     [
         digraph:del_vertex(G, V)
-     || V <- VList,
+     || V <- VertexList,
         V =/= 1,
         digraph:in_degree(G, V) =:= 0
     ].
 
+%%% DFA minimization: given a graph G, this function will remove non-distinguishable states
 remove_nondistinguishable(G) ->
     Table = init_table(G),
     NewT = distingue_final(G, Table),
-    % MinG = digraph:new(),
     M = loop_nondi(G, NewT, 0),
-    maps:foreach(
-        fun(K, V) ->
-            case V of
-                true ->
-                    done;
-                false ->
-                    {V1, V2} = get_both(K),
-                    {VD, VnD} =
-                        case V1 > V2 of
-                            true -> {V1, V2};
-                            false -> {V2, V1}
-                        end,
-                    Ei = digraph:in_edges(G, VD),
-                    lists:foreach(
-                        fun(E) ->
-                            {_, VI, VD, L} = digraph:edge(G, E),
-                            digraph:add_edge(G, VI, VnD, L),
-                            digraph:del_vertex(G, VD)
-                        end,
-                        Ei
-                    )
-            end
-        end,
-        M
-    ).
+    ForEachFun = fun(K, V) ->
+        case V of
+            true ->
+                done;
+            false ->
+                {V1, V2} = get_both(K),
+                {VD, VnD} =
+                    case V1 > V2 of
+                        true -> {V1, V2};
+                        false -> {V2, V1}
+                    end,
+                Ei = digraph:in_edges(G, VD),
+                lists:foreach(
+                    fun(E) ->
+                        case digraph:edge(G, E) of
+                            false ->
+                                ?UNDEFINED;
+                            {E, VI, VD, L} ->
+                                digraph:add_edge(G, VI, VnD, L),
+                                digraph:del_vertex(G, VD)
+                        end
+                    end,
+                    Ei
+                )
+        end
+    end,
+    maps:foreach(ForEachFun, M).
 
 loop_nondi(G, M, Jump) ->
     {OpDone, NewL} = maps:fold(
