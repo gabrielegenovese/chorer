@@ -47,9 +47,11 @@ new_branch(G, V, P, R, S, M) ->
 progress_proc(G, [], _) ->
     G;
 progress_proc(GlobalGraph, BranchList, Turn) when is_list(BranchList) ->
-    io:fwrite("Turn ~p~n", [Turn]),
+    io:fwrite("~nTurn ~p~n", [Turn]),
+    io:fwrite("Branch to eval ~p~n", [length(BranchList)]),
     NewBL = lists:foldl(
         fun(Item, AccL) ->
+            io:fwrite("Eval branch~n"),
             NewBreanches = progress_single_branch(Item),
             AccL ++ NewBreanches
         end,

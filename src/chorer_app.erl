@@ -8,13 +8,13 @@
 %%% API
 %%%===================================================================
 
+%%% Generate the local and global view of an Erlang File source.
 -spec generate_chor_automata(InputFile, OutputDir, EntryPoint) -> atom() when
     InputFile :: string(),
     OutputDir :: string(),
     EntryPoint :: atom().
 generate_chor_automata(InputFile, OutputDir, EntryPoint) ->
     io:format("Entrypoint: ~p~n", [EntryPoint]),
-    %%% Initialize code manager as a key based database
     init_db(),
     %%% Get all the metadata info such as exported functions, spawn done and actors
     metadata:extract(InputFile),
@@ -26,6 +26,7 @@ generate_chor_automata(InputFile, OutputDir, EntryPoint) ->
 %%% Internal Functions
 %%%===================================================================
 
+%%% Initialize code manager as a key based database
 init_db() ->
     Ret = whereis(?DBMANAGER),
     case Ret of

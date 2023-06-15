@@ -17,4 +17,16 @@
     label = 'ɛ'
 }).
 
+-record(local_view, {
+    name,
+    n_args,
+    ast,
+    graph,
+    local_vars,
+    returned_var,
+    nodes,
+    transitions,
+    queue
+}).
+
 %%%----END FILE----

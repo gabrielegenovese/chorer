@@ -20,8 +20,7 @@ minimize(NFA) ->
 %%% Internal Functions
 %%%===================================================================
 
-%%% The Epsilon Closure function: given a state (or a set of state),
-%%% it returns all the states reachable with an ɛ transition.
+%%% Given a list of state, it returns all the states reachable with an ɛ transition.
 eps_clos(Graph, VertexL) when is_list(VertexL) ->
     lists:foldl(
         fun(Vertex, AccS) ->
@@ -32,6 +31,8 @@ eps_clos(Graph, VertexL) when is_list(VertexL) ->
         sets:new(),
         VertexL
     ).
+
+%%% Given a state, it returns all the states reachable with an ɛ transition.
 eps_clos(Graph, Vertex, MarkedEdges) when not is_list(Vertex) ->
     %%% Get outer transitions
     OutTransitions = digraph:out_edges(Graph, Vertex),

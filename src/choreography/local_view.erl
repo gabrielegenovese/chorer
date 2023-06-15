@@ -4,10 +4,13 @@
 %%% API
 -export([generate/1]).
 
+-record(variable, {type = ?UNDEFINED, name = ?UNDEFINED}).
+
 %%%===================================================================
 %%% API
 %%%===================================================================
 
+%%% Generate a local view for each actor
 generate(OutputDir) ->
     ActorList = common_fun:get_actors_from_db(),
     %%% For each actor, create and save the local view
@@ -20,13 +23,14 @@ generate(OutputDir) ->
 %%% Internal Functions
 %%%===================================================================
 
+%%% Create a local view for an actor
 create_localview(ActorName, OutputDir) ->
     ActorAst = common_fun:get_fun_ast_from_db(ActorName),
     case ActorAst of
         no_ast_found ->
-            no_entry_point_found;
+            io:fwrite("Error: Actor ~p's AST not found", [ActorName]);
         _ ->
-            %%% TODO: ultimi parametri da chiedere all'utente
+            %%% TODO: parametri da chiedere all'utente
             {SetFinal, SetInfo} = {true, false},
             Gr = get_graph(ActorName, ActorAst, SetFinal, SetInfo),
             FileName = atom_to_list(ActorName),
@@ -68,33 +72,36 @@ add_args_to_graph(Gr, Vars, Guard, VStart, SetPm) ->
 
 %%% This function returns the last vertex added
 eval_pm_clause(Code, FunName, Gr, VStart, SetPm) ->
-    lists:foldl(
-        fun(Line, VLast) -> eval_codeline(Line, FunName, Gr, VLast, SetPm) end,
-        VStart,
+    {_, V} = lists:foldl(
+        fun(Line, AccData) ->
+            eval_codeline(Line, FunName, Gr, AccData, SetPm)
+        end,
+        {?UNDEFINED, VStart},
         Code
-    ).
+    ),
+    V.
 
 %%% This function evaluate a single line of code and returns the last vertex added to the graph
-eval_codeline(CodeLine, FunName, G, VLast, SetPm) ->
+eval_codeline(CodeLine, FunName, G, {LastRetVar, VLast}, SetPm) ->
     case CodeLine of
         %%% In a match code line (Var = ...), we just evaluate the left
         %%% content because it could be a receive, case, if, etc...
         %%% Future TODO: in the right content there could be a variable,
         %%% so we can save it and its content type (pid, atom, list, etc...) on the dbmanager
         {match, _, _RightContent, LeftContent} ->
-            eval_codeline(LeftContent, FunName, G, VLast, SetPm);
+            eval_codeline(LeftContent, FunName, G, {LastRetVar, VLast}, SetPm);
         %%% If there's a recursive call, just add an epsilon edge to the first state
         {call, _, {atom, _, FunName}, _} ->
             digraph:add_edge(G, VLast, 1, 'ɛ'),
             %%% return the start node TODO: capire se è la mossa giusta da fare
-            1;
+            {?UNDEFINED, 1};
         %%% call of the spawn function
         {call, _, {atom, _, spawn}, [_, {atom, _, Name}, _]} ->
             VNew = common_fun:add_vertex(G),
             % todo: refactor
             SLabel = list_to_atom("spawn " ++ atom_to_list(Name)),
             digraph:add_edge(G, VLast, VNew, SLabel),
-            VNew;
+            {#variable{type = pid}, VNew};
         %%% call of a generic function
         %%% Attention: don't change the position of this pattern matching
         {call, _, {atom, _, Name}, _ArgList} ->
@@ -103,36 +110,36 @@ eval_codeline(CodeLine, FunName, G, VLast, SetPm) ->
             case NewG of
                 %%% If the function called is a built-in or a module function,
                 %%% then we don't have the Ast. Just return the last added vertex
-                no_graph -> VLast;
+                no_graph -> {LastRetVar, VLast};
                 %%% If there's no error, then we have a graph, then we need to
                 %%% add the graph to the main graph
-                _ -> merge_graph(G, NewG, VLast)
+                _ -> {LastRetVar, merge_graph(G, NewG, VLast)}
             end;
         {'case', _, {var, _, Var}, PMList} ->
             BaseLabel = get_base_label(SetPm, atom_to_list(Var) ++ " match "),
-            eval_pm(PMList, G, VLast, FunName, BaseLabel, SetPm);
+            {?UNDEFINED, eval_pm(PMList, G, VLast, FunName, BaseLabel, SetPm)};
         {'case', _, _, PMList} ->
             BaseLabel = get_base_label(SetPm, "match smt"),
-            eval_pm(PMList, G, VLast, FunName, BaseLabel, SetPm);
+            {?UNDEFINED, eval_pm(PMList, G, VLast, FunName, BaseLabel, SetPm)};
         {'if', _, PMList} ->
             BaseLabel = get_base_label(SetPm, "if "),
-            eval_pm(PMList, G, VLast, FunName, BaseLabel, SetPm);
+            {?UNDEFINED, eval_pm(PMList, G, VLast, FunName, BaseLabel, SetPm)};
         {'receive', _, PMList} ->
-            eval_pm(PMList, G, VLast, FunName, "receive ", SetPm);
+            {?UNDEFINED, eval_pm(PMList, G, VLast, FunName, "receive ", SetPm)};
         %%% Future TODO: utile distinguere tra var e atom?
         {op, _, '!', {_, _, VarOrAtomName}, {atom, _, DataSent}} ->
             VNew = common_fun:add_vertex(G),
             SLabel = "send " ++ atom_to_list(DataSent) ++ " to " ++ atom_to_list(VarOrAtomName),
             digraph:add_edge(G, VLast, VNew, list_to_atom(SLabel)),
-            VNew;
+            {?UNDEFINED, VNew};
         {op, _, '!', {_, _, VarOrAtomName}, ComplicatedSend} ->
             VNew = common_fun:add_vertex(G),
             DataSent = get_what_is_sent(ComplicatedSend),
             SLabel = "send " ++ DataSent ++ " to " ++ atom_to_list(VarOrAtomName),
             digraph:add_edge(G, VLast, VNew, list_to_atom(SLabel)),
-            VNew;
+            {?UNDEFINED, VNew};
         _ ->
-            VLast
+            {LastRetVar, VLast}
     end.
 
 get_what_is_sent(_C) ->
