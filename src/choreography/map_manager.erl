@@ -7,9 +7,8 @@
 %%% API
 %%%===================================================================
 
-loop() ->
-    % init empty maps
-    loop(#{}, #{}, #{}).
+%%% init data
+loop() -> loop(#{register_list => []}, #{}, #{}).
 
 %%%===================================================================
 %%% Internal Functions
@@ -48,6 +47,14 @@ loop(CommonMap, FunAstMap, GraphMap) ->
             loop(NewCommon, FunAstMap, GraphMap);
         {P, get_actor_list} ->
             P ! {maps:get(actor_list, CommonMap)},
+            loop(CommonMap, FunAstMap, GraphMap);
+        %%%==========================
+        {add_to_register_list, Item} ->
+            RegList = maps:get(register_list, CommonMap),
+            NewCommon = maps:put(register_list, RegList ++ [Item], CommonMap),
+            loop(NewCommon, FunAstMap, GraphMap);
+        {P, get_register_list} ->
+            P ! {maps:get(register_list, CommonMap)},
             loop(CommonMap, FunAstMap, GraphMap);
         %%%==========================
 
@@ -100,6 +107,13 @@ loop(CommonMap, FunAstMap, GraphMap) ->
             end,
             loop(CommonMap, FunAstMap, GraphMap);
         %%%==========================
+        {P, _} ->
+            io:fwrite("No pattern matching found for process ~p~n", [P]),
+            P ! no_pattern_matching_found,
+            loop(CommonMap, FunAstMap, GraphMap);
+        stop ->
+            done;
         _ ->
-            no_pattern_matching_found
+            io:fwrite("No pattern matching found~n"),
+            loop(CommonMap, FunAstMap, GraphMap)
     end.

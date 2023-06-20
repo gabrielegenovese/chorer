@@ -72,9 +72,9 @@ progress_single_branch(BData, AccL) ->
     TempSendList = maps:fold(
         fun(Name, Pid, AL) -> AL ++ get_possible_send(Name, Pid) end,
         [],
-        BData#branch.proc_pid_m
+        NewBData#branch.proc_pid_m
     ),
-    SendList = remove_already_eval_send(BData, TempSendList),
+    SendList = remove_already_eval_send(NewBData, TempSendList),
     case SendList =:= [] of
         true ->
             case Op1 of
@@ -82,6 +82,7 @@ progress_single_branch(BData, AccL) ->
                 false -> AccL
             end;
         false ->
+            io:fwrite("SendList ~p~n", [SendList]),
             {NL, Modified} = lists:foldl(
                 fun(I, A) ->
                     {L, O} = A,
@@ -108,7 +109,7 @@ remove_already_eval_send(Data, SendL) ->
     lists:filter(
         fun({ProcName, SLabel, _, EInfo}) ->
             lists:foldl(
-                fun({PName, E, Message}, A) ->
+                fun({PName, E, _, Message}, A) ->
                     {Edge, _, _, _} = EInfo,
                     A and (not (ProcName =:= PName) and (SLabel =:= Message) and (Edge =:= E))
                 end,
@@ -150,16 +151,23 @@ eval_proc_until_send(ProcName, ProcPid, AccData) ->
                 Cond = is_lists_edgerecv(ProcPid, EL),
                 case Cond of
                     true ->
-                        lists:foldl(
+                        {DataRet, _} = lists:foldl(
                             fun(E, A) ->
-                                EInfo = get_proc_edge_info(ProcPid, E),
-                                {B, _, C} = A,
-                                {D, O} = eval_edge(EInfo, ProcName, ProcPid, B),
-                                {D, [], C or O}
+                                {DataRecv, MatchFound} = A,
+                                case MatchFound of
+                                    true ->
+                                        A;
+                                    false ->
+                                        {B, _, C} = DataRecv,
+                                        EInfo = get_proc_edge_info(ProcPid, E),
+                                        {D, O, NewMatch} = manage_recv(B, ProcName, ProcPid, EInfo),
+                                        {{D, [], C or O}, NewMatch}
+                                end
                             end,
-                            {Data, [], false},
+                            {{Data, [], false}, false},
                             EL
-                        );
+                        ),
+                        DataRet;
                     false ->
                         {NewL, NOp} = lists:foldl(
                             fun(E, A) ->
@@ -219,7 +227,7 @@ get_possible_send(ProcName, ProcPid) ->
 choose_edge(ProcPid) ->
     EL = get_proc_edges(ProcPid),
     %%% pick an edge
-    E = common_fun:pick_random(EL),
+    E = common_fun:first(EL),
     get_proc_edge_info(ProcPid, E).
 
 eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
@@ -239,7 +247,7 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             NewBData = BData#branch{last_vertex = VNew, proc_pid_m = NewM},
             {NewBData, true};
         is_list(IsReceive) ->
-            manage_recv(SLabel, BData, ProcName, ProcPid, EdgeInfo);
+            manage_recv(BData, ProcName, ProcPid, EdgeInfo);
         true ->
             {BData, false}
     end.
@@ -257,21 +265,28 @@ add_spawn_to_global(SLabel, ProcName, Data) ->
 manage_send(SLabel, Data, ProcName, ProcPid, EdgeInfo) ->
     {Edge, _, _, _} = EdgeInfo,
     DataSent = get_data_from_label(SLabel),
-    PL = find_compatibility(Data#branch.recv_l, DataSent),
+    ProcSent = ltoa(get_proc_from_label(SLabel)),
+    io:fwrite("Send "),
+    PL = find_compatibility(Data#branch.recv_l, ProcSent, DataSent),
     if
         PL =:= [] ->
             ProcPid ! {use_transition, Edge},
-            AlreadyMember = lists:member({ProcName, Edge, DataSent}, Data#branch.send_l),
+            AlreadyMember = lists:member({ProcName, Edge, ProcSent, DataSent}, Data#branch.send_l),
             case AlreadyMember of
                 true ->
                     {Data, false};
                 false ->
-                    {Data#branch{send_l = Data#branch.send_l ++ [{ProcName, Edge, DataSent}]}, true}
+                    {
+                        Data#branch{
+                            send_l = Data#branch.send_l ++ [{ProcName, Edge, ProcSent, DataSent}]
+                        },
+                        true
+                    }
             end;
         PL =/= [] ->
             % pick a receiver
-            Entry = common_fun:pick_random(PL),
-            {ProcNRecv, ProcRecvE, _} = Entry,
+            Entry = common_fun:first(PL),
+            {ProcNRecv, ProcRecvE, _, _} = Entry,
             PPid = maps:get(ProcNRecv, Data#branch.proc_pid_m),
             E2Info = get_proc_edge_info(PPid, ProcRecvE),
             NewL = ltoa(atol(ProcName) ++ "→" ++ atol(ProcNRecv) ++ ":" ++ DataSent),
@@ -288,23 +303,28 @@ manage_send(SLabel, Data, ProcName, ProcPid, EdgeInfo) ->
             }
     end.
 
-manage_recv(SLabel, Data, ProcName, ProcPid, EdgeInfo) ->
-    {Edge, _, _, _} = EdgeInfo,
+manage_recv(Data, ProcName, ProcPid, EdgeInfo) ->
+    {Edge, _, _, PLabel} = EdgeInfo,
+    SLabel = atol(PLabel),
     DataRecv = get_data_from_label(SLabel),
     RecvL = Data#branch.recv_l,
     SendL = Data#branch.send_l,
-    CompatibleRv = find_compatibility(SendL, DataRecv),
+    io:fwrite("Recv "),
+    CompatibleRv = find_compatibility(SendL, ProcName, DataRecv),
     case CompatibleRv =:= [] of
         true ->
-            AlreadyMember = lists:member({ProcName, Edge, DataRecv}, RecvL),
+            AlreadyMember = lists:member({ProcName, Edge, none, DataRecv}, RecvL),
             case AlreadyMember of
-                true -> {Data, false};
-                false -> {Data#branch{recv_l = RecvL ++ [{ProcName, Edge, DataRecv}]}, true}
+                true ->
+                    {Data, false, false};
+                false ->
+                    {Data#branch{recv_l = RecvL ++ [{ProcName, Edge, none, DataRecv}]}, true, false}
             end;
         false ->
             % pick a sender
-            E = common_fun:pick_random(CompatibleRv),
-            {ProcSent, ProcSentE, _} = E,
+            E = common_fun:first(CompatibleRv),
+            io:fwrite("E chose ~p~n", [E]),
+            {ProcSent, ProcSentE, _, _} = E,
             PPid = maps:get(ProcSent, Data#branch.proc_pid_m),
             E2Info = get_proc_edge_info(PPid, ProcSentE),
             NewL = ltoa(atol(ProcSent) ++ "→" ++ atol(ProcName) ++ ":" ++ DataRecv),
@@ -318,6 +338,7 @@ manage_recv(SLabel, Data, ProcName, ProcPid, EdgeInfo) ->
                     send_l = lists:delete(E, SendL),
                     states_m = NewSM
                 },
+                true,
                 true
             }
     end.
@@ -325,14 +346,18 @@ manage_recv(SLabel, Data, ProcName, ProcPid, EdgeInfo) ->
 delete_recv(RecvL, ProcName) ->
     lists:filter(
         fun(El) ->
-            {Name, _, _} = El,
+            {Name, _, _, _} = El,
             ProcName =/= Name
         end,
         RecvL
     ).
 
-find_compatibility(List, Message) ->
-    [{PName, E, Data} || {PName, E, Data} <- List, Data =:= Message].
+find_compatibility(List, Name, Message) ->
+    io:fwrite("Find in ~p for ~p and ~p~n", [List, Name, Message]),
+    [
+        {PName, E, ProcSent, Data}
+     || {PName, E, ProcSent, Data} <- List, ProcSent =:= Name, Data =:= Message
+    ].
 
 decide_vertex(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
     StateM = Data#branch.states_m,
@@ -360,6 +385,7 @@ decide_vertex(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
     end.
 
 get_data_from_label(S) -> lists:nth(2, string:split(S, " ", all)).
+get_proc_from_label(S) -> lists:nth(4, string:split(S, " ", all)).
 
 % stop all the processes
 stop_processes(ProcMap) -> maps:foreach(fun(_K, V) -> V ! stop end, ProcMap).

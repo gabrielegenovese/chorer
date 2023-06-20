@@ -13,7 +13,9 @@
     get_ast_from_db/0,
     get_actors_from_db/0,
     get_fun_ast_from_db/1,
-    get_fun_graph_from_db/1
+    get_fun_graph_from_db/1,
+    add_reg_entry_from_db/1,
+    get_reg_entry_from_db/0
 ]).
 
 %%%===================================================================
@@ -69,6 +71,8 @@ get_exported_fun_from_db() -> get_from_db({self(), get_exported_fun}).
 get_actors_from_db() -> get_from_db({self(), get_actor_list}).
 get_fun_ast_from_db(Key) -> get_from_db({self(), get_fun_ast, Key}).
 get_fun_graph_from_db(Key) -> get_from_db({self(), get_fun_graph, Key}).
+add_reg_entry_from_db(L) -> get_from_db({self(), add_to_register_list, L}).
+get_reg_entry_from_db() -> get_from_db({self(), get_register_list}).
 
 %%%===================================================================
 %%% Internal Functions
