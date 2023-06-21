@@ -23,8 +23,10 @@ generate(OutputDir, EntryPoint) ->
 
 generate_global(EntryPoint, Dir) ->
     Gr = create_globalview(EntryPoint),
-    % MG = fsa:minimize(Gr),
-    common_fun:save_graph_to_file(Gr, Dir, atol(EntryPoint), global).
+    MG = fsa:minimize(Gr),
+    %%% buffo doppio minimize a caso
+    MG1 = fsa:minimize(MG),
+    common_fun:save_graph_to_file(MG1, Dir, atol(EntryPoint), global).
 
 create_globalview(Name) ->
     RetG = digraph:new(),
@@ -69,12 +71,11 @@ progress_single_branch(BData, AccL) ->
         {BData, [], false},
         BData#branch.proc_pid_m
     ),
-    TempSendList = maps:fold(
+    SendList = maps:fold(
         fun(Name, Pid, AL) -> AL ++ get_possible_send(Name, Pid) end,
         [],
         NewBData#branch.proc_pid_m
     ),
-    SendList = remove_already_eval_send(NewBData, TempSendList),
     case SendList =:= [] of
         true ->
             case Op1 of
@@ -85,6 +86,7 @@ progress_single_branch(BData, AccL) ->
             io:fwrite("SendList ~p~n", [SendList]),
             {NL, Modified} = lists:foldl(
                 fun(I, A) ->
+                    io:fwrite("Eval ~p~n", [I]),
                     {L, O} = A,
                     {PName, SLabel, E} = I,
                     {ND, Op} = manage_send(SLabel, dup_branch(NewBData), PName, E),
@@ -103,22 +105,6 @@ progress_single_branch(BData, AccL) ->
                     progress_single_branch(H, AccL ++ NBL ++ T)
             end
     end.
-
-remove_already_eval_send(Data, SendL) ->
-    DSendL = Data#branch.send_l,
-    lists:filter(
-        fun({ProcName, SLabel, EInfo}) ->
-            lists:foldl(
-                fun({PName, E, _, Message}, A) ->
-                    {Edge, _, _, _} = EInfo,
-                    A and (not (ProcName =:= PName) and (SLabel =:= Message) and (Edge =:= E))
-                end,
-                true,
-                DSendL
-            )
-        end,
-        SendL
-    ).
 
 dup_branch(Data) ->
     Data#branch{proc_pid_m = duplicate_proccess(Data#branch.proc_pid_m)}.
@@ -168,6 +154,7 @@ eval_proc_until_send(ProcName, ProcPid, AccData) ->
                             EL
                         ),
                         DataRet;
+                    %%% TODO da testare, non ci entra mai il programma qua
                     false ->
                         {NewL, NOp} = lists:foldl(
                             fun(E, A) ->
@@ -305,12 +292,16 @@ manage_recv(Data, ProcName, ProcPid, EdgeInfo) ->
     CompatibleRv = find_compatibility(SendL, ProcName, DataRecv),
     case CompatibleRv =:= [] of
         true ->
-            AlreadyMember = lists:member({ProcName, Edge, none, DataRecv}, RecvL),
+            AlreadyMember = lists:member({ProcName, Edge, ProcName, DataRecv}, RecvL),
             case AlreadyMember of
                 true ->
                     {Data, false, false};
                 false ->
-                    {Data#branch{recv_l = RecvL ++ [{ProcName, Edge, none, DataRecv}]}, true, false}
+                    {
+                        Data#branch{recv_l = RecvL ++ [{ProcName, Edge, ProcName, DataRecv}]},
+                        true,
+                        false
+                    }
             end;
         false ->
             % pick a sender
@@ -363,23 +354,36 @@ decide_vertex(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
             Vsecond = maps:get({{Proc2, PV2}, {Proc1, V2}}, StateM, ?UNDEFINED),
             case Vsecond of
                 ?UNDEFINED ->
-                    VAdded = common_fun:add_vertex(G),
-                    digraph:add_edge(G, VLast, VAdded, Label),
-                    NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
-                    io:fwrite("Created new node from ~p to ~p with label ~p~n", [
-                        VLast, VAdded, Label
-                    ]),
-                    {VAdded, NewM};
+                    EL = digraph:out_edges(G, VLast),
+                    {AlreadyExist, VCase} = lists:foldl(
+                        fun(E, A) ->
+                            {E, VLast, VTo, VLabel} = digraph:edge(G, E),
+                            case VLabel =:= Label of
+                                true -> {true, VTo};
+                                false -> A
+                            end
+                        end,
+                        {false, VLast},
+                        EL
+                    ),
+                    case AlreadyExist of
+                        true ->
+                            {VCase, StateM};
+                        false ->
+                            VAdded = common_fun:add_vertex(G),
+                            digraph:add_edge(G, VLast, VAdded, Label),
+                            NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
+                            % io:fwrite("Created new node from ~p to ~p with label ~p~n", [VLast, VAdded, Label]),
+                            {VAdded, NewM}
+                    end;
                 _ ->
                     digraph:add_edge(G, VLast, Vsecond, Label),
-                    io:fwrite("Created new edge from ~p to ~p with label ~p~n", [
-                        VLast, Vsecond, Label
-                    ]),
+                    % io:fwrite("Created new edge from ~p to ~p with label ~p~n", [VLast, Vsecond, Label]),
                     {Vsecond, StateM}
             end;
         _ ->
             digraph:add_edge(G, VLast, Vfirst, Label),
-            io:fwrite("Created new edge from ~p to ~p with label ~p~n", [VLast, Vfirst, Label]),
+            % io:fwrite("Created new edge from ~p to ~p with label ~p~n", [VLast, Vfirst, Label]),
             {Vfirst, StateM}
     end.
 
