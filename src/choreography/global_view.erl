@@ -86,8 +86,8 @@ progress_single_branch(BData, AccL) ->
             {NL, Modified} = lists:foldl(
                 fun(I, A) ->
                     {L, O} = A,
-                    {PName, SLabel, PPid, E} = I,
-                    {ND, Op} = manage_send(SLabel, dup_branch(NewBData), PName, PPid, E),
+                    {PName, SLabel, E} = I,
+                    {ND, Op} = manage_send(SLabel, dup_branch(NewBData), PName, E),
                     {L ++ [ND], O or Op}
                 end,
                 {[], false},
@@ -107,7 +107,7 @@ progress_single_branch(BData, AccL) ->
 remove_already_eval_send(Data, SendL) ->
     DSendL = Data#branch.send_l,
     lists:filter(
-        fun({ProcName, SLabel, _, EInfo}) ->
+        fun({ProcName, SLabel, EInfo}) ->
             lists:foldl(
                 fun({PName, E, _, Message}, A) ->
                     {Edge, _, _, _} = EInfo,
@@ -207,6 +207,7 @@ get_possible_send(ProcName, ProcPid) ->
             [];
         true ->
             EL = get_proc_edges(ProcPid),
+            io:fwrite("EdgeList ~p for ~p~n", [EL, ProcName]),
             lists:foldl(
                 fun(E, A) ->
                     EInfo = get_proc_edge_info(ProcPid, E),
@@ -215,7 +216,7 @@ get_possible_send(ProcName, ProcPid) ->
                     IsSend = string:find(SLabel, "send"),
                     A ++
                         case is_list(IsSend) of
-                            true -> [{ProcName, SLabel, ProcPid, EInfo}];
+                            true -> [{ProcName, SLabel, EInfo}];
                             false -> []
                         end
                 end,
@@ -262,26 +263,24 @@ add_spawn_to_global(SLabel, ProcName, Data) ->
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewProcName, NewProcPid, NewMap}.
 
-manage_send(SLabel, Data, ProcName, ProcPid, EdgeInfo) ->
+manage_send(SLabel, Data, ProcName, EdgeInfo) ->
     {Edge, _, _, _} = EdgeInfo,
+    ProcPid = maps:get(ProcName, Data#branch.proc_pid_m),
+    ProcPid ! {use_transition, Edge},
     DataSent = get_data_from_label(SLabel),
     ProcSent = ltoa(get_proc_from_label(SLabel)),
+    SendL = Data#branch.send_l,
+    RecvL = Data#branch.recv_l,
     io:fwrite("Send "),
-    PL = find_compatibility(Data#branch.recv_l, ProcSent, DataSent),
+    PL = find_compatibility(RecvL, ProcSent, DataSent),
     if
         PL =:= [] ->
-            ProcPid ! {use_transition, Edge},
-            AlreadyMember = lists:member({ProcName, Edge, ProcSent, DataSent}, Data#branch.send_l),
+            AlreadyMember = lists:member({ProcName, Edge, ProcSent, DataSent}, SendL),
             case AlreadyMember of
                 true ->
                     {Data, false};
                 false ->
-                    {
-                        Data#branch{
-                            send_l = Data#branch.send_l ++ [{ProcName, Edge, ProcSent, DataSent}]
-                        },
-                        true
-                    }
+                    {Data#branch{send_l = SendL ++ [{ProcName, Edge, ProcSent, DataSent}]}, true}
             end;
         PL =/= [] ->
             % pick a receiver
@@ -292,15 +291,8 @@ manage_send(SLabel, Data, ProcName, ProcPid, EdgeInfo) ->
             NewL = ltoa(atol(ProcName) ++ "→" ++ atol(ProcNRecv) ++ ":" ++ DataSent),
             {VNA, NewSMap} = decide_vertex(ProcName, EdgeInfo, ProcNRecv, E2Info, Data, NewL),
             PPid ! {use_transition, ProcRecvE},
-            ProcPid ! {use_transition, Edge},
-            {
-                Data#branch{
-                    last_vertex = VNA,
-                    recv_l = lists:delete(Entry, Data#branch.recv_l),
-                    states_m = NewSMap
-                },
-                true
-            }
+            NewRecvL = delete_recv(lists:delete(Entry, RecvL), ProcNRecv),
+            {Data#branch{last_vertex = VNA, recv_l = NewRecvL, states_m = NewSMap}, true}
     end.
 
 manage_recv(Data, ProcName, ProcPid, EdgeInfo) ->
@@ -374,13 +366,20 @@ decide_vertex(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
                     VAdded = common_fun:add_vertex(G),
                     digraph:add_edge(G, VLast, VAdded, Label),
                     NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
+                    io:fwrite("Created new node from ~p to ~p with label ~p~n", [
+                        VLast, VAdded, Label
+                    ]),
                     {VAdded, NewM};
                 _ ->
                     digraph:add_edge(G, VLast, Vsecond, Label),
+                    io:fwrite("Created new edge from ~p to ~p with label ~p~n", [
+                        VLast, Vsecond, Label
+                    ]),
                     {Vsecond, StateM}
             end;
         _ ->
             digraph:add_edge(G, VLast, Vfirst, Label),
+            io:fwrite("Created new edge from ~p to ~p with label ~p~n", [VLast, Vfirst, Label]),
             {Vfirst, StateM}
     end.
 
@@ -424,7 +423,7 @@ proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE) ->
             end;
         {P, get_edges} ->
             EL = digraph:out_edges(G, VCurrent),
-            ERet = [E || E <- EL, not lists:member(E, SecondMarkedE)],
+            ERet = filter_marked_edges(EL, SecondMarkedE),
             P ! {ERet},
             proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE);
         {P, get_out_degree} ->
@@ -441,3 +440,5 @@ proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE) ->
         stop ->
             ok
     end.
+
+filter_marked_edges(EdgeL, MarkedE) -> [E || E <- EdgeL, not lists:member(E, MarkedE)].
