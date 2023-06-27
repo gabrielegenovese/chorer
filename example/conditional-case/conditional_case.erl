@@ -19,16 +19,11 @@ main() ->
         end,
 
     case P of
-        A ->
-            A ! "Ciao A";
-        B ->
-            B ! "Ciao B";
-        C ->
-            C ! "Ciao C";
-        D ->
-            D ! "Ciao D";
-        true ->
-            io:fwrite("Boh~n")
+        A -> A ! "Ciao A";
+        B -> B ! "Ciao B";
+        C -> C ! "Ciao C";
+        D -> D ! "Ciao D";
+        true -> io:fwrite("Boh~n")
     end,
 
     receive

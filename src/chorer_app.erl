@@ -17,7 +17,7 @@ generate_chor_automata(InputFile, OutputDir, EntryPoint) ->
     io:format("Entrypoint: ~p~n", [EntryPoint]),
     init_db(),
     %%% Get all the metadata info such as exported functions, spawn done and actors
-    metadata:extract(InputFile),
+    metadata:extract(InputFile, EntryPoint),
     %%% Generate local and global view and save them int the output directory
     local_view:generate(OutputDir),
     global_view:generate(OutputDir, EntryPoint).
@@ -32,9 +32,9 @@ init_db() ->
     case Ret of
         % if the pid of the dbmenager is not defined, initialize it
         'undefined' ->
-            DBMPid = spawn(map_manager, loop, []),
-            register(?DBMANAGER, DBMPid);
+            DBManagerPid = spawn(db_manager, loop, []),
+            register(?DBMANAGER, DBManagerPid);
         % otherwise do nothing, because is already defined
-        _ ->
-            ?UNDEFINED
+        _Pid ->
+            already_exist
     end.

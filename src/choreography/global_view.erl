@@ -11,7 +11,7 @@
 %%%===================================================================
 
 generate(OutputDir, EntryPoint) ->
-    MainGraph = common_fun:get_fun_graph_from_db(EntryPoint),
+    MainGraph = db_manager:get_fun_graph(EntryPoint),
     case MainGraph of
         no_graph_found -> no_entry_point_found;
         _ -> generate_global(EntryPoint, OutputDir)
@@ -23,10 +23,10 @@ generate(OutputDir, EntryPoint) ->
 
 generate_global(EntryPoint, Dir) ->
     Gr = create_globalview(EntryPoint),
-    MG = fsa:minimize(Gr),
-    %%% buffo doppio minimize a caso
-    MG1 = fsa:minimize(MG),
-    common_fun:save_graph_to_file(MG1, Dir, atol(EntryPoint), global).
+    % MG = fsa:minimize(Gr),
+    %%% buffo doppio minimize perche' uno solo non funziona
+    % MG1 = fsa:minimize(MG),
+    common_fun:save_graph_to_file(Gr, Dir, atol(EntryPoint), global).
 
 create_globalview(Name) ->
     RetG = digraph:new(),
@@ -34,7 +34,7 @@ create_globalview(Name) ->
     MainProcPid = spawn(?MODULE, proc_loop, [Name, 1]),
     ProcPidMap = #{Name => MainProcPid},
     %%% initialize data structures
-    progress_proc(RetG, [new_branch(RetG, VNew, ProcPidMap, [], [], #{})], 0).
+    progress_proc(RetG, [new_branch(RetG, VNew, ProcPidMap, [], [], #{})]).
 
 new_branch(G, V, P, R, S, M) ->
     #branch{
@@ -46,21 +46,20 @@ new_branch(G, V, P, R, S, M) ->
         states_m = M
     }.
 
-progress_proc(G, [], _) ->
+progress_proc(G, []) ->
     G;
-progress_proc(GlobalGraph, BranchList, Turn) when is_list(BranchList) ->
-    io:fwrite("~nTurn ~p~n", [Turn]),
+progress_proc(GlobalGraph, BranchList) when is_list(BranchList) ->
     io:fwrite("Branch to eval ~p~n", [length(BranchList)]),
     NewBL = lists:foldl(
         fun(Item, AccL) ->
-            io:fwrite("Eval branch~n"),
+            % io:fwrite("Eval branch~n"),
             NewBreanches = progress_single_branch(Item),
             AccL ++ NewBreanches
         end,
         [],
         BranchList
     ),
-    progress_proc(GlobalGraph, NewBL, Turn + 1).
+    progress_proc(GlobalGraph, NewBL).
 
 progress_single_branch(BData) ->
     progress_single_branch(BData, []).
@@ -83,10 +82,10 @@ progress_single_branch(BData, AccL) ->
                 false -> AccL
             end;
         false ->
-            io:fwrite("SendList ~p~n", [SendList]),
+            % io:fwrite("SendList ~p~n", [SendList]),
             {NL, Modified} = lists:foldl(
                 fun(I, A) ->
-                    io:fwrite("Eval ~p~n", [I]),
+                    % io:fwrite("Eval ~p~n", [I]),
                     {L, O} = A,
                     {PName, SLabel, E} = I,
                     {ND, Op} = manage_send(SLabel, dup_branch(NewBData), PName, E),
@@ -101,7 +100,7 @@ progress_single_branch(BData, AccL) ->
                     AccL;
                 false ->
                     [H | T] = NL,
-                    io:fwrite("~n"),
+                    % io:fwrite("~n"),
                     progress_single_branch(H, AccL ++ NBL ++ T)
             end
     end.
@@ -112,7 +111,12 @@ dup_branch(Data) ->
 duplicate_proccess(ProcMap) ->
     maps:fold(
         fun(K, V, A) ->
-            NewPid = spawn(?MODULE, proc_loop, [K, 1]),
+            {Name, N} = remove_last(atol(K)),
+            NewPid =
+                case catch list_to_integer(N) of
+                    {'EXIT', _} -> spawn(?MODULE, proc_loop, [K, 1]);
+                    _ -> spawn(?MODULE, proc_loop, [ltoa(Name), 1])
+                end,
             set_proc_data(NewPid, get_proc_data(V)),
             maps:put(K, NewPid, A)
         end,
@@ -194,7 +198,7 @@ get_possible_send(ProcName, ProcPid) ->
             [];
         true ->
             EL = get_proc_edges(ProcPid),
-            io:fwrite("EdgeList ~p for ~p~n", [EL, ProcName]),
+            % io:fwrite("EdgeList ~p for ~p~n", [EL, ProcName]),
             lists:foldl(
                 fun(E, A) ->
                     EInfo = get_proc_edge_info(ProcPid, E),
@@ -220,7 +224,7 @@ choose_edge(ProcPid) ->
 
 eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     {Edge, _, _, PLabel} = EdgeInfo,
-    io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
+    % io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
     SLabel = atol(PLabel),
     IsArg = string:find(SLabel, "arg"),
     IsSpawn = string:find(SLabel, "spawn"),
@@ -230,25 +234,31 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             ProcPid ! {use_transition, Edge},
             {BData, true};
         is_list(IsSpawn) ->
-            {VNew, _NewProcName, _NewProcPid, NewM} = add_spawn_to_global(SLabel, ProcName, BData),
+            {VNew, NewM} = add_spawn_to_global(SLabel, ProcName, BData),
             ProcPid ! {use_transition, Edge},
             NewBData = BData#branch{last_vertex = VNew, proc_pid_m = NewM},
             {NewBData, true};
+        %% todo: capire se utile
         is_list(IsReceive) ->
-            manage_recv(BData, ProcName, ProcPid, EdgeInfo);
+            %manage_recv(BData, ProcName, ProcPid, EdgeInfo);
+            % io:fwrite("~nRecv da eval~n"),
+            {BData, false};
         true ->
             {BData, false}
     end.
 
 add_spawn_to_global(SLabel, ProcName, Data) ->
-    NewProcName = string:prefix(SLabel, "spawn "),
-    NewProcPid = spawn(?MODULE, proc_loop, [ltoa(NewProcName), 1]),
-    NewMap = maps:put(ltoa(NewProcName), NewProcPid, Data#branch.proc_pid_m),
+    CompleteProcNameString = string:prefix(SLabel, "spawn "),
+    {FuncName, _ProcNumber} = remove_last(CompleteProcNameString),
+    FuncPid = spawn(?MODULE, proc_loop, [ltoa(FuncName), 1]),
+    NewMap = maps:put(ltoa(CompleteProcNameString), FuncPid, Data#branch.proc_pid_m),
     VNew = common_fun:add_vertex(Data#branch.graph),
     %%% Δ means spawned
-    NewLabel = ltoa(atol(ProcName) ++ "Δ" ++ NewProcName),
+    NewLabel = ltoa(atol(ProcName) ++ "Δ" ++ CompleteProcNameString),
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
-    {VNew, NewProcName, NewProcPid, NewMap}.
+    {VNew, NewMap}.
+
+remove_last(A) -> lists:split(length(A) - 1, A).
 
 manage_send(SLabel, Data, ProcName, EdgeInfo) ->
     {Edge, _, _, _} = EdgeInfo,
@@ -258,16 +268,15 @@ manage_send(SLabel, Data, ProcName, EdgeInfo) ->
     ProcSent = ltoa(get_proc_from_label(SLabel)),
     SendL = Data#branch.send_l,
     RecvL = Data#branch.recv_l,
-    io:fwrite("Send "),
+    % io:fwrite("Send "),
     PL = find_compatibility(RecvL, ProcSent, DataSent),
     if
         PL =:= [] ->
             AlreadyMember = lists:member({ProcName, Edge, ProcSent, DataSent}, SendL),
+            NewSL = SendL ++ [{ProcName, Edge, ProcSent, DataSent}],
             case AlreadyMember of
-                true ->
-                    {Data, false};
-                false ->
-                    {Data#branch{send_l = SendL ++ [{ProcName, Edge, ProcSent, DataSent}]}, true}
+                true -> {Data, false};
+                false -> {Data#branch{send_l = NewSL}, true}
             end;
         PL =/= [] ->
             % pick a receiver
@@ -288,25 +297,20 @@ manage_recv(Data, ProcName, ProcPid, EdgeInfo) ->
     DataRecv = get_data_from_label(SLabel),
     RecvL = Data#branch.recv_l,
     SendL = Data#branch.send_l,
-    io:fwrite("Recv "),
+    % io:fwrite("Recv "),
     CompatibleRv = find_compatibility(SendL, ProcName, DataRecv),
     case CompatibleRv =:= [] of
         true ->
             AlreadyMember = lists:member({ProcName, Edge, ProcName, DataRecv}, RecvL),
+            NewRL = RecvL ++ [{ProcName, Edge, ProcName, DataRecv}],
             case AlreadyMember of
-                true ->
-                    {Data, false, false};
-                false ->
-                    {
-                        Data#branch{recv_l = RecvL ++ [{ProcName, Edge, ProcName, DataRecv}]},
-                        true,
-                        false
-                    }
+                true -> {Data, false, false};
+                false -> {Data#branch{recv_l = NewRL}, true, false}
             end;
         false ->
             % pick a sender
             E = common_fun:first(CompatibleRv),
-            io:fwrite("E chose ~p~n", [E]),
+            % io:fwrite("E chose ~p~n", [E]),
             {ProcSent, ProcSentE, _, _} = E,
             PPid = maps:get(ProcSent, Data#branch.proc_pid_m),
             E2Info = get_proc_edge_info(PPid, ProcSentE),
@@ -339,8 +343,13 @@ find_compatibility(List, Name, Message) ->
     io:fwrite("Find in ~p for ~p and ~p~n", [List, Name, Message]),
     [
         {PName, E, ProcSent, Data}
-     || {PName, E, ProcSent, Data} <- List, ProcSent =:= Name, Data =:= Message
+     || {PName, E, ProcSent, Data} <- List,
+        is_message_compatible(ProcSent, Name),
+        is_proc_compatible(Data, Message)
     ].
+
+is_message_compatible(ProcSent, Name) -> ProcSent =:= Name.
+is_proc_compatible(Data, Message) -> Data =:= Message.
 
 decide_vertex(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
     StateM = Data#branch.states_m,
@@ -373,22 +382,19 @@ decide_vertex(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
                             VAdded = common_fun:add_vertex(G),
                             digraph:add_edge(G, VLast, VAdded, Label),
                             NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
-                            % io:fwrite("Created new node from ~p to ~p with label ~p~n", [VLast, VAdded, Label]),
                             {VAdded, NewM}
                     end;
                 _ ->
                     digraph:add_edge(G, VLast, Vsecond, Label),
-                    % io:fwrite("Created new edge from ~p to ~p with label ~p~n", [VLast, Vsecond, Label]),
                     {Vsecond, StateM}
             end;
         _ ->
             digraph:add_edge(G, VLast, Vfirst, Label),
-            % io:fwrite("Created new edge from ~p to ~p with label ~p~n", [VLast, Vfirst, Label]),
             {Vfirst, StateM}
     end.
 
 get_data_from_label(S) -> lists:nth(2, string:split(S, " ", all)).
-get_proc_from_label(S) -> lists:nth(4, string:split(S, " ", all)).
+get_proc_from_label(S) -> lists:reverse(lists:nth(1, string:split(lists:reverse(S), " ", all))).
 
 % stop all the processes
 stop_processes(ProcMap) -> maps:foreach(fun(_K, V) -> V ! stop end, ProcMap).
@@ -411,7 +417,7 @@ send_recv(P, Data) ->
 proc_loop(ProcName, VCurrent) ->
     proc_loop(ProcName, VCurrent, [], []).
 proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE) ->
-    G = common_fun:get_fun_graph_from_db(ProcName),
+    G = db_manager:get_fun_graph(ProcName),
     % timer:sleep(200),
     receive
         {use_transition, E} ->
@@ -422,7 +428,7 @@ proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE) ->
                 {E, VCurrent, VNew, _} ->
                     proc_loop(ProcName, VNew, FirstMarkedE ++ [E], SecondMarkedE);
                 _ ->
-                    io:fwrite("V ~p edge ~p non trovato in ~p~n", [VCurrent, E, ProcName]),
+                    % io:fwrite("V ~p edge ~p non trovato in ~p~n", [VCurrent, E, ProcName]),
                     proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE)
             end;
         {P, get_edges} ->

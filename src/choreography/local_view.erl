@@ -12,7 +12,7 @@
 
 %%% Generate a local view for each actor
 generate(OutputDir) ->
-    ActorList = common_fun:get_actors_from_db(),
+    ActorList = db_manager:get_actors(),
     %%% For each actor, create and save the local view
     lists:foreach(
         fun(Actor) -> create_localview(Actor, OutputDir) end,
@@ -25,10 +25,10 @@ generate(OutputDir) ->
 
 %%% Create a local view for an actor
 create_localview(ActorName, OutputDir) ->
-    ActorAst = common_fun:get_fun_ast_from_db(ActorName),
+    ActorAst = db_manager:get_fun_ast(ActorName),
     case ActorAst of
         no_ast_found ->
-            io:fwrite("Error: Actor ~p's AST not found", [ActorName]);
+            io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]);
         _ ->
             %%% TODO: parametri da chiedere all'utente
             {SetFinalState, SetAdditionalInfo} = {true, false},
@@ -36,7 +36,7 @@ create_localview(ActorName, OutputDir) ->
             FileNameStr = atol(ActorName),
             %%% Send the graph to the dbmanager
             MinGraph = fsa:minimize(Graph),
-            ?DBMANAGER ! {set_fun_graph, ActorName, MinGraph},
+            db_manager:send_fun_graph(ActorName, MinGraph),
             common_fun:save_graph_to_file(MinGraph, OutputDir, FileNameStr, local)
     end.
 
@@ -49,7 +49,7 @@ get_graph(FunName, Code, SetFinal, SetPm) when is_list(Code) ->
                 {clause, _, Vars, Guard, Content} ->
                     %%% Show the pattern matching options to view the complete local view
                     VN = add_args_to_graph(Gr, Vars, Guard, VStart, SetPm),
-                    VFinal = eval_pm_clause(Content, FunName, Gr, VN, SetPm),
+                    VFinal = eval_pm_clause(Content, FunName, Gr, VN, [], SetPm),
                     set_as_final(SetFinal, Gr, VFinal);
                 _ ->
                     ?UNDEFINED
@@ -71,10 +71,10 @@ add_args_to_graph(Gr, Vars, Guard, VStart, SetPm) ->
     end.
 
 %%% This function returns the last vertex added
-eval_pm_clause(Code, FunName, Gr, VStart, SetPm) ->
+eval_pm_clause(Code, FunName, Gr, VStart, LocalVarS, SetPm) ->
     {_, V, _} = lists:foldl(
         fun(Line, AccData) -> eval_codeline(Line, FunName, Gr, AccData, SetPm) end,
-        {#variable{}, VStart, []},
+        {#variable{}, VStart, LocalVarS},
         Code
     ),
     V.
@@ -97,18 +97,24 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
             %%% return the start node TODO: capire se è la mossa giusta da fare
             {#variable{}, 1, LocalVarL};
         %%% Evaluate the spawn function
-        {call, _, {atom, _, spawn}, [_, {atom, _, Name}, _ArgList]} ->
+        {call, _, {atom, _, spawn}, [_, {atom, _, Name}, ArgList]} ->
             VNew = common_fun:add_vertex(G),
-            % todo: refactor
-            SLabel = ltoa("spawn " ++ atol(Name)),
+            C = db_manager:inc_spawn_counter(Name),
+            S = atol(Name) ++ integer_to_list(C),
+            SLabel = ltoa("spawn " ++ S),
             digraph:add_edge(G, VLast, VNew, SLabel),
-            {#variable{type = pid}, VNew, LocalVarL};
+            {VarArgL, _, _} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
+            db_manager:add_fun_arg(S, VarArgL#variable.value),
+            {#variable{type = ltoa("pid_" ++ S)}, VNew, LocalVarL};
         %%% Evaluate the register function
+        {call, _, {atom, _, self}, _} ->
+            {#variable{type = ltoa("pid_self")}, VLast, LocalVarL};
         {call, _, {atom, _, register}, [{atom, _, AtomV}, {var, _, VarV}]} ->
             manage_register(LocalVarL, AtomV, VarV),
             AccData;
         %%% Evaluate a generic function
         %%% Attention: don't change the position of this pattern matching branch
+        %%% TODO: implement argument list evaluation feature
         {call, _, {atom, _, Name}, _ArgList} ->
             % TODO capire bene cosa succede e perché funziona (caso più unico che raro)
             NewG = eval_func(Name, SetPm),
@@ -120,27 +126,72 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
                 %%% add the graph to the main graph
                 _ -> {LastRetVar, merge_graph(G, NewG, VLast), LocalVarL}
             end;
+        {call, _, {remote, _, {atom, _, rand}, {atom, _, uniform}}, _ArgList} ->
+            {#variable{type = integer}, VLast, LocalVarL};
+        {call, _, {remote, _, {atom, _, _Package}, {atom, _, _Name}}, _ArgList} ->
+            AccData;
         %%% Evaluate Case and If
         {'case', _, {var, _, Var}, PMList} ->
             BaseLabel = get_base_label(SetPm, atol(Var) ++ " match "),
-            {#variable{}, eval_pm(PMList, G, VLast, FunName, BaseLabel, SetPm), LocalVarL};
+            {
+                #variable{},
+                eval_pm(PMList, G, VLast, LocalVarL, FunName, BaseLabel, SetPm),
+                LocalVarL
+            };
         {'case', _, _, PMList} ->
             BaseLabel = get_base_label(SetPm, "match smt"),
-            {#variable{}, eval_pm(PMList, G, VLast, FunName, BaseLabel, SetPm), LocalVarL};
+            {
+                #variable{},
+                eval_pm(PMList, G, VLast, LocalVarL, FunName, BaseLabel, SetPm),
+                LocalVarL
+            };
         {'if', _, PMList} ->
             BaseLabel = get_base_label(SetPm, "if "),
-            {#variable{}, eval_pm(PMList, G, VLast, FunName, BaseLabel, SetPm), LocalVarL};
+            {
+                #variable{},
+                eval_pm(PMList, G, VLast, LocalVarL, FunName, BaseLabel, SetPm),
+                LocalVarL
+            };
         %%% Evaluate Receive
         {'receive', _, PMList} ->
-            {#variable{}, eval_pm(PMList, G, VLast, FunName, "receive ", SetPm), LocalVarL};
+            {
+                #variable{},
+                eval_pm(PMList, G, VLast, LocalVarL, FunName, "receive ", SetPm),
+                LocalVarL
+            };
         %%% Evaluate Send
-        {op, _, '!', {_, _, VarOrAtomName}, DataSentAst} ->
+        {op, _, '!', {var, _, VarName}, DataSentAst} ->
             {Var, _, NewL} = eval_codeline(DataSentAst, FunName, G, AccData, SetPm),
             VNew = common_fun:add_vertex(G),
             DataSent = convert_var_to_string(Var),
-            SLabel = "send " ++ DataSent ++ " to " ++ atol(VarOrAtomName),
+            ArgL =
+                case db_manager:get_fun_args(FunName) of
+                    no_fun_args_found -> [];
+                    L -> L
+                end,
+            VarFound = find_proc_in_varl(VarName, LocalVarL ++ ArgL),
+            io:fwrite("Var Name ~p~n", [VarFound]),
+            SLabel =
+                "send " ++ DataSent ++ " to " ++
+                    case VarFound of
+                        nomatch -> atol(VarName);
+                        V -> atol(V)
+                    end,
             digraph:add_edge(G, VLast, VNew, ltoa(SLabel)),
             {#variable{type = atom, value = DataSent}, VNew, NewL};
+        {op, _, '!', {atom, _, AtomName}, DataSentAst} ->
+            {Var, _, NewL} = eval_codeline(DataSentAst, FunName, G, AccData, SetPm),
+            VNew = common_fun:add_vertex(G),
+            DataSent = convert_var_to_string(Var),
+            SLabel = "send " ++ DataSent ++ " to " ++ atol(AtomName) ++ "0",
+            digraph:add_edge(G, VLast, VNew, ltoa(SLabel)),
+            {#variable{type = atom, value = DataSent}, VNew, NewL};
+        %% List
+        {cons, _, HeadList, TailList} ->
+            {Var, _, _} = eval_codeline(HeadList, FunName, G, AccData, SetPm),
+            {VarList, _, _} = eval_codeline(TailList, FunName, G, AccData, SetPm),
+            NewVal = [Var] ++ VarList#variable.value,
+            {VarList#variable{value = NewVal}, VLast, LocalVarL};
         %%% Evaluate Types
         {integer, _, Val} ->
             {#variable{type = integer, value = Val}, VLast, LocalVarL};
@@ -150,8 +201,32 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
             {#variable{type = string, value = Val}, VLast, LocalVarL};
         {atom, _, Val} ->
             {#variable{type = atom, value = Val}, VLast, LocalVarL};
+        {tuple, _, TupleVal} ->
+            L = lists:foldl(
+                fun(I, A) ->
+                    {V, _, _} = eval_codeline(I, FunName, G, AccData, SetPm),
+                    A ++ [V]
+                end,
+                [],
+                TupleVal
+            ),
+            {#variable{type = tuple, value = L}, VLast, LocalVarL};
+        {nil, _} ->
+            {#variable{type = list, value = []}, VLast, LocalVarL};
         _ ->
             AccData
+    end.
+
+find_proc_in_varl(_, []) ->
+    nomatch;
+find_proc_in_varl(Name, [H | T]) ->
+    {var, _, VarN} = H#variable.name,
+    if
+        Name =:= VarN ->
+            S = atol(H#variable.type),
+            string:prefix(S, "pid_");
+        true ->
+            find_proc_in_varl(Name, T)
     end.
 
 convert_var_to_string(Var) ->
@@ -159,18 +234,27 @@ convert_var_to_string(Var) ->
         ?UNDEFINED ->
             "something";
         Type ->
+            SType = atol(Type),
             case Var#variable.value of
                 ?UNDEFINED ->
-                    "some " ++ atol(Type);
+                    SType;
                 Val ->
-                    case Type of
-                        integer -> integer_to_list(Val);
-                        float -> io_lib:format("~.2f", [Val]);
-                        string -> Val;
-                        atom -> atol(Val)
+                    case SType of
+                        "integer" -> integer_to_list(Val);
+                        "float" -> io_lib:format("~.2f", [Val]);
+                        "string" -> "[" ++ Val ++ "]";
+                        "atom" -> atol(Val);
+                        "tuple" -> format_tuple_vars(Var#variable.value);
+                        "pid" -> "pid";
+                        _ -> SType
                     end
             end
     end.
+
+format_tuple_vars(VarL) ->
+    L = lists:foldl(fun(I, A) -> A ++ "," ++ convert_var_to_string(I) end, "", VarL),
+    [_ | Label] = L,
+    "{" ++ Label ++ "}".
 
 get_base_label(SetPm, Label) ->
     case SetPm of
@@ -237,47 +321,39 @@ merge_graph(MainG, GToAdd, VLast) ->
 %%% This function returns an FSA graph of the function if the ast exist,
 %%% otherwise return error.
 eval_func(FuncName, SetPm) ->
-    FunAst = common_fun:get_fun_ast_from_db(FuncName),
+    FunAst = db_manager:get_fun_ast(FuncName),
     case FunAst of
         no_ast_found -> no_graph;
         %%% get the graph but don't set the final state
         _ -> get_graph(FuncName, FunAst, false, SetPm)
     end.
 
-eval_pm(PMList, G, VLast, FunName, Label, SetPm) ->
-    VLastList = explore_pm(PMList, G, VLast, FunName, Label, SetPm),
+eval_pm(PMList, G, VLast, LocalVarL, FunName, Label, SetPm) ->
+    VLastList = explore_pm(PMList, G, VLast, LocalVarL, FunName, Label, SetPm),
     VRet = common_fun:add_vertex(G),
-    add_edges_recursive(G, VLastList, VRet, 'ɛ'),
+    add_edges_recursive(G, VLastList, VRet, 'ɛ', VLast),
     VRet.
 
 %%% This function explore every pm's branch and returns the list of last added vertex
-explore_pm(PMList, G, VLast, FunName, Base, SetPm) ->
+explore_pm(PMList, G, VLast, LocalVarL, FunName, Base, SetPm) ->
     lists:foldl(
         fun(CodeLine, AddedVertexList) ->
             case CodeLine of
                 {clause, _, Vars, Guard, Content} ->
                     IsReceive = is_list(string:find(Base, "receive")),
                     %%% if it's a receive pm, then the label must be written
-                    EdLabel =
-                        if
-                            IsReceive -> format_label_pm_edge(true, Vars, Guard, Base);
-                            true -> format_label_pm_edge(SetPm, Vars, Guard, Base)
-                        end,
+                    EdLabel = format_label_pm_edge(IsReceive or SetPm, Vars, Guard, Base),
                     VL =
-                        if
-                            IsReceive or SetPm ->
+                        case IsReceive or SetPm of
+                            true ->
                                 VNew = common_fun:add_vertex(G),
                                 digraph:add_edge(G, VLast, VNew, EdLabel),
                                 VNew;
-                            true ->
+                            false ->
                                 VLast
                         end,
-                    VRet = eval_pm_clause(Content, FunName, G, VL, SetPm),
-                    if
-                        VRet =:= VL -> AddedVertexList;
-                        %%% Ruturn the vertex appended to the accumulator list
-                        true -> AddedVertexList ++ [VRet]
-                    end;
+                    VRet = eval_pm_clause(Content, FunName, G, VL, LocalVarL, SetPm),
+                    AddedVertexList ++ [VRet];
                 _ ->
                     AddedVertexList
             end
@@ -289,42 +365,52 @@ explore_pm(PMList, G, VLast, FunName, Base, SetPm) ->
 %%% This function format the Variables with the guards in a label for the FSA
 format_label_pm_edge(SetPm, VarList, GuardList, BaseLabel) when is_list(BaseLabel) ->
     RetString =
-        if
-            SetPm ->
-                %%% Very basic functions
-                VFun = fun(V, L) ->
-                    case V of
-                        %%% TODO: add more infos
-                        {var, _, '_'} -> L ++ "_";
-                        {var, _, Var} -> L ++ atol(Var);
-                        {atom, _, Atom} -> L ++ atol(Atom);
-                        {nil, _} -> L ++ "null";
-                        _ -> L
-                    end
-                end,
-                GFun = fun(G, L) ->
-                    case G of
-                        %%% Add guards if there's a guard
-                        %%% TODO: add more infos
-                        {op, _, _, _} -> L ++ " (guards)";
-                        _ -> L
-                    end
-                end,
-                VarsString = lists:foldl(fun(V, Acc) -> VFun(V, Acc) end, BaseLabel, VarList),
-                lists:foldl(fun(G, Acc) -> GFun(G, Acc) end, VarsString, GuardList);
-            not SetPm ->
+        case SetPm of
+            true ->
+                VarsS = lists:foldl(fun(V, Acc) -> var_to_string(V, Acc) end, BaseLabel, VarList),
+                lists:foldl(fun(G, Acc) -> guards_to_string(G, Acc) end, VarsS, GuardList);
+            false ->
                 "ɛ"
         end,
     %%% Returns an atom because labels are atoms
     ltoa(RetString).
 
-add_edges_recursive(G, VertexList, VertexToLink, Label) ->
+var_to_string(VarToVal) ->
+    var_to_string(VarToVal, "").
+var_to_string(VarToVal, BaseL) ->
+    case VarToVal of
+        {var, _, '_'} -> BaseL ++ "_";
+        {tuple, _, LVar} -> BaseL ++ format_tuple(LVar);
+        {var, _, Var} -> BaseL ++ atol(Var);
+        {atom, _, Atom} -> BaseL ++ atol(Atom);
+        {cons, _, _H, _T} -> BaseL ++ "list";
+        {nil, _} -> BaseL ++ "null";
+        _ -> "base"
+    end.
+
+format_tuple(VarL) ->
+    L = lists:foldl(fun(I, A) -> A ++ "," ++ var_to_string(I) end, "", VarL),
+    [_ | Label] = L,
+    "{" ++ Label ++ "}".
+
+% global_to_string(GlobalToVal) ->
+%     global_to_string(GlobalToVal, "").
+guards_to_string(GlobalToVal, BaseL) ->
+    case GlobalToVal of
+        %%% Add guards if there's a guard
+        %%% TODO: add more infos
+        {op, _, _, _} -> BaseL ++ " (guards)";
+        _ -> BaseL
+    end.
+
+add_edges_recursive(G, VertexList, VertexToLink, Label, Except) ->
     %%% Link every V in the VertexList to the VertexToLink, with a specified label
     [
         digraph:add_edge(G, V, VertexToLink, Label)
      || V <- VertexList,
         %%% exclude the start vertex
-        V =/= 1
+        V =/= 1,
+        V =/= Except
     ].
 
 % Set a state as a final state

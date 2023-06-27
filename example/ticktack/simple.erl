@@ -1,46 +1,46 @@
 -module(simple).
--export([tickl/0, tackl/0, tick/0, random/0]).
+-export([start/0, random/0, tic_loop/0, tac_loop/0]).
 
-tackl() ->
+start() ->
+    spawn_process(),
+    tic_loop ! tac,
+    started.
+
+tac_loop() ->
     receive
-        tick ->
-            io:fwrite("Received tick~n"),
-            case whereis(tickl) of
+        tic ->
+            io:fwrite("Received tic~n"),
+            case whereis(tic_loop) of
                 'undefined' -> done;
-                _ -> tickl ! tack
+                _ -> tic_loop ! tac
             end,
-            tackl();
+            tac_loop();
         stop ->
             io:fwrite("Process ended~n")
     end.
 
-tick() ->
-    spawn_process(),
-    tickl ! tack,
-    started.
-
 spawn_process() ->
-    Tack = spawn(?MODULE, tackl, []),
-    register(tackl, Tack),
-    TLoop = spawn(?MODULE, tickl, []),
-    register(tickl, TLoop),
+    Tac = spawn(?MODULE, tac_loop, []),
+    register(tac_loop, Tac),
+    Tic = spawn(?MODULE, tic_loop, []),
+    register(tic_loop, Tic),
     spawn(?MODULE, random, []).
 
-tickl() ->
+tic_loop() ->
     receive
-        tack ->
-            io:fwrite("Received tack~n"),
-            tackl ! tick,
-            tickl();
+        tac ->
+            io:fwrite("Received tac~n"),
+            tac_loop ! tic,
+            tic_loop();
         stop ->
             io:fwrite("Process ended~n"),
-            tackl ! stop
+            tac_loop ! stop
     end.
 
 random() ->
     RandInt = rand:uniform(10),
     io:fwrite("~p~n", [RandInt]),
     if
-        RandInt > 1 -> tickl ! stop;
+        RandInt > 1 -> tic_loop ! stop;
         true -> random()
     end.

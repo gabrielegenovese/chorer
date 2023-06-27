@@ -2,7 +2,7 @@
 -include("../common/common_data.hrl").
 
 %%% API
--export([extract/1]).
+-export([extract/2]).
 
 %%%===================================================================
 %%% API
@@ -10,11 +10,13 @@
 
 %%% Extract the metada, that is all the Abstract Syntax Tree, the Actor
 %%% List and the AST of every functions. Send them to the DBMANAGER.
-extract(InputFile) ->
+extract(InputFile, EntryPoint) ->
     gen_ast(InputFile),
     ActorList = gen_fun_ast_and_exported(),
     %%% Send the actor list to the dbmanager
-    ?DBMANAGER ! {set_actor_list, ActorList}.
+    db_manager:send_actor_list(ActorList),
+    gen_spawned_names_and_args(EntryPoint),
+    db_manager:reset_spawn_counter().
 
 %%%===================================================================
 %%% Internal Functions
@@ -26,21 +28,21 @@ extract(InputFile) ->
     InputFile :: string().
 gen_ast(InputFile) ->
     {ok, AST} = epp_dodger:quick_parse_file(InputFile),
-    ?DBMANAGER ! {set_ast, AST},
+    db_manager:send_ast(AST),
     done.
 
 %%% Generate the list of exported function and send it to the dbmanager.
 %%% It also send the ast of every function.
 -spec gen_fun_ast_and_exported() -> [string()].
 gen_fun_ast_and_exported() ->
-    Ast = common_fun:get_ast_from_db(),
+    Ast = db_manager:get_ast(),
     lists:foldl(
         fun(CodeLine, AccList) ->
             case CodeLine of
                 {attribute, _, export, AtrList} ->
                     AccList ++ [Name || {Name, _NArgs} <- AtrList];
-                {function, _, Name, _, FunAst} ->
-                    ?DBMANAGER ! {set_fun_ast, Name, FunAst},
+                {function, _, Name, _NArgs, FunAst} ->
+                    db_manager:send_fun_ast(Name, FunAst),
                     AccList;
                 _ ->
                     AccList
@@ -48,4 +50,83 @@ gen_fun_ast_and_exported() ->
         end,
         [],
         Ast
+    ).
+
+%%% Struttura dati che indica quali processi sono stati spawnati, in quale funzione è stata chiamata, quali argomenti
+%%% aveva la spawn e a quali dovrebbero corrispondere nella funzione
+-record(spawned_proc, {
+    name = noinfo, called_where = noinfo, args_called = noinfo, args_local = noinfo
+}).
+
+new_spawned_proc(Name, FunName, ArgC, ArgL) ->
+    #spawned_proc{
+        name = Name,
+        called_where = FunName,
+        args_called = ArgC,
+        args_local = ArgL
+    }.
+
+gen_spawned_names_and_args(EntryPoint) when is_atom(EntryPoint) ->
+    L = gen_spawned_names_and_args(EntryPoint, noinfo, true),
+    db_manager:send_spawn_info(L).
+
+gen_spawned_names_and_args(EntryPoint, CalledArgs, CreateEntry) when is_atom(EntryPoint) ->
+    Ast = db_manager:get_fun_ast(EntryPoint),
+    case Ast of
+        no_func_found ->
+            [];
+        _ ->
+            ListOfSpawn = get_spawned_loop(Ast, EntryPoint),
+            Vars = get_clause_vars(EntryPoint),
+            NewVal = #spawned_proc{name = EntryPoint, args_called = CalledArgs, args_local = Vars},
+            case CreateEntry of
+                true -> [NewVal] ++ ListOfSpawn;
+                false -> ListOfSpawn
+            end
+    end.
+
+get_clause_vars(FunName) ->
+    Ast = db_manager:get_fun_ast(FunName),
+    [{clause, _, Vars, _, _} | _] = Ast,
+    Vars.
+
+get_spawned_loop(Code, FunName) when is_list(Code) ->
+    lists:foldl(
+        fun(Line, A) ->
+            A ++
+                case Line of
+                    {clause, _, _, _, Content} ->
+                        get_spawned_loop(Content, FunName);
+                    {match, _, _VarName, LeftContent} ->
+                        case is_list(LeftContent) of
+                            true -> get_spawned_loop(LeftContent, FunName);
+                            false -> get_spawned_loop([LeftContent], FunName)
+                        end;
+                    {'case', _, _, PMList} ->
+                        get_spawned_loop(PMList, FunName);
+                    {'if', _, PMList} ->
+                        get_spawned_loop(PMList, FunName);
+                    {'receive', _, PMList} ->
+                        get_spawned_loop(PMList, FunName);
+                    {op, _, '!', DataSentAst} ->
+                        get_spawned_loop([DataSentAst], FunName);
+                    {call, _, {atom, _, spawn}, [_, {atom, _, Name}, ArgList]} ->
+                        ArgVars = get_clause_vars(Name),
+                        C = db_manager:inc_spawn_counter(Name),
+                        FName = list_to_atom(atom_to_list(Name) ++ integer_to_list(C)),
+                        % TODO: come evitare loop infiniti?
+                        FAst = db_manager:get_fun_ast(Name),
+                        L = get_spawned_loop(FAst, Name),
+                        [new_spawned_proc(FName, FunName, ArgList, ArgVars)] ++ L;
+                    %%% Attention: do not change position of this case branch
+                    {call, _, {atom, _, FunName}, _} ->
+                        [];
+                    {call, _, {atom, _, Name}, ArgL} ->
+                        gen_spawned_names_and_args(Name, ArgL, false);
+                    _ ->
+                        []
+                end
+        end,
+        [],
+        Code
     ).
