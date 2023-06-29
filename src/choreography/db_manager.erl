@@ -13,6 +13,7 @@
     add_reg_entry/1,
     get_reg_entry/0,
     get_fun_args/1,
+    get_func_arg_map/0,
     get_spawn_info/0,
     inc_spawn_counter/1,
     reset_spawn_counter/0,
@@ -28,7 +29,11 @@
 
 %%% Function data structure for the map
 -record(func_data, {
-    is_actor = false, ast = no_ast_found, graph = no_graph_found, spawned_counter = 0
+    is_actor = false,
+    ast = no_ast_found,
+    graph = no_graph_found,
+    spawned_counter = 0,
+    local_vars = noinfo
 }).
 
 %%%===================================================================
@@ -51,7 +56,8 @@ get_fun_ast(Key) -> get_from_db({self(), get_fun_ast, Key}).
 get_fun_graph(Key) -> get_from_db({self(), get_fun_graph, Key}).
 get_reg_entry() -> get_from_db({self(), get_register_list}).
 get_fun_args(K) -> get_from_db({self(), get_fun_arg, K}).
-get_spawn_info() -> send_to_db({self(), get_spawn_info}).
+get_spawn_info() -> get_from_db({self(), get_spawn_info}).
+get_func_arg_map() -> get_from_db({self(), get_func_args_map}).
 
 %%% Both getter and setter
 inc_spawn_counter(Key) -> get_from_db({self(), inc_spawned_counter, Key}).
@@ -179,7 +185,7 @@ loop(Data) ->
             NewFD = maps:put(Key, FuncD#func_data{graph = G}, FuncDataM),
             loop(Data#loop_data{func_data_m = NewFD});
         {P, get_fun_graph, Key} ->
-            FuncD = maps:get(Key, FuncDataM),
+            FuncD = maps:get(Key, FuncDataM, #func_data{}),
             P ! {FuncD#func_data.graph},
             loop(Data);
         %%% increments  amd send the spawned counter

@@ -76,13 +76,13 @@ progress_single_branch(BData, AccL) ->
         NewBData#branch.proc_pid_m
     ),
     case SendList =:= [] of
+        % io:fwrite("SendList ~p~n", [H]),
         true ->
             case Op1 of
                 true -> progress_single_branch(NewBData, AccL ++ NBL);
                 false -> AccL
             end;
         false ->
-            % io:fwrite("SendList ~p~n", [SendList]),
             {NL, Modified} = lists:foldl(
                 fun(I, A) ->
                     % io:fwrite("Eval ~p~n", [I]),
@@ -100,7 +100,6 @@ progress_single_branch(BData, AccL) ->
                     AccL;
                 false ->
                     [H | T] = NL,
-                    % io:fwrite("~n"),
                     progress_single_branch(H, AccL ++ NBL ++ T)
             end
     end.
@@ -141,6 +140,7 @@ eval_proc_until_send(ProcName, ProcPid, AccData) ->
                 Cond = is_lists_edgerecv(ProcPid, EL),
                 case Cond of
                     true ->
+                        % io:fwrite("RecvList ~p~n", [EL]),
                         {DataRet, _} = lists:foldl(
                             fun(E, A) ->
                                 {DataRecv, MatchFound} = A,
@@ -240,21 +240,20 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             {NewBData, true};
         %% todo: capire se utile
         is_list(IsReceive) ->
-            %manage_recv(BData, ProcName, ProcPid, EdgeInfo);
-            % io:fwrite("~nRecv da eval~n"),
-            {BData, false};
+            {D, O, _} = manage_recv(BData, ProcName, ProcPid, EdgeInfo),
+            {D, O};
         true ->
             {BData, false}
     end.
 
 add_spawn_to_global(SLabel, ProcName, Data) ->
-    CompleteProcNameString = string:prefix(SLabel, "spawn "),
-    {FuncName, _ProcNumber} = remove_last(CompleteProcNameString),
+    CompleteProcNameS = string:prefix(SLabel, "spawn "),
+    {FuncName, _ProcNumber} = remove_last(CompleteProcNameS),
     FuncPid = spawn(?MODULE, proc_loop, [ltoa(FuncName), 1]),
-    NewMap = maps:put(ltoa(CompleteProcNameString), FuncPid, Data#branch.proc_pid_m),
+    NewMap = maps:put(ltoa(CompleteProcNameS), FuncPid, Data#branch.proc_pid_m),
     VNew = common_fun:add_vertex(Data#branch.graph),
     %%% Δ means spawned
-    NewLabel = ltoa(atol(ProcName) ++ "Δ" ++ CompleteProcNameString),
+    NewLabel = ltoa(atol(ProcName) ++ "Δ" ++ CompleteProcNameS),
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
 
@@ -268,8 +267,7 @@ manage_send(SLabel, Data, ProcName, EdgeInfo) ->
     ProcSent = ltoa(get_proc_from_label(SLabel)),
     SendL = Data#branch.send_l,
     RecvL = Data#branch.recv_l,
-    % io:fwrite("Send "),
-    PL = find_compatibility(RecvL, ProcSent, DataSent),
+    PL = find_compatibility(ProcName, RecvL, ProcSent, DataSent, send),
     if
         PL =:= [] ->
             AlreadyMember = lists:member({ProcName, Edge, ProcSent, DataSent}, SendL),
@@ -297,8 +295,7 @@ manage_recv(Data, ProcName, ProcPid, EdgeInfo) ->
     DataRecv = get_data_from_label(SLabel),
     RecvL = Data#branch.recv_l,
     SendL = Data#branch.send_l,
-    % io:fwrite("Recv "),
-    CompatibleRv = find_compatibility(SendL, ProcName, DataRecv),
+    CompatibleRv = find_compatibility(SendL, ProcName, DataRecv, recv),
     case CompatibleRv =:= [] of
         true ->
             AlreadyMember = lists:member({ProcName, Edge, ProcName, DataRecv}, RecvL),
@@ -339,17 +336,105 @@ delete_recv(RecvL, ProcName) ->
         RecvL
     ).
 
-find_compatibility(List, Name, Message) ->
-    io:fwrite("Find in ~p for ~p and ~p~n", [List, Name, Message]),
+find_compatibility(List, Name, Message, recv) ->
+    lists:foldl(
+        fun(I, A) ->
+            {PName, _, ProcSent, Data} = I,
+            NewPName = check_vars(PName, ProcSent),
+            Cond = is_proc_compatible(Name, NewPName) and is_message_compatible(Message, Data),
+            A ++
+                case Cond of
+                    true -> [I];
+                    false -> []
+                end
+        end,
+        [],
+        List
+    ).
+
+find_compatibility(ProcId, List, Name, Message, send) ->
+    NewPName = check_vars(ProcId, Name),
     [
-        {PName, E, ProcSent, Data}
+        {PName, E, NewPName, Data}
      || {PName, E, ProcSent, Data} <- List,
-        is_message_compatible(ProcSent, Name),
-        is_proc_compatible(Data, Message)
+        is_proc_compatible(ProcSent, NewPName),
+        is_message_compatible(Data, Message)
     ].
 
-is_message_compatible(ProcSent, Name) -> ProcSent =:= Name.
-is_proc_compatible(Data, Message) -> Data =:= Message.
+check_vars(PId, VarName) ->
+    SpInfoAll = db_manager:get_spawn_info(),
+    SpInfoP = common_fun:first(lists:filter(fun(S) -> S#spawned_proc.name =:= PId end, SpInfoAll)),
+    case SpInfoP =/= [] of
+        true ->
+            C = find_var(SpInfoP#spawned_proc.args_local, VarName),
+            case C of
+                nomatch ->
+                    VarName;
+                _ ->
+                    V = eval_l_until(SpInfoP#spawned_proc.args_called, C - 1),
+                    case V of
+                        dontknow -> VarName;
+                        V when (V#variable.type =:= pid_self) -> SpInfoP#spawned_proc.called_where
+                    end
+            end;
+        false ->
+            VarName
+    end.
+
+find_var(L, V) -> find_var(L, V, 1).
+find_var([], _, _) ->
+    nomatch;
+find_var([H | T], V, C) ->
+    case H of
+        {var, _, N} when N =:= V -> C;
+        _ -> find_var(T, V, C + 1)
+    end.
+
+eval_l_until({nil, _}, _) ->
+    notfound;
+eval_l_until(_, C) when C < 0 -> notfound;
+eval_l_until({cons, _, V, _}, 0) ->
+    case V of
+        {call, _, {atom, _, self}, _} -> #variable{type = pid_self};
+        _ -> dontknow
+    end;
+eval_l_until({cons, _, _, T}, C) when C > 0 -> eval_l_until(T, C - 1).
+
+is_proc_compatible(PSent, PName) ->
+    PSent =:= PName.
+
+is_message_compatible(PatternMatching, Message) ->
+    MessageS = atol(Message),
+    PatternMS = atol(PatternMatching),
+    [FirstPChar | RestP] = PatternMS,
+    [FirstMChar | RestM] = MessageS,
+    Cond = is_uppercase([FirstPChar]),
+    if
+        %%% hierarchy
+        [FirstPChar] =:= "_" ->
+            true;
+        ([FirstPChar] =:= "{") and ([FirstMChar] =:= "{") ->
+            {ContentP, _} = remove_last(RestP),
+            {ContentM, _} = remove_last(RestM),
+            PL = string:split(ContentP, ",", all),
+            A = lists:enumerate(PL),
+            ML = string:split(ContentM, ",", all),
+            B = lists:enumerate(ML),
+            Bool = [is_message_compatible(IA, IB) || {BA, IA} <- A, {BB, IB} <- B, BA =:= BB],
+            and_rec(Bool);
+        PatternMS =:= MessageS ->
+            true;
+        true ->
+            Cond
+    end.
+
+and_rec([]) -> true;
+and_rec([H | T]) -> H and and_rec(T).
+
+is_uppercase(FirstChar) when
+    (is_list(FirstChar)) and (length(FirstChar) =:= 1)
+->
+    (FirstChar >= "A") and (FirstChar =< "Z").
 
 decide_vertex(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
     StateM = Data#branch.states_m,
@@ -399,8 +484,10 @@ get_proc_from_label(S) -> lists:reverse(lists:nth(1, string:split(lists:reverse(
 % stop all the processes
 stop_processes(ProcMap) -> maps:foreach(fun(_K, V) -> V ! stop end, ProcMap).
 
-ltoa(L) -> list_to_atom(L).
+atol(A) when not is_atom(A) -> A;
 atol(A) -> atom_to_list(A).
+ltoa(L) when not is_list(L) -> L;
+ltoa(L) -> list_to_atom(L).
 
 get_proc_edges(P) -> send_recv(P, {self(), get_edges}).
 get_proc_out_degree(P) -> send_recv(P, {self(), get_out_degree}).

@@ -1,0 +1,8 @@
+digraph start_server {
+	rankdir="LR";
+	n_0 [label="start_server", shape="plaintext"];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+
+	n_1 -> n_1 [id="[$e|14]", label="receive {tcp_closed,_Socket}"];
+}

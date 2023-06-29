@@ -29,4 +29,12 @@
     queue
 }).
 
+-record(variable, {type = ?UNDEFINED, name = ?UNDEFINED, value = ?UNDEFINED}).
+
+%%% Struttura dati che indica quali processi sono stati spawnati, in quale funzione è stata chiamata, quali argomenti
+%%% aveva la spawn e a quali dovrebbero corrispondere nella funzione
+-record(spawned_proc, {
+    name = noinfo, called_where = noinfo, args_called = noinfo, args_local = noinfo
+}).
+
 %%%----END FILE----

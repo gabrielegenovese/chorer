@@ -52,12 +52,6 @@ gen_fun_ast_and_exported() ->
         Ast
     ).
 
-%%% Struttura dati che indica quali processi sono stati spawnati, in quale funzione è stata chiamata, quali argomenti
-%%% aveva la spawn e a quali dovrebbero corrispondere nella funzione
--record(spawned_proc, {
-    name = noinfo, called_where = noinfo, args_called = noinfo, args_local = noinfo
-}).
-
 new_spawned_proc(Name, FunName, ArgC, ArgL) ->
     #spawned_proc{
         name = Name,

@@ -6,6 +6,13 @@ start() ->
     tic_loop ! tac,
     started.
 
+spawn_process() ->
+    Tac = spawn(?MODULE, tac_loop, []),
+    register(tac_loop, Tac),
+    Tic = spawn(?MODULE, tic_loop, []),
+    register(tic_loop, Tic),
+    spawn(?MODULE, random, []).
+
 tac_loop() ->
     receive
         tic ->
@@ -18,13 +25,6 @@ tac_loop() ->
         stop ->
             io:fwrite("Process ended~n")
     end.
-
-spawn_process() ->
-    Tac = spawn(?MODULE, tac_loop, []),
-    register(tac_loop, Tac),
-    Tic = spawn(?MODULE, tic_loop, []),
-    register(tic_loop, Tic),
-    spawn(?MODULE, random, []).
 
 tic_loop() ->
     receive
@@ -41,6 +41,6 @@ random() ->
     RandInt = rand:uniform(10),
     io:fwrite("~p~n", [RandInt]),
     if
-        RandInt > 1 -> tic_loop ! stop;
+        RandInt > 8 -> tic_loop ! stop;
         true -> random()
     end.

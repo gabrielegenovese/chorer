@@ -1,5 +1,5 @@
 -module(talk).
--compile(export_all).
+-export([start/2, start_server/1, send/2]).
 
 start(LocalPort, RemotePort) ->
     ServerPid = spawn(?MODULE, start_server, [LocalPort]),

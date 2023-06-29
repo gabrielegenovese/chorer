@@ -4,8 +4,6 @@
 %%% API
 -export([generate/1]).
 
--record(variable, {type = ?UNDEFINED, name = ?UNDEFINED, value = ?UNDEFINED}).
-
 %%%===================================================================
 %%% API
 %%%===================================================================
@@ -89,7 +87,8 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         %%% so we can save it and its content type (pid, atom, list, etc...) on the dbmanager
         {match, _, RightContent, LeftContent} ->
             {Var, V, NewL} = eval_codeline(LeftContent, FunName, G, AccData, SetPm),
-            NewVarEntry = Var#variable{name = RightContent},
+            {var, _, VarName} = RightContent,
+            NewVarEntry = Var#variable{name = VarName},
             {Var, V, NewL ++ [NewVarEntry]};
         %%% If there's a recursive call, just add an epsilon edge to the first state
         {call, _, {atom, _, FunName}, _ArgList} ->
@@ -116,7 +115,6 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         %%% Attention: don't change the position of this pattern matching branch
         %%% TODO: implement argument list evaluation feature
         {call, _, {atom, _, Name}, _ArgList} ->
-            % TODO capire bene cosa succede e perché funziona (caso più unico che raro)
             NewG = eval_func(Name, SetPm),
             case NewG of
                 %%% If the function called is a built-in or a module function,
@@ -170,7 +168,7 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
                     L -> L
                 end,
             VarFound = find_proc_in_varl(VarName, LocalVarL ++ ArgL),
-            io:fwrite("Var Name ~p~n", [VarFound]),
+            % io:fwrite("Var Name ~p found ~p~n", [VarName, VarFound]),
             SLabel =
                 "send " ++ DataSent ++ " to " ++
                     case VarFound of
@@ -181,9 +179,16 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
             {#variable{type = atom, value = DataSent}, VNew, NewL};
         {op, _, '!', {atom, _, AtomName}, DataSentAst} ->
             {Var, _, NewL} = eval_codeline(DataSentAst, FunName, G, AccData, SetPm),
-            VNew = common_fun:add_vertex(G),
             DataSent = convert_var_to_string(Var),
-            SLabel = "send " ++ DataSent ++ " to " ++ atol(AtomName) ++ "0",
+            RegList = db_manager:get_reg_entry(),
+            Proc = find_in_register(RegList, ltoa(AtomName)),
+            SLabel =
+                "send " ++ DataSent ++ " to " ++
+                    case Proc of
+                        nomatch -> atol(AtomName);
+                        P -> atol(P)
+                    end,
+            VNew = common_fun:add_vertex(G),
             digraph:add_edge(G, VLast, VNew, ltoa(SLabel)),
             {#variable{type = atom, value = DataSent}, VNew, NewL};
         %% List
@@ -220,13 +225,11 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
 find_proc_in_varl(_, []) ->
     nomatch;
 find_proc_in_varl(Name, [H | T]) ->
-    {var, _, VarN} = H#variable.name,
-    if
-        Name =:= VarN ->
-            S = atol(H#variable.type),
-            string:prefix(S, "pid_");
-        true ->
-            find_proc_in_varl(Name, T)
+    VarN = H#variable.name,
+    S = atol(H#variable.type),
+    case Name =:= VarN of
+        true -> string:prefix(S, "pid_");
+        false -> find_proc_in_varl(Name, T)
     end.
 
 convert_var_to_string(Var) ->
@@ -269,9 +272,10 @@ manage_register(LocalVarL, AtomName, VarName) ->
             ?UNDEFINED;
         V ->
             Cond = is_type_pid(V#variable.type),
+            Pid = get_pid_from_type(V#variable.type),
             case Cond of
                 false -> ?UNDEFINED;
-                true -> common_fun:add_reg_entry_from_db(AtomName)
+                true -> db_manager:add_reg_entry({AtomName, Pid})
             end
     end.
 
@@ -285,9 +289,22 @@ find_var([Var | Tail], Name) ->
     end.
 
 is_type_pid(Type) ->
-    SL = ltoa(Type),
+    SL = atol(Type),
     IsPid = string:find(SL, "pid"),
     is_list(IsPid).
+
+get_pid_from_type(Type) ->
+    SL = atol(Type),
+    PidS = string:prefix(SL, "pid_"),
+    ltoa(PidS).
+
+find_in_register([], _) ->
+    nomatch;
+find_in_register([{RegAtom, RegPid} | T], Name) ->
+    case RegAtom =:= Name of
+        true -> RegPid;
+        false -> find_in_register(T, Name)
+    end.
 
 %%% We have a main graph G1, a graph G2 and a G1's vertex.
 %%% We need to append G2 to the G1's vertex.
@@ -383,7 +400,7 @@ var_to_string(VarToVal, BaseL) ->
         {tuple, _, LVar} -> BaseL ++ format_tuple(LVar);
         {var, _, Var} -> BaseL ++ atol(Var);
         {atom, _, Atom} -> BaseL ++ atol(Atom);
-        {cons, _, _H, _T} -> BaseL ++ "list";
+        {cons, _, H, T} -> BaseL ++ "[" ++ var_to_string(H) ++ ", " ++ var_to_string(T) ++ "]";
         {nil, _} -> BaseL ++ "null";
         _ -> "base"
     end.
