@@ -253,7 +253,7 @@ add_spawn_to_global(SLabel, ProcName, Data) ->
     NewMap = maps:put(ltoa(CompleteProcNameS), FuncPid, Data#branch.proc_pid_m),
     VNew = common_fun:add_vertex(Data#branch.graph),
     %%% Δ means spawned
-    NewLabel = ltoa(atol(ProcName) ++ "Δ" ++ CompleteProcNameS),
+    NewLabel = atol(ProcName) ++ "Δ" ++ CompleteProcNameS,
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
 
@@ -282,7 +282,7 @@ manage_send(SLabel, Data, ProcName, EdgeInfo) ->
             {ProcNRecv, ProcRecvE, _, _} = Entry,
             PPid = maps:get(ProcNRecv, Data#branch.proc_pid_m),
             E2Info = get_proc_edge_info(PPid, ProcRecvE),
-            NewL = ltoa(atol(ProcName) ++ "→" ++ atol(ProcNRecv) ++ ":" ++ DataSent),
+            NewL = atol(ProcName) ++ "→" ++ atol(ProcNRecv) ++ ":" ++ DataSent,
             {VNA, NewSMap} = decide_vertex(ProcName, EdgeInfo, ProcNRecv, E2Info, Data, NewL),
             PPid ! {use_transition, ProcRecvE},
             NewRecvL = delete_recv(lists:delete(Entry, RecvL), ProcNRecv),
@@ -311,7 +311,7 @@ manage_recv(Data, ProcName, ProcPid, EdgeInfo) ->
             {ProcSent, ProcSentE, _, _} = E,
             PPid = maps:get(ProcSent, Data#branch.proc_pid_m),
             E2Info = get_proc_edge_info(PPid, ProcSentE),
-            NewL = ltoa(atol(ProcSent) ++ "→" ++ atol(ProcName) ++ ":" ++ DataRecv),
+            NewL = atol(ProcSent) ++ "→" ++ atol(ProcName) ++ ":" ++ DataRecv,
             {VNA, NewSM} = decide_vertex(ProcName, EdgeInfo, ProcSent, E2Info, Data, NewL),
             NewRecvL = delete_recv(RecvL, ProcName),
             ProcPid ! {use_transition, Edge},
@@ -478,7 +478,13 @@ decide_vertex(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
             {Vfirst, StateM}
     end.
 
-get_data_from_label(S) -> lists:nth(2, string:split(S, " ", all)).
+get_data_from_label(S) ->
+    Ret = lists:nth(2, string:split(S, " ", all)),
+    FirstChar = common_fun:first(Ret),
+    if
+        [FirstChar] =:= "[" -> Ret ++ " " ++ lists:nth(3, string:split(S, " ", all));
+        true -> Ret
+    end.
 get_proc_from_label(S) -> lists:reverse(lists:nth(1, string:split(lists:reverse(S), " ", all))).
 
 % stop all the processes

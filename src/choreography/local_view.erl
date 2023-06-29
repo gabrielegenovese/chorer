@@ -97,11 +97,10 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
             {#variable{}, 1, LocalVarL};
         %%% Evaluate the spawn function
         {call, _, {atom, _, spawn}, [_, {atom, _, Name}, ArgList]} ->
-            VNew = common_fun:add_vertex(G),
             C = db_manager:inc_spawn_counter(Name),
             S = atol(Name) ++ integer_to_list(C),
-            SLabel = ltoa("spawn " ++ S),
-            digraph:add_edge(G, VLast, VNew, SLabel),
+            VNew = common_fun:add_vertex(G),
+            digraph:add_edge(G, VLast, VNew, "spawn " ++ S),
             {VarArgL, _, _} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
             db_manager:add_fun_arg(S, VarArgL#variable.value),
             {#variable{type = ltoa("pid_" ++ S)}, VNew, LocalVarL};
@@ -175,7 +174,7 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
                         nomatch -> atol(VarName);
                         V -> atol(V)
                     end,
-            digraph:add_edge(G, VLast, VNew, ltoa(SLabel)),
+            digraph:add_edge(G, VLast, VNew, SLabel),
             {#variable{type = atom, value = DataSent}, VNew, NewL};
         {op, _, '!', {atom, _, AtomName}, DataSentAst} ->
             {Var, _, NewL} = eval_codeline(DataSentAst, FunName, G, AccData, SetPm),
@@ -189,7 +188,7 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
                         P -> atol(P)
                     end,
             VNew = common_fun:add_vertex(G),
-            digraph:add_edge(G, VLast, VNew, ltoa(SLabel)),
+            digraph:add_edge(G, VLast, VNew, SLabel),
             {#variable{type = atom, value = DataSent}, VNew, NewL};
         %% List
         {cons, _, HeadList, TailList} ->
@@ -262,7 +261,7 @@ format_tuple_vars(VarL) ->
 get_base_label(SetPm, Label) ->
     case SetPm of
         true -> Label;
-        false -> "ɛ"
+        false -> 'ɛ'
     end.
 
 manage_register(LocalVarL, AtomName, VarName) ->
@@ -357,9 +356,9 @@ explore_pm(PMList, G, VLast, LocalVarL, FunName, Base, SetPm) ->
         fun(CodeLine, AddedVertexList) ->
             case CodeLine of
                 {clause, _, Vars, Guard, Content} ->
-                    IsReceive = is_list(string:find(Base, "receive")),
+                    IsReceive = is_list(string:find(atol(Base), "receive")),
                     %%% if it's a receive pm, then the label must be written
-                    EdLabel = format_label_pm_edge(IsReceive or SetPm, Vars, Guard, Base),
+                    EdLabel = format_label_pm_edge(IsReceive or SetPm, Vars, Guard, atol(Base)),
                     VL =
                         case IsReceive or SetPm of
                             true ->
@@ -381,16 +380,13 @@ explore_pm(PMList, G, VLast, LocalVarL, FunName, Base, SetPm) ->
 
 %%% This function format the Variables with the guards in a label for the FSA
 format_label_pm_edge(SetPm, VarList, GuardList, BaseLabel) when is_list(BaseLabel) ->
-    RetString =
-        case SetPm of
-            true ->
-                VarsS = lists:foldl(fun(V, Acc) -> var_to_string(V, Acc) end, BaseLabel, VarList),
-                lists:foldl(fun(G, Acc) -> guards_to_string(G, Acc) end, VarsS, GuardList);
-            false ->
-                "ɛ"
-        end,
-    %%% Returns an atom because labels are atoms
-    ltoa(RetString).
+    case SetPm of
+        true ->
+            VarsS = lists:foldl(fun(V, Acc) -> var_to_string(V, Acc) end, BaseLabel, VarList),
+            lists:foldl(fun(G, Acc) -> guards_to_string(G, Acc) end, VarsS, GuardList);
+        false ->
+            'ɛ'
+    end.
 
 var_to_string(VarToVal) ->
     var_to_string(VarToVal, "").

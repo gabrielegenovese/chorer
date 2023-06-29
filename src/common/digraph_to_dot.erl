@@ -23,7 +23,7 @@ convert(Graph) ->
     Ids = ids(Graph),
     Vertices = [format_vertex(V, Ids) || V <- vertices(Graph)],
     Edges = [format_edge(E, Ids) || E <- edges(Graph)],
-    io_lib:format(
+    format_print(
         "digraph global {~n"
         % graph direction left to right
         "\trankdir=\"LR\";~n"
@@ -40,7 +40,7 @@ convert(Graph, Name) ->
     Ids = ids(Graph),
     Vertices = [format_vertex(V, Ids) || V <- vertices(Graph)],
     Edges = [format_edge(E, Ids) || E <- edges(Graph)],
-    io_lib:format(
+    format_print(
         "digraph ~ts{~n"
         % graph left to right
         "\trankdir=\"LR\";~n"
@@ -53,10 +53,8 @@ convert(Graph, Name) ->
 %%% Internal Functions
 %%%===================================================================
 
-pad("") ->
-    "";
-pad(String) ->
-    [String, " "].
+pad("") -> "";
+pad(String) -> [String, " "].
 
 is_final_state(Label) when not is_integer(Label) ->
     NewLabel = re:replace(Label, ?FINALTAG, "", [{return, list}]),
@@ -92,23 +90,26 @@ format_vertex({V, Label}, Ids) ->
         NewLabel =:= 1 -> Str = "\n\tn_0 -> " ++ Id ++ " [arrowhead=none];";
         true -> Str = ""
     end,
-    io_lib:format(
-        "\t~ts [id=~ts, shape=~tscircle, label=~ts];~s~n",
-        [Id, quoted(V), FinalState, quoted(NewLabel), Str]
+    format_print(
+        "\t~ts [id=~ts, shape=~tscircle, label=\"~tp\"];~s~n",
+        [Id, quoted(V), FinalState, NewLabel, Str]
     ).
 
 format_edge({Edge, V1, V2, Label}, Ids) ->
     #{V1 := Id1} = Ids,
     #{V2 := Id2} = Ids,
-    if
-        Label =:= [] ->
-            io_lib:format(
-                "\t~ts -> ~ts [id=~ts];~n",
+    case Label =:= [] of
+        true ->
+            format_print(
+                "\t~ts -> ~ts [id=~s];~n",
                 [Id1, Id2, quoted(Edge)]
             );
-        true ->
-            io_lib:format(
-                "\t~ts -> ~ts [id=~ts, label=~ts];~n",
-                [Id1, Id2, quoted(Edge), quoted(Label)]
+        false ->
+            format_print(
+                "\t~ts -> ~ts [id=~ts, label=\"~ts\"];~n",
+                [Id1, Id2, quoted(Edge), Label]
             )
     end.
+
+format_print(Format, ArgList) ->
+    lists:flatten(io_lib:format(Format, ArgList)).
