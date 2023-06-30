@@ -33,7 +33,7 @@ save_graph_to_file(Graph, Dir, FileName, Type) ->
             GraphDotStr = digraph_to_dot:convert(Graph, FileName),
             FilePath = filename:join([Dir, format_local_name(FileName)]);
         global ->
-            GraphDotStr = digraph_to_dot:convert(Graph),
+            GraphDotStr = digraph_to_dot:convert(Graph, "global"),
             FilePath = filename:join([Dir, format_global_name(FileName)])
     end,
     ToWriteData = unicode:characters_to_binary(GraphDotStr),

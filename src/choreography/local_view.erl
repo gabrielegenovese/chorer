@@ -2,18 +2,18 @@
 -include("../common/common_data.hrl").
 
 %%% API
--export([generate/1]).
+-export([generate/2]).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
 %%% Generate a local view for each actor
-generate(OutputDir) ->
+generate(OutputDir,Options) ->
     ActorList = db_manager:get_actors(),
     %%% For each actor, create and save the local view
     lists:foreach(
-        fun(Actor) -> create_localview(Actor, OutputDir) end,
+        fun(Actor) -> create_localview(Actor, OutputDir, Options) end,
         ActorList
     ).
 
@@ -22,14 +22,14 @@ generate(OutputDir) ->
 %%%===================================================================
 
 %%% Create a local view for an actor
-create_localview(ActorName, OutputDir) ->
+create_localview(ActorName, OutputDir, Options) ->
     ActorAst = db_manager:get_fun_ast(ActorName),
     case ActorAst of
         no_ast_found ->
             io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]);
         _ ->
             %%% TODO: parametri da chiedere all'utente
-            {SetFinalState, SetAdditionalInfo} = {true, false},
+            {SetFinalState, SetAdditionalInfo} = Options,
             Graph = get_graph(ActorName, ActorAst, SetFinalState, SetAdditionalInfo),
             FileNameStr = atol(ActorName),
             %%% Send the graph to the dbmanager

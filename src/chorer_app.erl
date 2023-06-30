@@ -2,25 +2,33 @@
 -include("common/common_data.hrl").
 
 %%% API
--export([generate_chor_automata/3]).
+-export([generate/2, generate/3, generate/4]).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
 %%% Generate the local and global view of an Erlang File source.
--spec generate_chor_automata(InputFile, OutputDir, EntryPoint) -> atom() when
+generate(InputFile, EntryPoint) ->
+    OutputDir = "./",
+    generate(InputFile, EntryPoint, OutputDir).
+
+generate(InputFile, EntryPoint, OutputDir) ->
+    generate(InputFile, EntryPoint, OutputDir, {true, false}).
+
+-spec generate(InputFile, EntryPoint, OutputDir, Options) -> atom() when
     InputFile :: string(),
+    EntryPoint :: atom(),
     OutputDir :: string(),
-    EntryPoint :: atom().
-generate_chor_automata(InputFile, OutputDir, EntryPoint) ->
-    io:format("Entrypoint: ~p~n", [EntryPoint]),
+    Options :: [boolean()].
+generate(InputFile, EntryPoint, OutputDir, Options) ->
     init_db(),
     %%% Get all the metadata info such as exported functions, spawn done and actors
     metadata:extract(InputFile, EntryPoint),
     %%% Generate local and global view and save them int the output directory
-    local_view:generate(OutputDir),
-    global_view:generate(OutputDir, EntryPoint).
+    local_view:generate(OutputDir, Options),
+    global_view:generate(OutputDir, EntryPoint),
+    finished.
 
 %%%===================================================================
 %%% Internal Functions
