@@ -22,19 +22,20 @@
     n_args,
     ast,
     graph,
+    current_vartex,
     local_vars,
     returned_var,
     nodes,
     transitions,
-    queue
+    recv_queue
 }).
 
 -record(variable, {type = ?UNDEFINED, name = ?UNDEFINED, value = ?UNDEFINED}).
 
-%%% Struttura dati che indica quali processi sono stati spawnati, in quale funzione è stata chiamata, quali argomenti
-%%% aveva la spawn e a quali dovrebbero corrispondere nella funzione
+%%% Struttura dati che indica quali processi sono stati spawnati, in quale funzione è stata
+%%% chiamata, quali argomenti aveva la spawn e a quali dovrebbero corrispondere nella funzione
 -record(spawned_proc, {
-    name = noinfo, called_where = noinfo, args_called = noinfo, args_local = noinfo
+    name = noinfo, called_where = noinfo, args_called = noinfo, args_local = noinfo, local_vars = []
 }).
 
 %%%----END FILE----

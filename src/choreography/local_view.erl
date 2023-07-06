@@ -70,21 +70,20 @@ add_args_to_graph(Gr, Vars, Guard, VStart, SetPm) ->
 
 %%% This function returns the last vertex added
 eval_pm_clause(Code, FunName, Gr, VStart, LocalVarS, SetPm) ->
-    {_, V, _} = lists:foldl(
+    {_, V, LocalVars} = lists:foldl(
         fun(Line, AccData) -> eval_codeline(Line, FunName, Gr, AccData, SetPm) end,
         {#variable{}, VStart, LocalVarS},
         Code
     ),
+    db_manager:add_fun_local_vars(FunName, LocalVars),
     V.
 
 %%% This function evaluate a single line of code and returns the last vertex added to the graph
 eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
     {LastRetVar, VLast, LocalVarL} = AccData,
     case CodeLine of
-        %%% In a match code line (Var = ...), we just evaluate the left
+        %%% In a match code line (Var = ...), we evaluate the left
         %%% content because it could be a receive, case, if, etc...
-        %%% Future TODO: in the right content there could be a vmatch ariable,
-        %%% so we can save it and its content type (pid, atom, list, etc...) on the dbmanager
         {match, _, RightContent, LeftContent} ->
             {Var, V, NewL} = eval_codeline(LeftContent, FunName, G, AccData, SetPm),
             {var, _, VarName} = RightContent,
@@ -104,9 +103,10 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
             {VarArgL, _, _} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
             db_manager:add_fun_arg(S, VarArgL#variable.value),
             {#variable{type = ltoa("pid_" ++ S)}, VNew, LocalVarL};
-        %%% Evaluate the register function
+        %%% Evaluate the self function
         {call, _, {atom, _, self}, _} ->
             {#variable{type = ltoa("pid_self")}, VLast, LocalVarL};
+        %%% Evaluate the register function
         {call, _, {atom, _, register}, [{atom, _, AtomV}, {var, _, VarV}]} ->
             manage_register(LocalVarL, AtomV, VarV),
             AccData;
@@ -126,6 +126,7 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         {call, _, {remote, _, {atom, _, rand}, {atom, _, uniform}}, _ArgList} ->
             {#variable{type = integer}, VLast, LocalVarL};
         {call, _, {remote, _, {atom, _, _Package}, {atom, _, _Name}}, _ArgList} ->
+            %%% Future todo: find the package and the function, create the local view of it
             AccData;
         %%% Evaluate Case and If
         {'case', _, {var, _, Var}, PMList} ->
@@ -234,7 +235,7 @@ find_proc_in_varl(Name, [H | T]) ->
 convert_var_to_string(Var) ->
     case Var#variable.type of
         ?UNDEFINED ->
-            "something";
+            atol(Var#variable.name);
         Type ->
             SType = atol(Type),
             case Var#variable.value of

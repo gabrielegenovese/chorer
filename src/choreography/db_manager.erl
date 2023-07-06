@@ -10,11 +10,12 @@
     get_actors/0,
     get_fun_ast/1,
     get_fun_graph/1,
-    add_reg_entry/1,
     get_reg_entry/0,
     get_fun_args/1,
     get_func_arg_map/0,
     get_spawn_info/0,
+    get_fun_local_vars/1,
+    add_reg_entry/1,
     inc_spawn_counter/1,
     reset_spawn_counter/0,
     send_fun_graph/2,
@@ -22,10 +23,13 @@
     send_ast/1,
     send_fun_ast/2,
     add_fun_arg/2,
-    send_spawn_info/1
+    send_spawn_info/1,
+    add_fun_local_vars/2
 ]).
 
--record(loop_data, {common = #{register_list => []}, func_data_m = #{}, func_arg_m = #{}}).
+-record(loop_data, {
+    common = #{register_list => []}, func_data_m = #{}, func_arg_m = #{}
+}).
 
 %%% Function data structure for the map
 -record(func_data, {
@@ -33,7 +37,7 @@
     ast = no_ast_found,
     graph = no_graph_found,
     spawned_counter = 0,
-    local_vars = noinfo
+    local_vars = []
 }).
 
 %%%===================================================================
@@ -58,6 +62,7 @@ get_reg_entry() -> get_from_db({self(), get_register_list}).
 get_fun_args(K) -> get_from_db({self(), get_fun_arg, K}).
 get_spawn_info() -> get_from_db({self(), get_spawn_info}).
 get_func_arg_map() -> get_from_db({self(), get_func_args_map}).
+get_fun_local_vars(Key) -> get_from_db({self(), get_local_vars, Key}).
 
 %%% Both getter and setter
 inc_spawn_counter(Key) -> get_from_db({self(), inc_spawned_counter, Key}).
@@ -71,6 +76,7 @@ send_actor_list(L) -> send_to_db({set_actor_list, L}).
 send_ast(AST) -> send_to_db({set_ast, AST}).
 add_reg_entry(L) -> send_to_db({add_to_register_list, L}).
 add_fun_arg(Key, Args) -> send_to_db({add_fun_args, Key, Args}).
+add_fun_local_vars(Key, L) -> send_to_db({add_local_vars, Key, L}).
 
 %%%===================================================================
 %%% Internal Functions
@@ -202,6 +208,16 @@ loop(Data) ->
             P ! {C},
             NewFD = maps:put(Key, FuncD#func_data{spawned_counter = C + 1}, FuncDataM),
             loop(Data#loop_data{func_data_m = NewFD});
+        %%%==========================
+        {add_local_vars, Key, AddL} ->
+            FuncD = maps:get(Key, FuncDataM),
+            List = FuncD#func_data.local_vars,
+            NewFD = maps:put(Key, FuncD#func_data{local_vars = List ++ AddL}, FuncDataM),
+            loop(Data#loop_data{func_data_m = NewFD});
+        {P, get_local_vars, Key} ->
+            FuncD = maps:get(Key, FuncDataM),
+            P ! {FuncD#func_data.local_vars},
+            loop(Data);
         %%%==========================
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%

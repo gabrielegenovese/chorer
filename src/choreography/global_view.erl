@@ -75,8 +75,8 @@ progress_single_branch(BData, AccL) ->
         [],
         NewBData#branch.proc_pid_m
     ),
+    % io:fwrite("SendList ~p~n", [SendList]),
     case SendList =:= [] of
-        % io:fwrite("SendList ~p~n", [H]),
         true ->
             case Op1 of
                 true -> progress_single_branch(NewBData, AccL ++ NBL);
@@ -110,18 +110,21 @@ dup_branch(Data) ->
 duplicate_proccess(ProcMap) ->
     maps:fold(
         fun(K, V, A) ->
-            {Name, N} = remove_last(atol(K)),
-            NewPid =
-                case catch list_to_integer(N) of
-                    {'EXIT', _} -> spawn(?MODULE, proc_loop, [K, 1]);
-                    _ -> spawn(?MODULE, proc_loop, [ltoa(Name), 1])
-                end,
+            {Name, _} = remove_last_with_check(K),
+            NewPid = spawn(?MODULE, proc_loop, [Name, 1]),
             set_proc_data(NewPid, get_proc_data(V)),
             maps:put(K, NewPid, A)
         end,
         #{},
         ProcMap
     ).
+
+remove_last_with_check(ProcId) ->
+    {Name, N} = remove_last(atol(ProcId)),
+    case catch list_to_integer(N) of
+        {'EXIT', _} -> {ProcId, N};
+        _ -> {ltoa(Name), N}
+    end.
 
 eval_proc_until_send(ProcName, ProcPid, AccData) ->
     ProcOD = get_proc_out_degree(ProcPid),
@@ -224,7 +227,7 @@ choose_edge(ProcPid) ->
 
 eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     {Edge, _, _, PLabel} = EdgeInfo,
-    % io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
+    io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
     SLabel = atol(PLabel),
     IsArg = string:find(SLabel, "arg"),
     IsSpawn = string:find(SLabel, "spawn"),
@@ -267,7 +270,7 @@ manage_send(SLabel, Data, ProcName, EdgeInfo) ->
     ProcSent = ltoa(get_proc_from_label(SLabel)),
     SendL = Data#branch.send_l,
     RecvL = Data#branch.recv_l,
-    PL = find_compatibility(ProcName, RecvL, ProcSent, DataSent, send),
+    PL = find_compatibility(Data#branch.proc_pid_m, ProcName, RecvL, ProcSent, DataSent, send),
     if
         PL =:= [] ->
             AlreadyMember = lists:member({ProcName, Edge, ProcSent, DataSent}, SendL),
@@ -295,7 +298,7 @@ manage_recv(Data, ProcName, ProcPid, EdgeInfo) ->
     DataRecv = get_data_from_label(SLabel),
     RecvL = Data#branch.recv_l,
     SendL = Data#branch.send_l,
-    CompatibleRv = find_compatibility(SendL, ProcName, DataRecv, recv),
+    CompatibleRv = find_compatibility(Data#branch.proc_pid_m, SendL, ProcName, DataRecv, recv),
     case CompatibleRv =:= [] of
         true ->
             AlreadyMember = lists:member({ProcName, Edge, ProcName, DataRecv}, RecvL),
@@ -308,10 +311,10 @@ manage_recv(Data, ProcName, ProcPid, EdgeInfo) ->
             % pick a sender
             E = common_fun:first(CompatibleRv),
             % io:fwrite("E chose ~p~n", [E]),
-            {ProcSent, ProcSentE, _, _} = E,
+            {ProcSent, ProcSentE, _, DSent} = E,
             PPid = maps:get(ProcSent, Data#branch.proc_pid_m),
             E2Info = get_proc_edge_info(PPid, ProcSentE),
-            NewL = atol(ProcSent) ++ "→" ++ atol(ProcName) ++ ":" ++ DataRecv,
+            NewL = atol(ProcSent) ++ "→" ++ atol(ProcName) ++ ":" ++ DSent,
             {VNA, NewSM} = decide_vertex(ProcName, EdgeInfo, ProcSent, E2Info, Data, NewL),
             NewRecvL = delete_recv(RecvL, ProcName),
             ProcPid ! {use_transition, Edge},
@@ -336,74 +339,126 @@ delete_recv(RecvL, ProcName) ->
         RecvL
     ).
 
-find_compatibility(List, Name, Message, recv) ->
+find_compatibility(ProcPidM, SendL, Name, Message, recv) ->
     lists:foldl(
         fun(I, A) ->
             {PName, _, ProcSent, Data} = I,
-            NewPName = check_vars(PName, ProcSent),
-            Cond = is_proc_compatible(Name, NewPName) and is_message_compatible(Message, Data),
-            A ++
-                case Cond of
-                    true -> [I];
-                    false -> []
-                end
+            PPid = maps:get(PName, ProcPidM),
+            NewPName = check_vars(PPid, PName, ProcSent),
+            Cond =
+                is_proc_compatible(Name, NewPName) and is_message_compatible(PPid, Message, Data),
+            case Cond of
+                true -> A ++ [I];
+                false -> A
+            end
         end,
         [],
-        List
+        SendL
     ).
 
-find_compatibility(ProcId, List, Name, Message, send) ->
-    NewPName = check_vars(ProcId, Name),
+find_compatibility(ProcPidM, ProcId, RecvL, Name, Message, send) ->
+    PPid = maps:get(ProcId, ProcPidM),
+    NewPName = check_vars(PPid, ProcId, Name),
     [
-        {PName, E, NewPName, Data}
-     || {PName, E, ProcSent, Data} <- List,
+        {PName, E, ProcSent, Data}
+     || {PName, E, ProcSent, Data} <- RecvL,
         is_proc_compatible(ProcSent, NewPName),
-        is_message_compatible(Data, Message)
+        is_message_compatible(PPid, Data, Message)
     ].
 
-check_vars(PId, VarName) ->
+find_spawn_info(PId) ->
     SpInfoAll = db_manager:get_spawn_info(),
-    SpInfoP = common_fun:first(lists:filter(fun(S) -> S#spawned_proc.name =:= PId end, SpInfoAll)),
-    case SpInfoP =/= [] of
-        true ->
-            C = find_var(SpInfoP#spawned_proc.args_local, VarName),
-            case C of
-                nomatch ->
-                    VarName;
-                _ ->
-                    V = eval_l_until(SpInfoP#spawned_proc.args_called, C - 1),
-                    case V of
-                        dontknow -> VarName;
-                        V when (V#variable.type =:= pid_self) -> SpInfoP#spawned_proc.called_where
-                    end
-            end;
-        false ->
-            VarName
+    common_fun:first(lists:filter(fun(S) -> S#spawned_proc.name =:= PId end, SpInfoAll)).
+
+check_vars(ProcPid, PId, VarName) ->
+    SpInfoP = find_spawn_info(PId),
+    LVars = get_proc_local(ProcPid),
+    {Name, _} = remove_last_with_check(PId),
+    LocalVars = db_manager:get_fun_local_vars(Name),
+    L =
+        if
+            SpInfoP =:= [] ->
+                [];
+            true ->
+                convertL_in_variable(
+                    SpInfoP#spawned_proc.args_called, SpInfoP#spawned_proc.args_local
+                )
+        end,
+    SeachList = L ++ LocalVars ++ LVars,
+    io:fwrite("Find var ~p in ~p~n", [VarName, SeachList]),
+    VarValue = find_var(SeachList, VarName),
+    case VarValue of
+        nomatch ->
+            VarName;
+        V ->
+            case V#variable.type of
+                ?UNDEFINED -> VarName;
+                "pid_self" -> SpInfoP#spawned_proc.called_where;
+                pid_self -> SpInfoP#spawned_proc.called_where;
+                _ -> V#variable.type
+            end
     end.
 
-find_var(L, V) -> find_var(L, V, 1).
-find_var([], _, _) ->
+convertL_in_variable(A, B) ->
+    convertL_in_variable(A, B, []).
+convertL_in_variable({nil, _}, [], L) ->
+    L;
+convertL_in_variable({cons, _, HeadList, TailList}, [H | T], L) ->
+    {var, _, Name} = H,
+    Var = convert_in_variable(HeadList, Name),
+    AL = convertL_in_variable(TailList, T, L),
+    [Var] ++ AL;
+convertL_in_variable(_, _, _) ->
+    [].
+
+convert_in_variable(Eval, Name) ->
+    TempV = #variable{name = Name},
+    case Eval of
+        {cons, _, HeadList, TailList} ->
+            Var = convert_in_variable(HeadList, ?UNDEFINED),
+            VarT = convert_in_variable(TailList, ?UNDEFINED),
+            NewVal = [Var] ++ VarT#variable.value,
+            TempV#variable{value = NewVal};
+        %%% Evaluate Types
+        {call, _, {atom, _, self}, _} ->
+            TempV#variable{type = ltoa("pid_self")};
+        {integer, _, Val} ->
+            TempV#variable{type = integer, value = Val};
+        {float, _, Val} ->
+            TempV#variable{type = float, value = Val};
+        {string, _, Val} ->
+            TempV#variable{type = string, value = Val};
+        {atom, _, Val} ->
+            TempV#variable{type = atom, value = Val};
+        {tuple, _, TupleVal} ->
+            L = lists:foldl(
+                fun(I, A) ->
+                    V = convert_in_variable(I, ?UNDEFINED),
+                    A ++ [V]
+                end,
+                [],
+                TupleVal
+            ),
+            TempV#variable{type = tuple, value = L};
+        {nil, _} ->
+            TempV#variable{type = list, value = []};
+        _ ->
+            TempV
+    end.
+
+find_var([], _) ->
     nomatch;
-find_var([H | T], V, C) ->
-    case H of
-        {var, _, N} when N =:= V -> C;
-        _ -> find_var(T, V, C + 1)
+find_var([H | T], VarName) ->
+    Cond = H#variable.name =:= VarName,
+    case Cond of
+        true -> H;
+        false -> find_var(T, VarName)
     end.
-
-eval_l_until({nil, _}, _) ->
-    notfound;
-eval_l_until(_, C) when C < 0 -> notfound;
-eval_l_until({cons, _, V, _}, 0) ->
-    case V of
-        {call, _, {atom, _, self}, _} -> #variable{type = pid_self};
-        _ -> dontknow
-    end;
-eval_l_until({cons, _, _, T}, C) when C > 0 -> eval_l_until(T, C - 1).
 
 is_proc_compatible(PSent, PName) ->
     PSent =:= PName.
 
-is_message_compatible(PatternMatching, Message) ->
+is_message_compatible(ProcPid, PatternMatching, Message) ->
     MessageS = atol(Message),
     PatternMS = atol(PatternMatching),
     [FirstPChar | RestP] = PatternMS,
@@ -420,13 +475,33 @@ is_message_compatible(PatternMatching, Message) ->
             A = lists:enumerate(PL),
             ML = string:split(ContentM, ",", all),
             B = lists:enumerate(ML),
-            Bool = [is_message_compatible(IA, IB) || {BA, IA} <- A, {BB, IB} <- B, BA =:= BB],
+            Bool = [
+                is_message_compatible(ProcPid, IA, IB)
+             || {BA, IA} <- A, {BB, IB} <- B, BA =:= BB
+            ],
             and_rec(Bool);
         PatternMS =:= MessageS ->
             true;
+        Cond ->
+            register_var(ProcPid, PatternMatching, Message),
+            true;
         true ->
-            Cond
+            false
     end.
+
+register_var(ProcPid, Name, Type) ->
+    IsPid = string:prefix(Type, "pid_"),
+    [FC | _] = Type,
+    IsLower = is_lowercase([FC]),
+    TVal =
+        if
+            is_list(IsPid) -> ltoa(Type);
+            IsLower -> atom;
+            true -> ltoa(Type)
+        end,
+    V = #variable{name = ltoa(Name), type = TVal},
+    % io:fwrite("Added Var ~p~n", [V]),
+    add_proc_local(ProcPid, V).
 
 and_rec([]) -> true;
 and_rec([H | T]) -> H and and_rec(T).
@@ -435,6 +510,11 @@ is_uppercase(FirstChar) when
     (is_list(FirstChar)) and (length(FirstChar) =:= 1)
 ->
     (FirstChar >= "A") and (FirstChar =< "Z").
+
+is_lowercase(FirstChar) when
+    (is_list(FirstChar)) and (length(FirstChar) =:= 1)
+->
+    (FirstChar >= "a") and (FirstChar =< "z").
 
 decide_vertex(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
     StateM = Data#branch.states_m,
@@ -490,14 +570,16 @@ get_proc_from_label(S) -> lists:reverse(lists:nth(1, string:split(lists:reverse(
 % stop all the processes
 stop_processes(ProcMap) -> maps:foreach(fun(_K, V) -> V ! stop end, ProcMap).
 
-atol(A) when not is_atom(A) -> A;
-atol(A) -> atom_to_list(A).
-ltoa(L) when not is_list(L) -> L;
-ltoa(L) -> list_to_atom(L).
+atol(A) when is_list(A) -> A;
+atol(A) when is_atom(A) -> atom_to_list(A).
+ltoa(L) when is_atom(L) -> L;
+ltoa(L) when is_list(L) -> list_to_atom(L).
 
 get_proc_edges(P) -> send_recv(P, {self(), get_edges}).
 get_proc_out_degree(P) -> send_recv(P, {self(), get_out_degree}).
 get_proc_edge_info(P, E) -> send_recv(P, {self(), get_edge_info, E}).
+get_proc_local(P) -> send_recv(P, {self(), get_local_vars}).
+add_proc_local(P, V) -> P ! {add_local_var, V}.
 get_proc_data(P) -> send_recv(P, {self(), get_data}).
 set_proc_data(P, Data) -> P ! {set_data, Data}.
 
@@ -508,8 +590,8 @@ send_recv(P, Data) ->
     end.
 
 proc_loop(ProcName, VCurrent) ->
-    proc_loop(ProcName, VCurrent, [], []).
-proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE) ->
+    proc_loop(ProcName, VCurrent, [], [], []).
+proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE, LocalVars) ->
     G = db_manager:get_fun_graph(ProcName),
     % timer:sleep(200),
     receive
@@ -517,29 +599,34 @@ proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE) ->
             IsAlreadyMarkedOnce = lists:member(E, FirstMarkedE),
             case digraph:edge(G, E) of
                 {E, VCurrent, VNew, _} when IsAlreadyMarkedOnce ->
-                    proc_loop(ProcName, VNew, FirstMarkedE, SecondMarkedE ++ [E]);
+                    proc_loop(ProcName, VNew, FirstMarkedE, SecondMarkedE ++ [E], LocalVars);
                 {E, VCurrent, VNew, _} ->
-                    proc_loop(ProcName, VNew, FirstMarkedE ++ [E], SecondMarkedE);
+                    proc_loop(ProcName, VNew, FirstMarkedE ++ [E], SecondMarkedE, LocalVars);
                 _ ->
                     % io:fwrite("V ~p edge ~p non trovato in ~p~n", [VCurrent, E, ProcName]),
-                    proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE)
+                    proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE, LocalVars)
             end;
         {P, get_edges} ->
             EL = digraph:out_edges(G, VCurrent),
             ERet = filter_marked_edges(EL, SecondMarkedE),
             P ! {ERet},
-            proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE);
+            proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE, LocalVars);
         {P, get_out_degree} ->
             P ! {digraph:out_degree(G, VCurrent)},
-            proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE);
+            proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE, LocalVars);
         {P, get_edge_info, E} ->
             P ! {digraph:edge(G, E)},
-            proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE);
+            proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE, LocalVars);
         {P, get_data} ->
             P ! {{VCurrent, FirstMarkedE, SecondMarkedE}},
-            proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE);
+            proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE, LocalVars);
         {set_data, {V, FE, SE}} ->
-            proc_loop(ProcName, V, FE, SE);
+            proc_loop(ProcName, V, FE, SE, LocalVars);
+        {P, get_local_vars} ->
+            P ! {LocalVars},
+            proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE, LocalVars);
+        {add_local_var, V} ->
+            proc_loop(ProcName, VCurrent, FirstMarkedE, SecondMarkedE, LocalVars ++ [V]);
         stop ->
             ok
     end.

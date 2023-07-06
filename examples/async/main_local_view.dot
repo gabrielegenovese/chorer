@@ -6,6 +6,6 @@ digraph main {
 	n_2 [id="2", shape=circle, label="2"];
 	n_3 [id="3", shape=doublecircle, label="3"];
 
-	n_2 -> n_3 [id="[$e|1]", label="receive {_,Msg}"];
-	n_1 -> n_2 [id="[$e|3]", label="spawn dummy0"];
+	n_1 -> n_2 [id="[$e|1]", label="spawn dummy10"];
+	n_2 -> n_3 [id="[$e|0]", label="spawn dummy20"];
 }

@@ -1,32 +1,32 @@
 -module(simple).
--export([start/0, tack_loop/0, tick_loop/0]).
+-export([start/0, tac_loop/0, tic_loop/0]).
 
 start() ->
     spawn_process(),
-    tickl ! tack. % inizia il loop
+    ticl ! tac. % inizia il loop
 
 spawn_process() ->
-    Tack = spawn(?MODULE, tack_loop, []),
-    register(tackl, Tack), % registro il pid nell'atom tackl
-    TLoop = spawn(?MODULE, tick_loop, []),
-    register(tickl, TLoop).
+    TacPid = spawn(?MODULE, tac_loop, []),
+    register(tacl, TacPid), % registro il pid nell'atom tacl
+    TicPid = spawn(?MODULE, tic_loop, []),
+    register(ticl, TicPid).
     
-tack_loop() ->
+tac_loop() ->
     receive
-        tick ->
-            tickl ! tack,
-            tack_loop();
+        tic ->
+            ticl ! tac,
+            tac_loop();
         stop ->
-            tickl ! stop,
-            io:fwrite("Process tack_loop ended~n")
+            ticl ! stop,
+            io:fwrite("Process tac_loop ended~n")
     end.
 
-tick_loop() ->
+tic_loop() ->
     receive
-        tack ->
-            tackl ! tick,
-            tick_loop();
+        tac ->
+            tacl ! tic,
+            tic_loop();
         stop ->
-            tackl ! stop,
-            io:fwrite("Process tick_loop ended~n")
+            tacl ! stop,
+            io:fwrite("Process tic_loop ended~n")
     end.
