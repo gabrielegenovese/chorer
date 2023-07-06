@@ -2,19 +2,19 @@
 -export([main/0, dummy1/0, dummy2/0]).
 
 dummy1() ->
-    dd ! ciao,
+    d2 ! ciao,
     receive
         ciao -> done
     end.
 
 dummy2() ->
-    db ! ciao,
+    d1 ! ciao,
     receive
         ciao -> done
     end.
 
 main() ->
-    A = spawn(?MODULE, dummy1, [1]),
-    register(dd, A),
-    B = spawn(?MODULE, dummy2, [1]),
-    register(db, B).
+    A = spawn(?MODULE, dummy1, []),
+    register(d1, A),
+    B = spawn(?MODULE, dummy2, []),
+    register(d2, B).
