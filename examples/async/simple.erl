@@ -2,7 +2,7 @@
 -export([main/0, dummy1/0, dummy2/0]).
 
 dummy1() ->
-    d2 ! ciao,
+    d2 ! bello,
     receive
         ciao -> done
     end.
@@ -10,7 +10,7 @@ dummy1() ->
 dummy2() ->
     d1 ! ciao,
     receive
-        ciao -> done
+        bello -> done
     end.
 
 main() ->

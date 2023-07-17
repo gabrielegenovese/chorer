@@ -9,7 +9,7 @@
 %%%===================================================================
 
 %%% Generate a local view for each actor
-generate(OutputDir,Options) ->
+generate(OutputDir, Options) ->
     ActorList = db_manager:get_actors(),
     %%% For each actor, create and save the local view
     lists:foreach(
@@ -219,6 +219,8 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         {nil, _} ->
             {#variable{type = list, value = []}, VLast, LocalVarL};
         _ ->
+            %%% TODO Mettere warning
+            io:fwrite("WARNING: couldn't parse code line ~p~n", [CodeLine]),
             AccData
     end.
 
