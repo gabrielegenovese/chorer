@@ -1,5 +1,5 @@
 -module(metadata).
--include("../common/common_data.hrl").
+-include("../share/common_data.hrl").
 
 %%% API
 -export([extract/2]).

@@ -1,5 +1,5 @@
 %%%-------------------------------------------------------------------
-%%% Base source from:
+%%% Module based from:
 %%%     https://github.com/jkrukoff/digraph_export/blob/master/src/digraph_export_dot.erl
 %%%
 %%% Features added:

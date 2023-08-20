@@ -1,5 +1,5 @@
 -module(chorer_app).
--include("common/common_data.hrl").
+-include("share/common_data.hrl").
 
 %%% API
 -export([generate/2, generate/3, generate/4]).

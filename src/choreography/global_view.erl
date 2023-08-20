@@ -1,5 +1,5 @@
 -module(global_view).
--include("../common/common_data.hrl").
+-include("../share/common_data.hrl").
 
 %%% API
 -export([generate/2, proc_loop/2]).
@@ -24,8 +24,6 @@ generate(OutputDir, EntryPoint) ->
 generate_global(EntryPoint, Dir) ->
     Gr = create_globalview(EntryPoint),
     % MG = fsa:minimize(Gr),
-    %%% buffo doppio minimize perche' uno solo non funziona
-    % MG1 = fsa:minimize(MG),
     common_fun:save_graph_to_file(Gr, Dir, atol(EntryPoint), global).
 
 create_globalview(Name) ->

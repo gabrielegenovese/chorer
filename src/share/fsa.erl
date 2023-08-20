@@ -75,20 +75,20 @@ subset_construction(NFA, StateS, TransS, MarkedS) ->
         true ->
             {StateS, TransS};
         false ->
-            NewM = sets:add_element(NotMarkedS, MarkedS),
+            NewMarkedList = sets:add_element(NotMarkedS, MarkedS),
             {NewS, NewT} = sets:fold(
                 fun(VElem, Data) ->
                     EOL = digraph:out_edges(NFA, VElem),
                     LFoldlFun = fun(E, AData) ->
                         {S, T} = AData,
-                        {_, _, V, L} = digraph:edge(NFA, E),
-                        case L of
+                        {_, _, V, Label} = digraph:edge(NFA, E),
+                        case Label of
                             'ɛ' ->
                                 AData;
                             _ ->
                                 R = eps_clos(NFA, [V]),
                                 Cond = sets:is_element(R, S),
-                                NeoT = sets:add_element({NotMarkedS, R, L}, T),
+                                NeoT = sets:add_element({NotMarkedS, R, Label}, T),
                                 case Cond of
                                     true -> {S, NeoT};
                                     false -> {sets:add_element(R, S), NeoT}
@@ -100,7 +100,7 @@ subset_construction(NFA, StateS, TransS, MarkedS) ->
                 {StateS, TransS},
                 NotMarkedS
             ),
-            subset_construction(NFA, NewS, NewT, NewM)
+            subset_construction(NFA, NewS, NewT, NewMarkedList)
     end.
 
 %%% Convert a list of DFA state in a given DFA graph:
@@ -113,12 +113,11 @@ convert_statel_to_graph(NFA, DFA, FirstDFAState, DFAStateL) ->
                 AccM;
             false ->
                 DFAVertex = common_fun:add_vertex(DFA),
-                NewM = maps:put(DFAState, DFAVertex, AccM),
                 case is_final_state(NFA, sets:to_list(DFAState)) of
                     true -> set_as_final(DFA, DFAVertex);
                     false -> ?UNDEFINED
                 end,
-                NewM
+                maps:put(DFAState, DFAVertex, AccM)
         end
     end,
     sets:fold(FoldFun, RetM, DFAStateL).
@@ -150,16 +149,17 @@ remove_unreachable(G) ->
     ].
 
 %%% DFA minimization: given a graph G, this function will remove non-distinguishable states
+%%% using the Table Filling at Scale Algorithm
 remove_nondistinguishable(G) ->
-    Table = init_table(G),
-    NewT = distingue_final(G, Table),
-    M = loop_nondi(G, NewT, 0),
+    Table = init_scale_table(G),
+    InitMarkedStates = distinguish_final(G, Table),
+    FinalMarkedStatesMap = find_nondistinguishable(G, InitMarkedStates, 0),
     ForEachFun = fun(K, V) ->
         case V of
             true ->
                 done;
             false ->
-                {V1, V2} = get_both(K),
+                {V1, V2} = get_both_states(K),
                 {VD, VnD} =
                     case V1 > V2 of
                         true -> {V1, V2};
@@ -169,24 +169,22 @@ remove_nondistinguishable(G) ->
                 lists:foreach(
                     fun(E) ->
                         case digraph:edge(G, E) of
-                            false ->
-                                ?UNDEFINED;
-                            {E, VI, VD, L} ->
-                                digraph:add_edge(G, VI, VnD, L),
-                                digraph:del_vertex(G, VD)
+                            false -> ?UNDEFINED;
+                            {E, VI, VD, L} -> digraph:add_edge(G, VI, VnD, L)
                         end
                     end,
                     Ei
-                )
+                ),
+                digraph:del_vertex(G, VD)
         end
     end,
-    maps:foreach(ForEachFun, M).
+    maps:foreach(ForEachFun, FinalMarkedStatesMap).
 
-loop_nondi(G, M, Jump) ->
+find_nondistinguishable(G, M, Jump) ->
     {OpDone, NewL} = maps:fold(
         fun(StateCouple, IsMarked, A) ->
             {_, UpdatedM} = A,
-            {S1, S2} = get_both(StateCouple),
+            {S1, S2} = get_both_states(StateCouple),
             case IsMarked of
                 true ->
                     A;
@@ -202,7 +200,7 @@ loop_nondi(G, M, Jump) ->
         M
     ),
     case OpDone of
-        true -> loop_nondi(G, NewL, Jump + 1);
+        true -> find_nondistinguishable(G, NewL, Jump + 1);
         false -> M
     end.
 
@@ -266,29 +264,30 @@ get_all_labels(G, V) ->
         )
     ).
 
-init_table(G) ->
-    VL = digraph:vertices(G),
+init_scale_table(Graph) ->
+    VertexList = digraph:vertices(Graph),
+    %% double convertion to remove equals couples
     stol(
         sfroml([
             sets:add_element(V1, sets:add_element(V2, sets:new()))
-         || V1 <- VL, V2 <- VL, V1 =/= V2
+         || V1 <- VertexList, V2 <- VertexList, V1 =/= V2
         ])
     ).
 
-distingue_final(G, Table) ->
+distinguish_final(G, Table) ->
     lists:foldl(
         fun(I, Acc) ->
-            {H, T} = get_both(I),
+            {H, T} = get_both_states(I),
             IsHF = is_final_state(G, H),
             IsTF = is_final_state(G, T),
-            NewM = ((not IsHF and IsTF) or (IsHF and not IsTF)),
-            maps:merge(Acc, #{I => NewM})
+            IMark = ((not IsHF and IsTF) or (IsHF and not IsTF)),
+            maps:merge(Acc, #{I => IMark})
         end,
         #{},
         Table
     ).
 
-get_both(S) ->
+get_both_states(S) ->
     L = stol(S),
     [H | [T | _]] = L,
     {H, T}.

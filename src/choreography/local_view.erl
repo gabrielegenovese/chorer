@@ -1,5 +1,5 @@
 -module(local_view).
--include("../common/common_data.hrl").
+-include("../share/common_data.hrl").
 
 %%% API
 -export([generate/2]).
@@ -218,6 +218,12 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
             {#variable{type = tuple, value = L}, VLast, LocalVarL};
         {nil, _} ->
             {#variable{type = list, value = []}, VLast, LocalVarL};
+        {var, _, VarName} ->
+            VarF = find_var(LocalVarL, VarName),
+            case VarF of
+                not_found -> {#variable{name = VarName}, VLast, LocalVarL};
+                _ -> {VarF, VLast, LocalVarL}
+            end;
         _ ->
             %%% TODO Mettere warning
             io:fwrite("WARNING: couldn't parse code line ~p~n", [CodeLine]),

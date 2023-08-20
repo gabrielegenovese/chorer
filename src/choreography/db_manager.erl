@@ -1,5 +1,5 @@
 -module(db_manager).
--include("../common/common_data.hrl").
+-include("../share/common_data.hrl").
 
 %%% Api
 -export([
