@@ -1,7 +1,0 @@
-digraph super_dummy {
-	rankdir="LR";
-	n_0 [label="super_dummy", shape="plaintext"];
-	n_1 [id="1", shape=circle, label="1"];
-	n_0 -> n_1 [arrowhead=none];
-
-}

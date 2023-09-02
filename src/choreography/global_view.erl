@@ -74,9 +74,9 @@ progress_proc(GlobalGraph, BranchList) when is_list(BranchList) ->
     progress_proc(GlobalGraph, NewBL).
 
 progress_single_branch(BData) ->
-    {TempBranchData, NewBranchList1} = maps:fold(
+    {TempBranchData, NewBranchList1, OpDone1} = maps:fold(
         fun(Name, Pid, AccData) -> eval_proc_until_recv(Name, Pid, AccData) end,
-        {BData, []},
+        {BData, [], false},
         BData#branch.proc_pid_m
     ),
     RetL = maps:fold(
@@ -117,11 +117,15 @@ progress_single_branch(BData) ->
         TempBranchData#branch.proc_pid_m
     ),
     case RetL =:= [] of
-        true -> done;
-        false -> done
-    end,
-    stop_processes(TempBranchData#branch.proc_pid_m),
-    RetL.
+        true ->
+            case OpDone1 of
+                true -> progress_single_branch(TempBranchData);
+                false -> []
+            end;
+        false ->
+            stop_processes(TempBranchData#branch.proc_pid_m),
+            RetL
+    end.
 
 dup_branch(Data) ->
     Data#branch{proc_pid_m = duplicate_proccess(Data#branch.proc_pid_m)}.
@@ -147,7 +151,7 @@ remove_last_with_check(ProcId) ->
 
 eval_proc_until_recv(ProcName, ProcPid, AccData) ->
     ProcOD = get_proc_out_degree(ProcPid),
-    {Data, NBL} = AccData,
+    {Data, NBL, Bool} = AccData,
     {NewData, NL, OpDone} =
         if
             %%% TODO: verify this -> No out edges equals to final state?
@@ -161,8 +165,8 @@ eval_proc_until_recv(ProcName, ProcPid, AccData) ->
                 {Data, [], false}
         end,
     case OpDone of
-        false -> {NewData, NBL};
-        true -> eval_proc_until_recv(ProcName, ProcPid, {NewData, NBL ++ NL})
+        false -> {NewData, NBL, Bool};
+        true -> eval_proc_until_recv(ProcName, ProcPid, {NewData, NBL ++ NL, true})
     end.
 
 is_lists_edgerecv(ProcPid, EL) ->
@@ -208,7 +212,7 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
 add_spawn_to_global(SLabel, ProcName, Data) ->
     CompleteProcNameS = string:prefix(SLabel, "spawn "),
     {FuncName, _ProcNumber} = remove_last(CompleteProcNameS),
-    FuncPid = spawn(?MODULE, proc_loop, [#proc_info{proc_id = FuncName}]),
+    FuncPid = spawn(?MODULE, proc_loop, [#proc_info{proc_id = ltoa(FuncName)}]),
     NewMap = maps:put(ltoa(CompleteProcNameS), FuncPid, Data#branch.proc_pid_m),
     VNew = common_fun:add_vertex(Data#branch.graph),
     %%% Δ means spawned
@@ -261,8 +265,8 @@ manage_recv(ProcPid, Message) ->
                         true ->
                             {B, Ret};
                         false ->
-                            {E, _, _, EInfo} = get_proc_edge_info(ProcPid, E),
-                            IsIt = is_message_compatible(ProcPid, From, EInfo, Message),
+                            {E, _, _, ELabel} = get_proc_edge_info(ProcPid, E),
+                            IsIt = is_message_compatible(ProcPid, From, ELabel, Message),
                             case IsIt of
                                 true -> {true, E};
                                 false -> {B, Ret}
@@ -371,7 +375,7 @@ find_var([H | T], VarName) ->
     end.
 
 is_message_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
-    {B, R} = check_mess_comp(ProcPid, CallingProc, PatternMatching, Message),
+    {B, R} = check_mess_comp(ProcPid, CallingProc, PatternMatching, Message#message.data),
     case B of
         true ->
             lists:foreach(
@@ -387,11 +391,10 @@ is_message_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
     B.
 
 check_mess_comp(ProcPid, CallingProc, PatternMatching, Message) ->
-    MessData = Message#message.data,
-    MessageS = atol(MessData),
-    PatternMS = atol(PatternMatching),
-    TempPattern = lists:flatten(string:replace(PatternMS, "receive ", "")),
-    [FirstPChar | RestP] = TempPattern,
+    MessageS = atol(Message),
+    TempPattern = atol(PatternMatching),
+    PatternMS = lists:flatten(string:replace(TempPattern, "receive ", "")),
+    [FirstPChar | RestP] = PatternMS,
     [FirstMChar | RestM] = MessageS,
     IsFirstCharUpperCase = is_uppercase([FirstPChar]),
     if
@@ -399,7 +402,6 @@ check_mess_comp(ProcPid, CallingProc, PatternMatching, Message) ->
         [FirstPChar] =:= "_" ->
             {true, []};
         ([FirstPChar] =:= "{") and ([FirstMChar] =:= "{") ->
-            io:fwrite("[MessComp] PM ~p Mess ~p~n", [PatternMatching, Message]),
             {ContentP, _} = remove_last(RestP),
             {ContentM, _} = remove_last(RestM),
             PL = string:split(ContentP, ",", all),
@@ -412,10 +414,7 @@ check_mess_comp(ProcPid, CallingProc, PatternMatching, Message) ->
             ],
             and_rec(BoolList);
         IsFirstCharUpperCase ->
-            io:fwrite("[UPPER] PM ~p Mess ~p true ~p~n", [
-                PatternMatching, Message, IsFirstCharUpperCase
-            ]),
-            {true, [{ProcPid, CallingProc, ltoa(TempPattern), MessData}]};
+            {true, [{ProcPid, CallingProc, ltoa(PatternMS), Message}]};
         PatternMS =:= MessageS ->
             {true, []};
         true ->
