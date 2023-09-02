@@ -34,8 +34,8 @@ generate(OutputDir, EntryPoint) ->
 
 generate_global(EntryPoint, Dir) ->
     Gr = create_globalview(EntryPoint),
-    % MG = fsa:minimize(Gr),
-    common_fun:save_graph_to_file(Gr, Dir, atol(EntryPoint), global).
+    MG = fsa:minimize(Gr),
+    common_fun:save_graph_to_file(MG, Dir, atol(EntryPoint), global).
 
 create_globalview(Name) ->
     RetG = digraph:new(),
@@ -74,58 +74,62 @@ progress_proc(GlobalGraph, BranchList) when is_list(BranchList) ->
     progress_proc(GlobalGraph, NewBL).
 
 progress_single_branch(BData) ->
-    {TempBranchData, NewBranchList1, OpDone1} = maps:fold(
+    {TempBranchData, TempBranchList, OpDone} = maps:fold(
         fun(Name, Pid, AccData) -> eval_proc_until_recv(Name, Pid, AccData) end,
         {BData, [], false},
         BData#branch.proc_pid_m
     ),
-    RetL = maps:fold(
-        fun(Name, Pid, AL) ->
+    TempProcPidMap = TempBranchData#branch.proc_pid_m,
+    NewBranchList = maps:fold(
+        fun(Name, Pid, AccList) ->
             MessageQueue = get_proc_mess_queue(Pid),
-            lists:foldl(
-                fun(Message, ALL) ->
-                    MessFrom = Message#message.from,
-                    PidFrom = maps:get(MessFrom, TempBranchData#branch.proc_pid_m),
-                    MessData = Message#message.data,
-                    {Done, E} = manage_recv(Pid, Message),
-                    ALL ++
-                        case Done of
-                            true ->
-                                DupData = dup_branch(TempBranchData),
-                                NewPid = maps:get(Name, DupData#branch.proc_pid_m),
-                                Label = atol(MessFrom) ++ "→" ++ atol(Name) ++ ":" ++ MessData,
-                                {VNA, NewSMap} = decide_vertex(
-                                    MessFrom,
-                                    get_proc_edge_info(PidFrom, Message#message.edge),
-                                    Name,
-                                    get_proc_edge_info(NewPid, E),
-                                    DupData,
-                                    Label
-                                ),
-                                NewPid ! {use_transition, E},
-                                del_proc_mess_queue(NewPid, Message),
-                                [DupData#branch{last_vertex = VNA, states_m = NewSMap}];
-                            false ->
-                                []
-                        end
-                end,
-                AL,
-                MessageQueue
-            )
+            gen_branch_foreach_mess(TempBranchData, MessageQueue, Name, Pid, AccList)
         end,
-        NewBranchList1,
-        TempBranchData#branch.proc_pid_m
+        TempBranchList,
+        TempProcPidMap
     ),
-    case RetL =:= [] of
+    case NewBranchList =:= [] of
         true ->
-            case OpDone1 of
+            case OpDone of
                 true -> progress_single_branch(TempBranchData);
                 false -> []
             end;
         false ->
-            stop_processes(TempBranchData#branch.proc_pid_m),
-            RetL
+            stop_processes(TempProcPidMap),
+            NewBranchList
     end.
+
+gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, ProcPid, BaseList) ->
+    lists:foldl(
+        fun(Message, ALL) ->
+            ProcFrom = Message#message.from,
+            MessData = Message#message.data,
+            {Done, E} = manage_recv(ProcPid, Message),
+            ALL ++
+                case Done of
+                    true ->
+                        DupData = dup_branch(BranchData),
+                        NewPid = maps:get(ProcName, DupData#branch.proc_pid_m),
+                        PidFrom = maps:get(ProcFrom, DupData#branch.proc_pid_m),
+                        Label = atol(ProcFrom) ++ "→" ++ atol(ProcName) ++ ":" ++ atol(MessData),
+                        {LastUsedVertex, NewStateMap} = add_vertex_to_graph(
+                            ProcFrom,
+                            get_proc_edge_info(PidFrom, Message#message.edge),
+                            ProcName,
+                            get_proc_edge_info(NewPid, E),
+                            DupData,
+                            Label
+                        ),
+                        NewPid ! {use_transition, E},
+                        del_proc_mess_queue(NewPid, Message),
+                        [DupData#branch{last_vertex = LastUsedVertex, states_m = NewStateMap}];
+                    false ->
+                        []
+                end
+        end,
+        BaseList,
+        MessageQueue
+    ).
 
 dup_branch(Data) ->
     Data#branch{proc_pid_m = duplicate_proccess(Data#branch.proc_pid_m)}.
@@ -159,8 +163,13 @@ eval_proc_until_recv(ProcName, ProcPid, AccData) ->
                 {Data, [], false};
             ProcOD =:= 1 ->
                 EToEval = choose_edge(ProcPid),
-                {D, O} = eval_edge(EToEval, ProcName, ProcPid, Data),
-                {D, [], O};
+                case EToEval of
+                    false ->
+                        {Data, [], false};
+                    E ->
+                        {D, O} = eval_edge(E, ProcName, ProcPid, Data),
+                        {D, [], O}
+                end;
             true ->
                 {Data, [], false}
         end,
@@ -183,7 +192,6 @@ is_lists_edgerecv(ProcPid, EL) ->
 
 choose_edge(ProcPid) ->
     EL = get_proc_edges(ProcPid),
-    %%% pick an edge
     E = common_fun:first(EL),
     get_proc_edge_info(ProcPid, E).
 
@@ -239,6 +247,7 @@ manage_send(SLabel, Data, ProcName, Edge) ->
 
 manage_recv(ProcPid, Message) ->
     EL = get_proc_edges(ProcPid),
+    %%% TODO: trovare il modo di valutare in ordine i rami del receive (in quanto è molto rilevante nell'esecuzione)
     IsRecv = is_lists_edgerecv(ProcPid, EL),
     From = Message#message.from,
     case IsRecv of
@@ -298,7 +307,7 @@ check_vars(ProcName, ProcPid, VarName) ->
                 )
         end,
     SeachList = L ++ LocalVars ++ LVars,
-    io:fwrite("Find var ~p in ~p~n", [VarName, SeachList]),
+    io:fwrite("Find var ~p in ~p from ~p~n", [VarName, SeachList, ProcName]),
     VarValue = find_var(SeachList, VarName),
     case VarValue of
         nomatch ->
@@ -310,9 +319,12 @@ check_vars(ProcName, ProcPid, VarName) ->
                 self -> SpInfoP#spawned_proc.called_where;
                 "pid_self" -> SpInfoP#spawned_proc.called_where;
                 pid_self -> SpInfoP#spawned_proc.called_where;
-                _ -> V#variable.type
+                _ -> remove_pid_part(V#variable.type)
             end
     end.
+
+remove_pid_part(Data) ->
+    ltoa(lists:flatten(string:replace(atol(Data), "pid_", ""))).
 
 find_spawn_info(PId) ->
     SpInfoAll = db_manager:get_spawn_info(),
@@ -392,15 +404,12 @@ is_message_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
 
 check_mess_comp(ProcPid, CallingProc, PatternMatching, Message) ->
     MessageS = atol(Message),
-    TempPattern = atol(PatternMatching),
-    PatternMS = lists:flatten(string:replace(TempPattern, "receive ", "")),
+    PatternMS = lists:flatten(string:replace(atol(PatternMatching), "receive ", "")),
     [FirstPChar | RestP] = PatternMS,
     [FirstMChar | RestM] = MessageS,
     IsFirstCharUpperCase = is_uppercase([FirstPChar]),
     if
         %%% hierarchy
-        [FirstPChar] =:= "_" ->
-            {true, []};
         ([FirstPChar] =:= "{") and ([FirstMChar] =:= "{") ->
             {ContentP, _} = remove_last(RestP),
             {ContentM, _} = remove_last(RestM),
@@ -413,9 +422,11 @@ check_mess_comp(ProcPid, CallingProc, PatternMatching, Message) ->
              || {BA, IA} <- A, {BB, IB} <- B, BA =:= BB
             ],
             and_rec(BoolList);
-        IsFirstCharUpperCase ->
-            {true, [{ProcPid, CallingProc, ltoa(PatternMS), Message}]};
         PatternMS =:= MessageS ->
+            {true, []};
+        IsFirstCharUpperCase ->
+            {true, [{ProcPid, CallingProc, ltoa(PatternMS), check_pid_self(Message, CallingProc)}]};
+        [FirstPChar] =:= "_" ->
             {true, []};
         true ->
             {false, []}
@@ -436,9 +447,9 @@ register_var(ProcPid, ProcName, Name, Type) ->
     io:fwrite("Added Var ~p~n", [V]),
     add_proc_localvars(ProcPid, V).
 
-% check_pid_self(Data, ProcId) ->
-%     io:fwrite("[C]Data ~p proc id ~p~n", [Data, ProcId]),
-%     lists:flatten(string:replace(atol(Data), "pid_self", "pid_" ++ atol(ProcId))).
+check_pid_self(Data, ProcId) ->
+    io:fwrite("[C]Data ~p proc id ~p~n", [Data, ProcId]),
+    lists:flatten(string:replace(atol(Data), "pid_self", "pid_" ++ atol(ProcId))).
 
 and_rec([]) ->
     {true, []};
@@ -461,7 +472,7 @@ is_lowercase(Char) when
 ->
     (Char >= "a") and (Char =< "z").
 
-decide_vertex(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
+add_vertex_to_graph(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
     StateM = Data#branch.states_m,
     VLast = Data#branch.last_vertex,
     G = Data#branch.graph,
@@ -495,10 +506,29 @@ decide_vertex(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
                             {VAdded, NewM}
                     end;
                 _ ->
-                    digraph:add_edge(G, VLast, Vsecond, Label),
-                    {Vsecond, StateM}
+                    EL = digraph:out_edges(G, VLast),
+                    {AlreadyExist, VCase} = lists:foldl(
+                        fun(E, A) ->
+                            {E, VLast, VTo, VLabel} = digraph:edge(G, E),
+                            case VLabel =:= Label of
+                                true -> {true, VTo};
+                                false -> A
+                            end
+                        end,
+                        {false, VLast},
+                        EL
+                    ),
+                    case AlreadyExist of
+                        true ->
+                            {VCase, StateM};
+                        false ->
+                            digraph:add_edge(G, VLast, Vsecond, Label),
+                            NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
+                            {Vsecond, NewM}
+                    end
             end;
         _ ->
+            io:fwrite("[ADD]First defined!!~n"),
             digraph:add_edge(G, VLast, Vfirst, Label),
             {Vfirst, StateM}
     end.

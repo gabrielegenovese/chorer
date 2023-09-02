@@ -1,12 +1,14 @@
 digraph tac_loop {
 	rankdir="LR";
 	n_0 [label="tac_loop", shape="plaintext"];
-	n_1 [id="1", shape=circle, label="1"];
-	n_0 -> n_1 [arrowhead=none];
-	n_2 [id="2", shape=circle, label="2"];
-	n_3 [id="4", shape=doublecircle, label="4"];
+	n_1 [id="5", shape=circle, label="5"];
+	n_2 [id="1", shape=circle, label="1"];
+	n_0 -> n_2 [arrowhead=none];
+	n_3 [id="2", shape=circle, label="2"];
+	n_4 [id="3", shape=doublecircle, label="3"];
 
-	n_1 -> n_3 [id="[$e|2]", label="receive stop"];
-	n_1 -> n_2 [id="[$e|1]", label="receive tic"];
-	n_2 -> n_1 [id="[$e|5]", label="send tac to tic_loop0"];
+	n_2 -> n_3 [id="[$e|2]", label="receive tic"];
+	n_1 -> n_4 [id="[$e|0]", label="send stop to tic_loop0"];
+	n_3 -> n_2 [id="[$e|6]", label="send tac to tic_loop0"];
+	n_2 -> n_1 [id="[$e|3]", label="receive stop"];
 }

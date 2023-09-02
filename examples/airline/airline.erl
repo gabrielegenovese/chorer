@@ -23,7 +23,5 @@ agent(Pid3, NAg) ->
             Pid3 ! {sell, self()},
             receive
                 {booked, _} -> agent(Pid3, NAg)
-            end;
-        _ ->
-            io:format("Agent~p done!~n", [NAg])
+            end
     end.
