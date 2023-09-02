@@ -3,7 +3,6 @@
 
 main() ->
     spawn(?MODULE, agent, [self(), 1]),
-    spawn(?MODULE, agent, [self(), 2]),
     seats(3).
 
 seats(Num) ->

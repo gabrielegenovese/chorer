@@ -173,6 +173,8 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
                 "send " ++ DataSent ++ " to " ++
                     case VarFound of
                         nomatch -> atol(VarName);
+                        self -> atol(FunName);
+                        "self" -> atol(FunName);
                         V -> atol(V)
                     end,
             digraph:add_edge(G, VLast, VNew, SLabel),
@@ -186,6 +188,8 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
                 "send " ++ DataSent ++ " to " ++
                     case Proc of
                         nomatch -> atol(AtomName);
+                        self -> atol(FunName);
+                        "self" -> atol(FunName);
                         P -> atol(P)
                     end,
             VNew = common_fun:add_vertex(G),
@@ -219,6 +223,8 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         {nil, _} ->
             {#variable{type = list, value = []}, VLast, LocalVarL};
         {var, _, VarName} ->
+            %%% todo:find var in argument vars
+            % ArgL = db_manager:get_fun_args(FunName),
             VarF = find_var(LocalVarL, VarName),
             case VarF of
                 not_found -> {#variable{name = VarName}, VLast, LocalVarL};
