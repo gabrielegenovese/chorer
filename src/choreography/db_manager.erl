@@ -27,11 +27,12 @@
     add_fun_local_vars/2
 ]).
 
--record(loop_data, {
-    common = #{register_list => []}, func_data_m = #{}, func_arg_m = #{}
+%%% Database Manager Info Record
+-record(db_info, {
+    common_m = #{register_list => []}, func_data_m = #{}, func_arg_m = #{}
 }).
 
-%%% Function data structure for the map
+%%% Function Data Structure
 -record(func_data, {
     is_actor = false,
     ast = no_ast_found,
@@ -44,8 +45,8 @@
 %%% API
 %%%===================================================================
 
-%%% init data
-loop() -> loop(#loop_data{}).
+%%% init db data
+loop() -> loop(#db_info{}).
 
 %%%===================================================================
 %%% API to interract with the dbmanager
@@ -59,7 +60,7 @@ get_actors() -> get_from_db({self(), get_actor_list}).
 get_fun_ast(Key) -> get_from_db({self(), get_fun_ast, Key}).
 get_fun_graph(Key) -> get_from_db({self(), get_fun_graph, Key}).
 get_reg_entry() -> get_from_db({self(), get_register_list}).
-get_fun_args(K) -> get_from_db({self(), get_fun_arg, K}).
+get_fun_args(Key) -> get_from_db({self(), get_fun_arg, Key}).
 get_spawn_info() -> get_from_db({self(), get_spawn_info}).
 get_func_arg_map() -> get_from_db({self(), get_func_args_map}).
 get_fun_local_vars(Key) -> get_from_db({self(), get_local_vars, Key}).
@@ -69,14 +70,14 @@ inc_spawn_counter(Key) -> get_from_db({self(), inc_spawned_counter, Key}).
 reset_spawn_counter() -> send_to_db({reset_spawned_counter}).
 
 %%% Setters
-send_spawn_info(L) -> send_to_db({set_spawn_info, L}).
-send_fun_graph(Key, G) -> send_to_db({set_fun_graph, Key, G}).
+send_spawn_info(Data) -> send_to_db({set_spawn_info, Data}).
+send_fun_graph(Key, Graph) -> send_to_db({set_fun_graph, Key, Graph}).
 send_fun_ast(Key, Ast) -> send_to_db({set_fun_ast, Key, Ast}).
 send_actor_list(L) -> send_to_db({set_actor_list, L}).
-send_ast(AST) -> send_to_db({set_ast, AST}).
+send_ast(Ast) -> send_to_db({set_ast, Ast}).
 add_reg_entry(L) -> send_to_db({add_to_register_list, L}).
 add_fun_arg(Key, Args) -> send_to_db({add_fun_args, Key, Args}).
-add_fun_local_vars(Key, L) -> send_to_db({add_local_vars, Key, L}).
+add_fun_local_vars(Key, Data) -> send_to_db({add_local_vars, Key, Data}).
 
 %%%===================================================================
 %%% Internal Functions
@@ -87,20 +88,17 @@ get_from_db(Data) ->
     send_to_db(Data),
     recv().
 
-%%% Send data to the db menager
-send_to_db(Data) ->
-    ?DBMANAGER ! Data.
+send_to_db(Data) -> ?DBMANAGER ! Data.
 
-%%% Receive data from the db menager
 recv() ->
     receive
-        {D} -> D
+        {Data} -> Data
     end.
 
 loop(Data) ->
-    CommonMap = Data#loop_data.common,
-    FuncDataM = Data#loop_data.func_data_m,
-    FuncArgM = Data#loop_data.func_arg_m,
+    CommonMap = Data#db_info.common_m,
+    FuncDataM = Data#db_info.func_data_m,
+    FuncArgM = Data#db_info.func_arg_m,
     receive
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% Common Map Operations %%%
@@ -109,21 +107,21 @@ loop(Data) ->
         %%%==========================
         {set_entrypoint, Ep} ->
             NewCommon = maps:put(entrypoint, Ep, CommonMap),
-            loop(Data#loop_data{common = NewCommon});
+            loop(Data#db_info{common_m = NewCommon});
         {P, get_entrypoint} ->
             P ! {maps:get(entrypoint, CommonMap)},
             loop(Data);
         %%%==========================
         {set_exported_fun, L} ->
             NewCommon = maps:put(exported_fun, L, CommonMap),
-            loop(Data#loop_data{common = NewCommon});
+            loop(Data#db_info{common_m = NewCommon});
         {P, get_exported_fun} ->
             P ! {maps:get(exported_fun, CommonMap)},
             loop(Data);
         %%%==========================
         {set_ast, Ast} ->
             NewCommon = maps:put(ast, Ast, CommonMap),
-            loop(Data#loop_data{common = NewCommon});
+            loop(Data#db_info{common_m = NewCommon});
         {P, get_ast} ->
             P ! {maps:get(ast, CommonMap)},
             loop(Data);
@@ -138,7 +136,7 @@ loop(Data) ->
                 FuncDataM,
                 ActorL
             ),
-            loop(Data#loop_data{common = NewCommon, func_data_m = NewFD});
+            loop(Data#db_info{common_m = NewCommon, func_data_m = NewFD});
         {P, get_actor_list} ->
             P ! {maps:get(actor_list, CommonMap)},
             loop(Data);
@@ -146,14 +144,14 @@ loop(Data) ->
         {add_to_register_list, Item} ->
             RegList = maps:get(register_list, CommonMap),
             NewCommon = maps:put(register_list, RegList ++ [Item], CommonMap),
-            loop(Data#loop_data{common = NewCommon});
+            loop(Data#db_info{common_m = NewCommon});
         {P, get_register_list} ->
             P ! {maps:get(register_list, CommonMap)},
             loop(Data);
         %%%==========================
         {set_spawn_info, List} ->
             NewCommonM = maps:put(spawn_info, List, CommonMap),
-            loop(Data#loop_data{common = NewCommonM});
+            loop(Data#db_info{common_m = NewCommonM});
         {P, get_spawn_info} ->
             P ! {maps:get(spawn_info, CommonMap)},
             loop(Data);
@@ -171,7 +169,7 @@ loop(Data) ->
         {set_fun_ast, Key, Ast} ->
             FuncD = maps:get(Key, FuncDataM, #func_data{}),
             NewFD = maps:put(Key, FuncD#func_data{ast = Ast}, FuncDataM),
-            loop(Data#loop_data{func_data_m = NewFD});
+            loop(Data#db_info{func_data_m = NewFD});
         {P, get_fun_ast, Key} ->
             FuncD = maps:get(Key, FuncDataM, no_key_found),
             case FuncD of
@@ -189,7 +187,7 @@ loop(Data) ->
         {set_fun_graph, Key, G} ->
             FuncD = maps:get(Key, FuncDataM),
             NewFD = maps:put(Key, FuncD#func_data{graph = G}, FuncDataM),
-            loop(Data#loop_data{func_data_m = NewFD});
+            loop(Data#db_info{func_data_m = NewFD});
         {P, get_fun_graph, Key} ->
             FuncD = maps:get(Key, FuncDataM, #func_data{}),
             P ! {FuncD#func_data.graph},
@@ -201,19 +199,19 @@ loop(Data) ->
                 #{},
                 FuncDataM
             ),
-            loop(Data#loop_data{func_data_m = NewM});
+            loop(Data#db_info{func_data_m = NewM});
         {P, inc_spawned_counter, Key} ->
             FuncD = maps:get(Key, FuncDataM),
             C = FuncD#func_data.spawned_counter,
             P ! {C},
             NewFD = maps:put(Key, FuncD#func_data{spawned_counter = C + 1}, FuncDataM),
-            loop(Data#loop_data{func_data_m = NewFD});
+            loop(Data#db_info{func_data_m = NewFD});
         %%%==========================
         {add_local_vars, Key, AddL} ->
             FuncD = maps:get(Key, FuncDataM),
             List = FuncD#func_data.local_vars,
             NewFD = maps:put(Key, FuncD#func_data{local_vars = List ++ AddL}, FuncDataM),
-            loop(Data#loop_data{func_data_m = NewFD});
+            loop(Data#db_info{func_data_m = NewFD});
         {P, get_local_vars, Key} ->
             FuncD = maps:get(Key, FuncDataM),
             P ! {FuncD#func_data.local_vars},
@@ -231,7 +229,7 @@ loop(Data) ->
         {add_fun_args, Key, Args} ->
             L = maps:get(Key, FuncArgM, []),
             NewFA = maps:put(Key, L ++ Args, FuncArgM),
-            loop(Data#loop_data{func_arg_m = NewFA});
+            loop(Data#db_info{func_arg_m = NewFA});
         {P, get_fun_arg, Key} ->
             P ! {maps:get(Key, FuncArgM, no_fun_args_found)},
             loop(Data);
@@ -243,6 +241,6 @@ loop(Data) ->
         stop ->
             done;
         _ ->
-            io:fwrite("No pattern matching found~n"),
+            io:fwrite("No pattern matching found in db manager loop~n"),
             loop(Data)
     end.

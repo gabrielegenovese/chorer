@@ -7,7 +7,10 @@
     pick_random/1,
     save_graph_to_file/4,
     add_vertex/1,
-    del_vertex/2
+    del_vertex/2,
+    is_erlvar/1,
+    is_uppercase/1,
+    is_lowercase/1
 ]).
 
 %%%===================================================================
@@ -52,6 +55,24 @@ del_vertex(G, V) ->
     [digraph:add_vertex(G, Ver, Ver - 1) || Ver <- digraph:vertices(G), Ver > V],
     digraph:del_vertex(G, V).
 
+%%% Return true if first letter's atom is uppercase (it's a variable in erlang), otherwise false.
+is_erlvar(Name) ->
+    SName = atol(Name),
+    [FirstChar | _] = SName,
+    is_uppercase([FirstChar]).
+
+%%% If the input character is uppercase return true, otherwise false.
+is_uppercase(Char) when
+    (is_list(Char)) and (length(Char) =:= 1)
+->
+    (Char >= "A") and (Char =< "Z").
+
+%%% If the input character is lowercase return true, otherwise false.
+is_lowercase(Char) when
+    (is_list(Char)) and (length(Char) =:= 1)
+->
+    (Char >= "a") and (Char =< "z").
+
 %%%===================================================================
 %%% Internal Functions
 %%%===================================================================
@@ -64,3 +85,6 @@ format_global_name(Name) -> Name ++ "_global_view.dot".
 
 %%% Get a new label for a given graph
 new_label(Graph) -> length(digraph:vertices(Graph)) + 1.
+
+atol(A) when is_atom(A) -> atom_to_list(A);
+atol(A) when is_list(A) -> A.

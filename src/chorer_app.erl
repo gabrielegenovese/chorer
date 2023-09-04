@@ -27,8 +27,7 @@ generate(InputFile, EntryPoint, OutputDir, Options) ->
     metadata:extract(InputFile, EntryPoint),
     %%% Generate local and global view and save them int the output directory
     local_view:generate(OutputDir, Options),
-    global_view:generate(OutputDir, EntryPoint),
-    finished.
+    global_view:generate(OutputDir, EntryPoint).
 
 %%%===================================================================
 %%% Internal Functions

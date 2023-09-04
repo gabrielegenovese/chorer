@@ -4,7 +4,12 @@
 %%% API
 -export([generate/2, proc_loop/1]).
 
--record(branch, {graph = digraph:new(), last_vertex = 1, proc_pid_m = #{}, states_m = #{}}).
+-record(branch, {
+    graph = digraph:new(),
+    last_vertex = 1,
+    proc_pid_m = #{},
+    states_m = #{}
+}).
 
 -record(proc_info, {
     proc_id,
@@ -15,7 +20,7 @@
     message_queue = []
 }).
 
--record(message, {from, data, edge, checked = false}).
+-record(message, {from, data, edge}).
 
 %%%===================================================================
 %%% API
@@ -35,7 +40,8 @@ generate(OutputDir, EntryPoint) ->
 generate_global(EntryPoint, Dir) ->
     Gr = create_globalview(EntryPoint),
     MG = fsa:minimize(Gr),
-    common_fun:save_graph_to_file(MG, Dir, atol(EntryPoint), global).
+    common_fun:save_graph_to_file(MG, Dir, atol(EntryPoint), global),
+    finished.
 
 create_globalview(Name) ->
     RetG = digraph:new(),
@@ -252,8 +258,7 @@ manage_recv(ProcPid, Message) ->
     From = Message#message.from,
     case IsRecv of
         false ->
-            % TODO: gestire
-            % old code
+            % TODO: gestire casistica, il seguente codice è vecchio e quindi da prendere con le pinze
             % {NewL, NOp} = lists:foldl(
             %     fun(E, A) ->
             %         EInfo = get_proc_edge_info(ProcPid, E),
@@ -407,7 +412,7 @@ check_mess_comp(ProcPid, CallingProc, PatternMatching, Message) ->
     PatternMS = lists:flatten(string:replace(atol(PatternMatching), "receive ", "")),
     [FirstPChar | RestP] = PatternMS,
     [FirstMChar | RestM] = MessageS,
-    IsFirstCharUpperCase = is_uppercase([FirstPChar]),
+    IsFirstCharUpperCase = common_fun:is_erlvar(PatternMS),
     if
         %%% hierarchy
         ([FirstPChar] =:= "{") and ([FirstMChar] =:= "{") ->
@@ -436,7 +441,7 @@ register_var(ProcPid, ProcName, Name, Type) ->
     io:fwrite("[Register] PName ~p VName ~p VType ~p~n", [ProcName, Name, Type]),
     IsPid = string:prefix(Type, "pid_"),
     [FC | _] = Type,
-    IsLower = is_lowercase([FC]),
+    IsLower = common_fun:is_lowercase([FC]),
     TVal =
         if
             is_list(IsPid) -> ltoa("pid_" ++ atol(ProcName));
@@ -461,16 +466,6 @@ and_rec([{B, L} | T]) ->
         false ->
             {B, []}
     end.
-
-is_uppercase(Char) when
-    (is_list(Char)) and (length(Char) =:= 1)
-->
-    (Char >= "A") and (Char =< "Z").
-
-is_lowercase(Char) when
-    (is_list(Char)) and (length(Char) =:= 1)
-->
-    (Char >= "a") and (Char =< "z").
 
 add_vertex_to_graph(Proc1, Edge1, Proc2, Edge2, Data, Label) ->
     StateM = Data#branch.states_m,
@@ -575,19 +570,21 @@ proc_loop(Data) ->
     VCurr = Data#proc_info.current_vertex,
     FirstMarkedE = Data#proc_info.first_marked_edges,
     SecondMarkedE = Data#proc_info.second_marked_edges,
-    LocalVars = Data#proc_info.local_vars,
     MessageQueue = Data#proc_info.message_queue,
+    LocalVars = Data#proc_info.local_vars,
     receive
         {use_transition, E} ->
             IsAlreadyMarkedOnce = lists:member(E, FirstMarkedE),
             case digraph:edge(G, E) of
-                {E, _, VNew, _} when IsAlreadyMarkedOnce ->
+                {E, VCurr, VNew, _} when IsAlreadyMarkedOnce ->
                     proc_loop(Data#proc_info{
-                        current_vertex = VNew, second_marked_edges = SecondMarkedE ++ [E]
+                        current_vertex = VNew,
+                        second_marked_edges = SecondMarkedE ++ [E]
                     });
-                {E, _, VNew, _} ->
+                {E, VCurr, VNew, _} ->
                     proc_loop(Data#proc_info{
-                        current_vertex = VNew, first_marked_edges = FirstMarkedE ++ [E]
+                        current_vertex = VNew,
+                        first_marked_edges = FirstMarkedE ++ [E]
                     });
                 _ ->
                     io:fwrite("[PROC LOOP] V ~p Edge ~p non trovato in ~p~n", [VCurr, E, ProcName]),

@@ -8,8 +8,8 @@
 %%% API
 %%%===================================================================
 
-%%% Extract the metada, that is all the Abstract Syntax Tree, the Actor
-%%% List and the AST of every functions. Send them to the DBMANAGER.
+%%% Extract the metada, that is the Abstract Syntax Tree's file (AST), the
+%%% Actor List and the AST of every functions. Send them to the DBMANAGER.
 extract(InputFile, EntryPoint) ->
     gen_ast(InputFile),
     ActorList = gen_fun_ast_and_exported(),
@@ -61,9 +61,10 @@ new_spawned_proc(Name, FunName, ArgC, ArgL) ->
     }.
 
 gen_spawned_names_and_args(EntryPoint) when is_atom(EntryPoint) ->
-    L = gen_spawned_names_and_args(EntryPoint, noinfo, true),
+    L = gen_spawned_names_and_args(EntryPoint, ?UNDEFINED, true),
     db_manager:send_spawn_info(L).
 
+%%% Get all the spawned function and the arguments passed to it.
 gen_spawned_names_and_args(EntryPoint, CalledArgs, CreateEntry) when is_atom(EntryPoint) ->
     Ast = db_manager:get_fun_ast(EntryPoint),
     case Ast of
@@ -79,16 +80,19 @@ gen_spawned_names_and_args(EntryPoint, CalledArgs, CreateEntry) when is_atom(Ent
             end
     end.
 
+%%% Extract the variables from a clause statement (ast format)
 get_clause_vars(FunName) ->
     Ast = db_manager:get_fun_ast(FunName),
     [{clause, _, Vars, _, _} | _] = Ast,
     Vars.
 
+%%% Find every spawn
 get_spawned_loop(Code, FunName) when is_list(Code) ->
     lists:foldl(
         fun(Line, A) ->
             A ++
                 case Line of
+                    %%% Evaluate recursively statement with possible spawn in it
                     {clause, _, _, _, Content} ->
                         get_spawned_loop(Content, FunName);
                     {match, _, _VarName, LeftContent} ->
@@ -104,6 +108,7 @@ get_spawned_loop(Code, FunName) when is_list(Code) ->
                         get_spawned_loop(PMList, FunName);
                     {op, _, '!', DataSentAst} ->
                         get_spawned_loop([DataSentAst], FunName);
+                    %%% When a spawn is found, send the data to the db manager
                     {call, _, {atom, _, spawn}, [_, {atom, _, Name}, ArgList]} ->
                         ArgVars = get_clause_vars(Name),
                         C = db_manager:inc_spawn_counter(Name),
@@ -115,6 +120,7 @@ get_spawned_loop(Code, FunName) when is_list(Code) ->
                     %%% Attention: do not change position of this case branch
                     {call, _, {atom, _, FunName}, _} ->
                         [];
+                    %%% Generic function call
                     {call, _, {atom, _, Name}, ArgL} ->
                         gen_spawned_names_and_args(Name, ArgL, false);
                     _ ->

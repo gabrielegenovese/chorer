@@ -28,17 +28,16 @@ create_localview(ActorName, OutputDir, Options) ->
         no_ast_found ->
             io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]);
         _ ->
-            %%% TODO: parametri da chiedere all'utente
             {SetFinalState, SetAdditionalInfo} = Options,
-            Graph = get_graph(ActorName, ActorAst, SetFinalState, SetAdditionalInfo),
-            FileNameStr = atol(ActorName),
-            %%% Send the graph to the dbmanager
+            Graph = get_localview(ActorName, ActorAst, SetFinalState, SetAdditionalInfo),
             MinGraph = fsa:minimize(Graph),
+            %%% Send the graph to the dbmanager
             db_manager:send_fun_graph(ActorName, MinGraph),
-            common_fun:save_graph_to_file(MinGraph, OutputDir, FileNameStr, local)
+            common_fun:save_graph_to_file(MinGraph, OutputDir, atol(ActorName), local)
     end.
 
-get_graph(FunName, Code, SetFinal, SetPm) when is_list(Code) ->
+%%% Get the local view of a function
+get_localview(FunName, Code, SetFinal, SetPm) when is_list(Code) ->
     Gr = digraph:new(),
     VStart = common_fun:add_vertex(Gr),
     lists:foreach(
@@ -57,6 +56,7 @@ get_graph(FunName, Code, SetFinal, SetPm) when is_list(Code) ->
     ),
     Gr.
 
+%%% Add "Argument" Edges to the local view.
 add_args_to_graph(Gr, Vars, Guard, VStart, SetPm) ->
     case SetPm of
         true ->
@@ -68,33 +68,31 @@ add_args_to_graph(Gr, Vars, Guard, VStart, SetPm) ->
             VStart
     end.
 
-%%% This function returns the last vertex added
+%%% Evaluate each codeline of a function and returns the last vertex added to the graph
 eval_pm_clause(Code, FunName, Gr, VStart, LocalVarS, SetPm) ->
-    {_, V, LocalVars} = lists:foldl(
+    {_, LastVertexAdded, LocalVars} = lists:foldl(
         fun(Line, AccData) -> eval_codeline(Line, FunName, Gr, AccData, SetPm) end,
         {#variable{}, VStart, LocalVarS},
         Code
     ),
     db_manager:add_fun_local_vars(FunName, LocalVars),
-    V.
+    LastVertexAdded.
 
-%%% This function evaluate a single line of code and returns the last vertex added to the graph
+%%% Evaluate a single line of code and returns the last vertex added to the graph and the list of local variables
 eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
     {LastRetVar, VLast, LocalVarL} = AccData,
     case CodeLine of
-        %%% In a match code line (Var = ...), we evaluate the left
+        %%% In a match code line (Var = ...), evaluate the left
         %%% content because it could be a receive, case, if, etc...
-        {match, _, RightContent, LeftContent} ->
+        {match, _, {var, _, VarName}, LeftContent} ->
             {Var, V, NewL} = eval_codeline(LeftContent, FunName, G, AccData, SetPm),
-            {var, _, VarName} = RightContent,
             NewVarEntry = Var#variable{name = VarName},
             {Var, V, NewL ++ [NewVarEntry]};
         %%% If there's a recursive call, just add an epsilon edge to the first state
         {call, _, {atom, _, FunName}, _ArgList} ->
             digraph:add_edge(G, VLast, 1, 'ɛ'),
-            %%% return the start node TODO: capire se è la mossa giusta da fare
             {#variable{}, 1, LocalVarL};
-        %%% Evaluate the spawn function
+        %%% Evaluate the spawn() function
         {call, _, {atom, _, spawn}, [_, {atom, _, Name}, ArgList]} ->
             C = db_manager:inc_spawn_counter(Name),
             S = atol(Name) ++ integer_to_list(C),
@@ -103,10 +101,10 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
             {VarArgL, _, _} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
             db_manager:add_fun_arg(S, VarArgL#variable.value),
             {#variable{type = ltoa("pid_" ++ S)}, VNew, LocalVarL};
-        %%% Evaluate the self function
+        %%% Evaluate the self() function
         {call, _, {atom, _, self}, _} ->
             {#variable{type = ltoa("pid_self")}, VLast, LocalVarL};
-        %%% Evaluate the register function
+        %%% Evaluate the register() function
         {call, _, {atom, _, register}, [{atom, _, AtomV}, {var, _, VarV}]} ->
             manage_register(LocalVarL, AtomV, VarV),
             AccData;
@@ -123,10 +121,12 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
                 %%% add the graph to the main graph
                 _ -> {LastRetVar, merge_graph(G, NewG, VLast), LocalVarL}
             end;
+        %%% Evaluate a rand:uniform() function
         {call, _, {remote, _, {atom, _, rand}, {atom, _, uniform}}, _ArgList} ->
             {#variable{type = integer}, VLast, LocalVarL};
+        %%% Evaluate an extern function
         {call, _, {remote, _, {atom, _, _Package}, {atom, _, _Name}}, _ArgList} ->
-            %%% Future todo: find the package and the function, create the local view of it
+            %%% TODO: find the package and the function, create the local view of it
             AccData;
         %%% Evaluate Case and If
         {'case', _, {var, _, Var}, PMList} ->
@@ -158,50 +158,40 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
                 LocalVarL
             };
         %%% Evaluate Send
-        {op, _, '!', {var, _, VarName}, DataSentAst} ->
+        {op, _, '!', {_, _, VarName}, DataSentAst} ->
             {Var, _, NewL} = eval_codeline(DataSentAst, FunName, G, AccData, SetPm),
+            DataSent = recordvar_to_string(Var),
             VNew = common_fun:add_vertex(G),
-            DataSent = convert_var_to_string(Var),
-            ArgL =
-                case db_manager:get_fun_args(FunName) of
-                    no_fun_args_found -> [];
-                    L -> L
+            IsVar = common_fun:is_erlvar(VarName),
+            ProcSentTo =
+                case IsVar of
+                    true ->
+                        ArgL =
+                            case db_manager:get_fun_args(FunName) of
+                                no_fun_args_found -> [];
+                                L -> L
+                            end,
+                        find_proc_in_varl(VarName, LocalVarL ++ ArgL);
+                    false ->
+                        RegList = db_manager:get_reg_entry(),
+                        find_in_register(RegList, ltoa(VarName))
                 end,
-            VarFound = find_proc_in_varl(VarName, LocalVarL ++ ArgL),
-            % io:fwrite("Var Name ~p found ~p~n", [VarName, VarFound]),
             SLabel =
                 "send " ++ DataSent ++ " to " ++
-                    case VarFound of
+                    case ProcSentTo of
                         nomatch -> atol(VarName);
-                        self -> atol(FunName);
-                        "self" -> atol(FunName);
-                        V -> atol(V)
-                    end,
-            digraph:add_edge(G, VLast, VNew, SLabel),
-            {#variable{type = atom, value = DataSent}, VNew, NewL};
-        {op, _, '!', {atom, _, AtomName}, DataSentAst} ->
-            {Var, _, NewL} = eval_codeline(DataSentAst, FunName, G, AccData, SetPm),
-            DataSent = convert_var_to_string(Var),
-            RegList = db_manager:get_reg_entry(),
-            Proc = find_in_register(RegList, ltoa(AtomName)),
-            SLabel =
-                "send " ++ DataSent ++ " to " ++
-                    case Proc of
-                        nomatch -> atol(AtomName);
                         self -> atol(FunName);
                         "self" -> atol(FunName);
                         P -> atol(P)
                     end,
-            VNew = common_fun:add_vertex(G),
             digraph:add_edge(G, VLast, VNew, SLabel),
             {#variable{type = atom, value = DataSent}, VNew, NewL};
-        %% List
+        %%% Evaluate Types
         {cons, _, HeadList, TailList} ->
             {Var, _, _} = eval_codeline(HeadList, FunName, G, AccData, SetPm),
             {VarList, _, _} = eval_codeline(TailList, FunName, G, AccData, SetPm),
             NewVal = [Var] ++ VarList#variable.value,
             {VarList#variable{value = NewVal}, VLast, LocalVarL};
-        %%% Evaluate Types
         {integer, _, Val} ->
             {#variable{type = integer, value = Val}, VLast, LocalVarL};
         {float, _, Val} ->
@@ -223,7 +213,7 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         {nil, _} ->
             {#variable{type = list, value = []}, VLast, LocalVarL};
         {var, _, VarName} ->
-            %%% todo:find var in argument vars
+            %%% TODO:find var in argument vars
             % ArgL = db_manager:get_fun_args(FunName),
             VarF = find_var(LocalVarL, VarName),
             case VarF of
@@ -231,11 +221,11 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
                 _ -> {VarF, VLast, LocalVarL}
             end;
         _ ->
-            %%% TODO Mettere warning
             io:fwrite("WARNING: couldn't parse code line ~p~n", [CodeLine]),
             AccData
     end.
 
+%%% Find a process in a list of variables
 find_proc_in_varl(_, []) ->
     nomatch;
 find_proc_in_varl(Name, [H | T]) ->
@@ -246,7 +236,8 @@ find_proc_in_varl(Name, [H | T]) ->
         false -> find_proc_in_varl(Name, T)
     end.
 
-convert_var_to_string(Var) ->
+%%% Convert a variable (record) to a string
+recordvar_to_string(Var) ->
     case Var#variable.type of
         ?UNDEFINED ->
             atol(Var#variable.name);
@@ -261,15 +252,16 @@ convert_var_to_string(Var) ->
                         "float" -> io_lib:format("~.2f", [Val]);
                         "string" -> "[" ++ Val ++ "]";
                         "atom" -> atol(Val);
-                        "tuple" -> format_tuple_vars(Var#variable.value);
+                        "tuple" -> format_tuple(Val, fun recordvar_to_string/1);
                         "pid" -> "pid";
                         _ -> SType
                     end
             end
     end.
 
-format_tuple_vars(VarL) ->
-    L = lists:foldl(fun(I, A) -> A ++ "," ++ convert_var_to_string(I) end, "", VarL),
+%%% Convert a tuple to a string
+format_tuple(VarL, Fun) ->
+    L = lists:foldl(fun(I, A) -> A ++ "," ++ Fun(I) end, "", VarL),
     [_ | Label] = L,
     "{" ++ Label ++ "}".
 
@@ -279,20 +271,22 @@ get_base_label(SetPm, Label) ->
         false -> 'ɛ'
     end.
 
+%%% Send the info for the register() function to the db manager
 manage_register(LocalVarL, AtomName, VarName) ->
     VarFound = find_var(LocalVarL, VarName),
     case VarFound of
         not_found ->
             ?UNDEFINED;
         V ->
-            Cond = is_type_pid(V#variable.type),
+            IsPid = is_type_pid(V#variable.type),
             Pid = get_pid_from_type(V#variable.type),
-            case Cond of
+            case IsPid of
                 false -> ?UNDEFINED;
                 true -> db_manager:add_reg_entry({AtomName, Pid})
             end
     end.
 
+%%% Find variable by Name in a list
 find_var([], _) ->
     not_found;
 find_var([Var | Tail], Name) ->
@@ -302,16 +296,18 @@ find_var([Var | Tail], Name) ->
         false -> find_var(Tail, Name)
     end.
 
+%%% If the input is a string with "pid" in it returns true, otherwise false.
 is_type_pid(Type) ->
     SL = atol(Type),
     IsPid = string:find(SL, "pid"),
     is_list(IsPid).
 
+%%% Remove "pid_" from a string
 get_pid_from_type(Type) ->
     SL = atol(Type),
-    PidS = string:prefix(SL, "pid_"),
-    ltoa(PidS).
+    string:prefix(SL, "pid_").
 
+%%% Find a registered atom in a list
 find_in_register([], _) ->
     nomatch;
 find_in_register([{RegAtom, RegPid} | T], Name) ->
@@ -349,23 +345,24 @@ merge_graph(MainG, GToAdd, VLast) ->
     % return last added vertex, which is the max number in the key list
     maps:get(lists:max(maps:keys(VEquiMap)), VEquiMap).
 
-%%% This function returns an FSA graph of the function if the ast exist,
-%%% otherwise return error.
+%%% Returns an FSA graph of the function if the ast exist, otherwise return error.
 eval_func(FuncName, SetPm) ->
     FunAst = db_manager:get_fun_ast(FuncName),
     case FunAst of
         no_ast_found -> no_graph;
         %%% get the graph but don't set the final state
-        _ -> get_graph(FuncName, FunAst, false, SetPm)
+        _ -> get_localview(FuncName, FunAst, false, SetPm)
     end.
 
+%%% Evaluate Pattern Matching's list of clauses: evaluate every branch alone, then
+%%% link every last vertex's branch to a shared vertex with epsilon transaction
 eval_pm(PMList, G, VLast, LocalVarL, FunName, Label, SetPm) ->
     VLastList = explore_pm(PMList, G, VLast, LocalVarL, FunName, Label, SetPm),
     VRet = common_fun:add_vertex(G),
     add_edges_recursive(G, VLastList, VRet, 'ɛ', VLast),
     VRet.
 
-%%% This function explore every pm's branch and returns the list of last added vertex
+%%% Explore every pm's branch and returns the list of last added vertex
 explore_pm(PMList, G, VLast, LocalVarL, FunName, Base, SetPm) ->
     lists:foldl(
         fun(CodeLine, AddedVertexList) ->
@@ -393,36 +390,33 @@ explore_pm(PMList, G, VLast, LocalVarL, FunName, Base, SetPm) ->
         PMList
     ).
 
-%%% This function format the Variables with the guards in a label for the FSA
+%%% Format the Variables with the guards in a label for the FSA
 format_label_pm_edge(SetPm, VarList, GuardList, BaseLabel) when is_list(BaseLabel) ->
     case SetPm of
         true ->
-            VarsS = lists:foldl(fun(V, Acc) -> var_to_string(V, Acc) end, BaseLabel, VarList),
+            VarsS = lists:foldl(fun(V, Acc) -> astvar_to_string(V, Acc) end, BaseLabel, VarList),
             lists:foldl(fun(G, Acc) -> guards_to_string(G, Acc) end, VarsS, GuardList);
         false ->
             'ɛ'
     end.
 
-var_to_string(VarToVal) ->
-    var_to_string(VarToVal, "").
-var_to_string(VarToVal, BaseL) ->
-    case VarToVal of
-        {var, _, '_'} -> BaseL ++ "_";
-        {tuple, _, LVar} -> BaseL ++ format_tuple(LVar);
-        {var, _, Var} -> BaseL ++ atol(Var);
-        {atom, _, Atom} -> BaseL ++ atol(Atom);
-        {cons, _, H, T} -> BaseL ++ "[" ++ var_to_string(H) ++ ", " ++ var_to_string(T) ++ "]";
-        {nil, _} -> BaseL ++ "null";
-        _ -> "base"
-    end.
+%%% Convert a data type (ast format) to a string
+astvar_to_string(VarToVal) ->
+    astvar_to_string(VarToVal, "").
+astvar_to_string(VarToVal, BaseL) ->
+    io:fwrite("[AST] VAR ~p~n", [VarToVal]),
+    BaseL ++
+        case VarToVal of
+            {var, _, '_'} -> "_";
+            {tuple, _, LVar} -> format_tuple(LVar, fun astvar_to_string/1);
+            {var, _, Var} -> atol(Var);
+            {atom, _, Atom} -> atol(Atom);
+            {cons, _, H, T} -> "[" ++ astvar_to_string(H) ++ ", " ++ astvar_to_string(T) ++ "]";
+            {nil, _} -> "null";
+            _ -> atol(?UNDEFINED)
+        end.
 
-format_tuple(VarL) ->
-    L = lists:foldl(fun(I, A) -> A ++ "," ++ var_to_string(I) end, "", VarL),
-    [_ | Label] = L,
-    "{" ++ Label ++ "}".
-
-% global_to_string(GlobalToVal) ->
-%     global_to_string(GlobalToVal, "").
+%%% Convert the guard (ast format) to a string
 guards_to_string(GlobalToVal, BaseL) ->
     case GlobalToVal of
         %%% Add guards if there's a guard
@@ -431,6 +425,7 @@ guards_to_string(GlobalToVal, BaseL) ->
         _ -> BaseL
     end.
 
+%%% Link each vertex of a vertex's list to a given vertex, with a defined label 
 add_edges_recursive(G, VertexList, VertexToLink, Label, Except) ->
     %%% Link every V in the VertexList to the VertexToLink, with a specified label
     [
@@ -441,9 +436,9 @@ add_edges_recursive(G, VertexList, VertexToLink, Label, Except) ->
         V =/= Except
     ].
 
-% Set a state as a final state
-set_as_final(ShouldBeSet, G, V) ->
-    {V, LastLabel} = digraph:vertex(G, V),
+%%% Set a vertex as a final state
+set_as_final(ShouldBeSet, Graph, Vertex) ->
+    {_, LastLabel} = digraph:vertex(Graph, Vertex),
     if
         %%% we can add *and (LastLabel =/= 1) ->* to the guard bacause there could be problems with loops
         %%% Future TODO: in eval_codeline potrei tornare il vertice e un booleano che rappresenti se la
@@ -451,12 +446,12 @@ set_as_final(ShouldBeSet, G, V) ->
         ShouldBeSet and (is_integer(LastLabel)) ->
             %%% A final state is a state with the final tag in the label
             FormattedLabel = ?FINALTAG ++ integer_to_list(LastLabel),
-            digraph:add_vertex(G, V, FormattedLabel);
+            digraph:add_vertex(Graph, Vertex, FormattedLabel);
         true ->
             ?UNDEFINED
     end.
 
 ltoa(L) when is_list(L) -> list_to_atom(L);
-ltoa(L) -> L.
+ltoa(L) when is_atom(L) -> L.
 atol(A) when is_atom(A) -> atom_to_list(A);
-atol(A) -> A.
+atol(A) when is_list(A) -> A.

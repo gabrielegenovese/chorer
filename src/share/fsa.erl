@@ -8,6 +8,8 @@
 %%% API
 %%%===================================================================
 
+%%% Minimize an FSA, using algorithms from Simone Martini and Maurizio Gabbrielli's
+%%% book: Programming Languages, Second edition, McGraw-Hill, 2011
 minimize(NFA) ->
     % Convert a NFA to a DFA
     DFA = subset_construction(NFA),
@@ -20,7 +22,7 @@ minimize(NFA) ->
 %%% Internal Functions
 %%%===================================================================
 
-%%% Given a list of state, it returns all the states reachable with an ɛ transition.
+%%% Given a list of state, it returns all the states reachable with an ɛ transition
 eps_clos(Graph, VertexL) when is_list(VertexL) ->
     lists:foldl(
         fun(Vertex, AccS) ->
@@ -32,7 +34,7 @@ eps_clos(Graph, VertexL) when is_list(VertexL) ->
         VertexL
     ).
 
-%%% Given a state, it returns all the states reachable with an ɛ transition.
+%%% Given a state, it returns all the states reachable with an ɛ transition
 eps_clos(Graph, Vertex, MarkedEdges) when not is_list(Vertex) ->
     %%% Get outer transitions
     OutTransitions = digraph:out_edges(Graph, Vertex),
@@ -64,11 +66,11 @@ subset_construction(NFA) ->
     convert_transl_to_graph(DFA, VertexEquivalanceM, DFATransitionsL),
     DFA.
 
-%%% This function initialize new sets for subset_construction/4
+%%% Initialize new sets for subset_construction/4
 subset_construction(NFA, StateS) ->
     subset_construction(NFA, StateS, sets:new(), sets:new()).
 
-%%% This recursive function create a list of DFA states and transactions, given an NFA graph
+%%% Create recursively a list of DFA states and transactions, given an NFA graph
 subset_construction(NFA, StateS, TransS, MarkedS) ->
     NotMarkedS = get_not_marked(StateS, MarkedS),
     case NotMarkedS =:= [] of
@@ -122,7 +124,7 @@ convert_statel_to_graph(NFA, DFA, FirstDFAState, DFAStateL) ->
     end,
     sets:fold(FoldFun, RetM, DFAStateL).
 
-%%% Covert a DFA transition list to equivalents graph edges in the DFA graph
+%%% Convert a DFA transition list to equivalents graph edges in the DFA graph
 convert_transl_to_graph(DFA, DFAVertexEquivM, DFATransitionsL) ->
     lists:foreach(
         fun(DFATransition) ->
@@ -148,12 +150,12 @@ remove_unreachable(G) ->
         digraph:in_degree(G, V) =:= 0
     ].
 
-%%% DFA minimization: given a graph G, this function will remove non-distinguishable states
-%%% using the Table Filling at Scale Algorithm
+%%% DFA minimization: given a graph G, this function will remove non-distinguishable
+%%% states using the Table Filling at Scale Algorithm
 remove_nondistinguishable(G) ->
     Table = init_scale_table(G),
     InitMarkedStates = distinguish_final(G, Table),
-    FinalMarkedStatesMap = find_nondistinguishable(G, InitMarkedStates, 0),
+    FinalMarkedStatesMap = find_nondistinguishable(G, InitMarkedStates),
     ForEachFun = fun(K, V) ->
         case V of
             true ->
@@ -180,7 +182,9 @@ remove_nondistinguishable(G) ->
     end,
     maps:foreach(ForEachFun, FinalMarkedStatesMap).
 
-find_nondistinguishable(G, M, Jump) ->
+%%% Find non-distinguishable states: a state is non-distinguishable if given two state
+%%% and a path to follow, they end up in the same state for all their transitions
+find_nondistinguishable(G, M) ->
     {OpDone, NewL} = maps:fold(
         fun(StateCouple, IsMarked, A) ->
             {_, UpdatedM} = A,
@@ -189,7 +193,7 @@ find_nondistinguishable(G, M, Jump) ->
                 true ->
                     A;
                 false ->
-                    B = check_if_eq(UpdatedM, G, S1, S2, Jump),
+                    B = check_if_nondistinguishable(UpdatedM, G, S1, S2),
                     case B of
                         false -> {true, maps:put(StateCouple, true, UpdatedM)};
                         true -> A
@@ -200,11 +204,12 @@ find_nondistinguishable(G, M, Jump) ->
         M
     ),
     case OpDone of
-        true -> find_nondistinguishable(G, NewL, Jump + 1);
+        true -> find_nondistinguishable(G, NewL);
         false -> M
     end.
 
-check_if_eq(UpdatedM, G, S1, S2, _Jump) ->
+%%% Check if two states non-distinguishable
+check_if_nondistinguishable(Map, G, S1, S2) ->
     L1 = get_all_labels(G, S1),
     L2 = get_all_labels(G, S2),
     LL =
@@ -226,7 +231,7 @@ check_if_eq(UpdatedM, G, S1, S2, _Jump) ->
                             SKey = sets:add_element(V2, sets:add_element(V1, sets:new())),
                             A and
                                 case V1 =/= V2 of
-                                    true -> maps:get(SKey, UpdatedM);
+                                    true -> maps:get(SKey, Map);
                                     false -> true
                                 end
                     end
@@ -236,12 +241,13 @@ check_if_eq(UpdatedM, G, S1, S2, _Jump) ->
         LL
     ).
 
-get_vertex_using_label(G, V, L) ->
-    EL = digraph:out_edges(G, V),
+%%% Given a vertex, returns each vertex than is reached using a given label
+get_vertex_using_label(Graph, Vertex, Label) ->
+    EL = digraph:out_edges(Graph, Vertex),
     lists:foldl(
         fun(E, A) ->
-            case digraph:edge(G, E) of
-                {_, _, VO, L} -> VO;
+            case digraph:edge(Graph, E) of
+                {_, _, VRet, Label} -> VRet;
                 _ -> A
             end
         end,
@@ -249,6 +255,7 @@ get_vertex_using_label(G, V, L) ->
         EL
     ).
 
+%%% Get the list of all label's vertex
 get_all_labels(G, V) ->
     EL = digraph:out_edges(G, V),
     stol(
@@ -264,6 +271,7 @@ get_all_labels(G, V) ->
         )
     ).
 
+%%% Initialize the Scale Table
 init_scale_table(Graph) ->
     VertexList = digraph:vertices(Graph),
     %% double convertion to remove equals couples
@@ -274,6 +282,7 @@ init_scale_table(Graph) ->
         ])
     ).
 
+%%% Distinguish final and non-final states
 distinguish_final(G, Table) ->
     lists:foldl(
         fun(I, Acc) ->
@@ -287,17 +296,22 @@ distinguish_final(G, Table) ->
         Table
     ).
 
+%%% Format a list of two element into a couple
 get_both_states(S) ->
     L = stol(S),
     [H | [T | _]] = L,
     {H, T}.
 
+%%% If in a state's list there are all final state return true, otherwise false
 is_final_state(G, L) when is_list(L) ->
     lists:foldl(fun(V, A) -> A or is_final_state(G, V) end, false, L);
+%%% If the state is a final state return true, otherwise false
 is_final_state(G, V) ->
     {V, L} = digraph:vertex(G, V),
+    %%% All label's states are numbers, execept for final states
     not is_integer(L).
 
+%%% Set a state as final
 set_as_final(G, V) ->
     {V, L} = digraph:vertex(G, V),
     FL = ?FINALTAG ++ integer_to_list(L),
