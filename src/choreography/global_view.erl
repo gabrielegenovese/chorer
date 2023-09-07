@@ -117,7 +117,7 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, ProcPid, BaseList) -
                         DupData = dup_branch(BranchData),
                         NewPid = maps:get(ProcName, DupData#branch.proc_pid_m),
                         PidFrom = maps:get(ProcFrom, DupData#branch.proc_pid_m),
-                        Label = atol(ProcFrom) ++ "→" ++ atol(ProcName) ++ ":" ++ atol(MessData),
+                        Label = format_send_label(ProcFrom, ProcName, MessData),
                         {LastUsedVertex, NewStateMap} = add_vertex_to_graph(
                             ProcFrom,
                             get_proc_edge_info(PidFrom, Message#message.edge),
@@ -137,6 +137,17 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, ProcPid, BaseList) -
         MessageQueue
     ).
 
+format_send_label(ProcFrom, ProcTo, Data) ->
+    format_proc_name(ProcFrom) ++ "→" ++ format_proc_name(ProcTo) ++ ":" ++ atol(Data).
+
+format_proc_name(S) ->
+    SProcId = atol(S),
+    {Name, N} = lists:split(length(SProcId) - 1, SProcId),
+    case catch list_to_integer(N) of
+        {'EXIT', _} -> SProcId;
+        _ -> Name ++ "_" ++ N
+    end.
+
 dup_branch(Data) ->
     Data#branch{proc_pid_m = duplicate_proccess(Data#branch.proc_pid_m)}.
 
@@ -153,7 +164,8 @@ duplicate_proccess(ProcMap) ->
     ).
 
 remove_last_with_check(ProcId) ->
-    {Name, N} = remove_last(atol(ProcId)),
+    SProcId = atol(ProcId),
+    {Name, N} = lists:split(length(SProcId) - 1, SProcId),
     case catch list_to_integer(N) of
         {'EXIT', _} -> {ProcId, N};
         _ -> {ltoa(Name), N}
@@ -224,17 +236,20 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     end.
 
 add_spawn_to_global(SLabel, ProcName, Data) ->
-    CompleteProcNameS = string:prefix(SLabel, "spawn "),
-    {FuncName, _ProcNumber} = remove_last(CompleteProcNameS),
+    TempProcNameS = string:prefix(SLabel, "spawn "),
+    CompleteProcNameS = ltoa(lists:flatten(string:replace(atol(TempProcNameS), "_", ""))),
+    FuncName = remove_last(remove_last(TempProcNameS)),
     FuncPid = spawn(?MODULE, proc_loop, [#proc_info{proc_id = ltoa(FuncName)}]),
     NewMap = maps:put(ltoa(CompleteProcNameS), FuncPid, Data#branch.proc_pid_m),
     VNew = common_fun:add_vertex(Data#branch.graph),
     %%% Δ means spawned
-    NewLabel = atol(ProcName) ++ "Δ" ++ CompleteProcNameS,
+    NewLabel = atol(ProcName) ++ "Δ" ++ TempProcNameS,
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
 
-remove_last(A) -> lists:split(length(A) - 1, A).
+remove_last(A) ->
+    {H, _} = lists:split(length(A) - 1, A),
+    H.
 
 manage_send(SLabel, Data, ProcName, Edge) ->
     ProcPidMap = Data#branch.proc_pid_m,
@@ -416,8 +431,8 @@ check_mess_comp(ProcPid, CallingProc, PatternMatching, Message) ->
     if
         %%% hierarchy
         ([FirstPChar] =:= "{") and ([FirstMChar] =:= "{") ->
-            {ContentP, _} = remove_last(RestP),
-            {ContentM, _} = remove_last(RestM),
+            ContentP = remove_last(RestP),
+            ContentM = remove_last(RestM),
             PL = string:split(ContentP, ",", all),
             A = lists:enumerate(PL),
             ML = string:split(ContentM, ",", all),

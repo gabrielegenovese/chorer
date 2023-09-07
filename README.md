@@ -8,7 +8,7 @@ The project requires `erlang` and `rebar3` to run.
 
 ## Usage
 
-Use `rebar3` to run the program from the Command Line.
+Use `rebar3` to run the program from the command line.
 
 ```erlang
 # rebar3 shell
@@ -16,7 +16,7 @@ Use `rebar3` to run the program from the Command Line.
 finished
 ```
 
-The tool will create a DOT file for each actor's local view and a DOT for the global view in your folder. To visualize the Choreography Automatas, copy paste the content's files in a [DOT viewer](https://dreampuf.github.io/GraphvizOnline).
+The tool will create a DOT file for each actor's local view and a DOT file for the global view in the specified folder. To visualize the Choreography Automatas, copy paste the content's files in a [DOT viewer](https://dreampuf.github.io/GraphvizOnline).
 
 
 ## Credits

@@ -95,7 +95,7 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         %%% Evaluate the spawn() function
         {call, _, {atom, _, spawn}, [_, {atom, _, Name}, ArgList]} ->
             C = db_manager:inc_spawn_counter(Name),
-            S = atol(Name) ++ integer_to_list(C),
+            S = atol(Name) ++ "_" ++ integer_to_list(C),
             VNew = common_fun:add_vertex(G),
             digraph:add_edge(G, VLast, VNew, "spawn " ++ S),
             {VarArgL, _, _} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
@@ -404,7 +404,6 @@ format_label_pm_edge(SetPm, VarList, GuardList, BaseLabel) when is_list(BaseLabe
 astvar_to_string(VarToVal) ->
     astvar_to_string(VarToVal, "").
 astvar_to_string(VarToVal, BaseL) ->
-    io:fwrite("[AST] VAR ~p~n", [VarToVal]),
     BaseL ++
         case VarToVal of
             {var, _, '_'} -> "_";
