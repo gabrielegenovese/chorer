@@ -112,7 +112,7 @@ get_spawned_loop(Code, FunName) when is_list(Code) ->
                     {call, _, {atom, _, spawn}, [_, {atom, _, Name}, ArgList]} ->
                         ArgVars = get_clause_vars(Name),
                         C = db_manager:inc_spawn_counter(Name),
-                        FName = list_to_atom(atom_to_list(Name) ++ integer_to_list(C)),
+                        FName = list_to_atom(atom_to_list(Name) ++ "_" ++ integer_to_list(C)),
                         % TODO: come evitare loop infiniti?
                         FAst = db_manager:get_fun_ast(Name),
                         L = get_spawned_loop(FAst, Name),

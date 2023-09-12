@@ -4,24 +4,6 @@
 %%% API
 -export([generate/2, proc_loop/1]).
 
--record(branch, {
-    graph = digraph:new(),
-    last_vertex = 1,
-    proc_pid_m = #{},
-    states_m = #{}
-}).
-
--record(proc_info, {
-    proc_id,
-    current_vertex = 1,
-    first_marked_edges = [],
-    second_marked_edges = [],
-    local_vars = sets:new(),
-    message_queue = []
-}).
-
--record(message, {from, data, edge}).
-
 %%%===================================================================
 %%% API
 %%%===================================================================
@@ -134,15 +116,7 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, ProcPid, BaseList) -
     ).
 
 format_send_label(ProcFrom, ProcTo, Data) ->
-    format_proc_name(ProcFrom) ++ "→" ++ format_proc_name(ProcTo) ++ ":" ++ atol(Data).
-
-format_proc_name(S) ->
-    SProcId = atol(S),
-    {Name, N} = lists:split(length(SProcId) - 1, SProcId),
-    case catch list_to_integer(N) of
-        {'EXIT', _} -> SProcId;
-        _ -> Name ++ "_" ++ N
-    end.
+    atol(ProcFrom) ++ "→" ++ atol(ProcTo) ++ ":" ++ atol(Data).
 
 dup_branch(Data) ->
     Data#branch{proc_pid_m = duplicate_proccess(Data#branch.proc_pid_m)}.
@@ -150,7 +124,7 @@ dup_branch(Data) ->
 duplicate_proccess(ProcMap) ->
     maps:fold(
         fun(K, V, A) ->
-            {Name, _} = remove_last_with_check(K),
+            {Name, _} = remove_id_with_check(K),
             NewPid = spawn(?MODULE, proc_loop, [#proc_info{proc_id = Name}]),
             set_proc_data(NewPid, get_proc_data(V)),
             maps:put(K, NewPid, A)
@@ -159,12 +133,12 @@ duplicate_proccess(ProcMap) ->
         ProcMap
     ).
 
-remove_last_with_check(ProcId) ->
+remove_id_with_check(ProcId) ->
     SProcId = atol(ProcId),
     {Name, N} = lists:split(length(SProcId) - 1, SProcId),
     case catch list_to_integer(N) of
         {'EXIT', _} -> {ProcId, N};
-        _ -> {ltoa(Name), N}
+        _ -> {ltoa(remove_last(Name)), N}
     end.
 
 eval_proc_until_recv(ProcName, ProcPid, AccData) ->
@@ -221,8 +195,8 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             ProcPid ! {use_transition, Edge},
             {BData, true};
         is_list(IsSpawn) ->
-            {VNew, NewM} = add_spawn_to_global(SLabel, ProcName, BData),
             ProcPid ! {use_transition, Edge},
+            {VNew, NewM} = add_spawn_to_global(SLabel, ProcName, BData),
             NewBData = BData#branch{last_vertex = VNew, proc_pid_m = NewM},
             {NewBData, true};
         is_list(IsSend) ->
@@ -232,14 +206,13 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     end.
 
 add_spawn_to_global(SLabel, ProcName, Data) ->
-    TempProcNameS = string:prefix(SLabel, "spawn "),
-    CompleteProcNameS = ltoa(lists:flatten(string:replace(atol(TempProcNameS), "_", ""))),
-    FuncName = remove_last(remove_last(TempProcNameS)),
+    ProcId = string:prefix(SLabel, "spawn "),
+    FuncName = remove_last(remove_last(ProcId)),
     FuncPid = spawn(?MODULE, proc_loop, [#proc_info{proc_id = ltoa(FuncName)}]),
-    NewMap = maps:put(ltoa(CompleteProcNameS), FuncPid, Data#branch.proc_pid_m),
+    NewMap = maps:put(ltoa(ProcId), FuncPid, Data#branch.proc_pid_m),
     VNew = common_fun:add_vertex(Data#branch.graph),
     %%% Δ means spawned
-    NewLabel = atol(ProcName) ++ "Δ" ++ TempProcNameS,
+    NewLabel = atol(ProcName) ++ "Δ" ++ ProcId,
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
 
@@ -252,10 +225,15 @@ manage_send(SLabel, Data, ProcName, Edge) ->
     ProcPid = maps:get(ProcName, ProcPidMap),
     DataSent = get_data_from_label(SLabel),
     ProcSentTemp = ltoa(get_proc_from_label(SLabel)),
-    ProcSentName = check_vars(ProcName, ProcPid, ProcSentTemp),
+    IsVar = common_fun:is_erlvar(ProcSentTemp),
+    ProcSentName =
+        case IsVar of
+            true -> check_vars(ProcName, ProcPid, ProcSentTemp);
+            false -> ProcSentTemp
+        end,
     ProcSentPid = maps:get(ProcSentName, ProcPidMap, no_pid),
     case ProcSentPid of
-        no_pid -> ?UNDEFINED;
+        no_pid -> io:fwrite("[SEND] no pid found for: ~p~n", [ProcSentName]);
         P -> add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge))
     end,
     ProcPid ! {use_transition, Edge},
@@ -310,7 +288,7 @@ manage_recv(ProcPid, Message) ->
 check_vars(ProcName, ProcPid, VarName) ->
     SpInfoP = find_spawn_info(ProcName),
     LVars = get_proc_localvars(ProcPid),
-    {Name, _} = remove_last_with_check(ProcName),
+    {Name, _} = remove_id_with_check(ProcName),
     LocalVars = db_manager:get_fun_local_vars(Name),
     L =
         if

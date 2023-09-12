@@ -2,15 +2,27 @@ digraph global {
 	rankdir="LR";
 	n_0 [label="global", shape="plaintext"];
 	n_1 [id="5", shape=circle, label="5"];
-	n_2 [id="1", shape=circle, label="1"];
-	n_0 -> n_2 [arrowhead=none];
-	n_3 [id="2", shape=circle, label="2"];
-	n_4 [id="4", shape=circle, label="4"];
-	n_5 [id="3", shape=circle, label="3"];
+	n_2 [id="12", shape=circle, label="12"];
+	n_3 [id="11", shape=circle, label="11"];
+	n_4 [id="6", shape=circle, label="6"];
+	n_5 [id="1", shape=circle, label="1"];
+	n_0 -> n_5 [arrowhead=none];
+	n_6 [id="9", shape=circle, label="9"];
+	n_7 [id="2", shape=circle, label="2"];
+	n_8 [id="8", shape=circle, label="8"];
+	n_9 [id="4", shape=circle, label="4"];
+	n_10 [id="3", shape=circle, label="3"];
 
-	n_3 -> n_5 [id="[$e|2]", label="startΔtic_loop0"];
-	n_4 -> n_1 [id="[$e|0]", label="tac_loop0→tic_loop0:tac"];
-	n_2 -> n_3 [id="[$e|1]", label="startΔtac_loop0"];
-	n_5 -> n_1 [id="[$e|3]", label="start→tic_loop0:tac"];
-	n_1 -> n_4 [id="[$e|4]", label="tic_loop0→tac_loop0:tic"];
+	n_2 -> n_9 [id="[$e|10]", label="start→tic_loop_0:tac"];
+	n_4 -> n_1 [id="[$e|13]", label="tic_loop_0→tac_loop_0:stop"];
+	n_5 -> n_7 [id="[$e|0]", label="startΔtac_loop_0"];
+	n_10 -> n_2 [id="[$e|1]", label="startΔrandom_0"];
+	n_8 -> n_1 [id="[$e|7]", label="tic_loop_0→tac_loop_0:stop"];
+	n_9 -> n_3 [id="[$e|11]", label="tic_loop_0→tac_loop_0:tic"];
+	n_6 -> n_1 [id="[$e|14]", label="tic_loop_0→tac_loop_0:stop"];
+	n_9 -> n_4 [id="[$e|5]", label="random_0→tic_loop_0:stop"];
+	n_3 -> n_9 [id="[$e|6]", label="tac_loop_0→tic_loop_0:tac"];
+	n_4 -> n_8 [id="[$e|9]", label="tic_loop_0→tac_loop_0:tic"];
+	n_7 -> n_10 [id="[$e|3]", label="startΔtic_loop_0"];
+	n_3 -> n_6 [id="[$e|8]", label="random_0→tic_loop_0:stop"];
 }

@@ -17,33 +17,57 @@
 %     label = 'ɛ'
 % }).
 
--record(local_view, {
-    name,
-    n_args,
-    ast,
-    graph,
-    current_vartex,
-    local_vars,
-    returned_var,
-    nodes,
-    transitions,
-    recv_queue
-}).
+% -record(local_view, {
+%     name,
+%     n_args,
+%     ast,
+%     graph,
+%     current_vartex,
+%     local_vars,
+%     returned_var,
+%     nodes,
+%     transitions,
+%     recv_queue
+% }).
 
+%%% Variable data structure
+%%% type could be integrer, float, etc... or pid_prodId
 -record(variable, {
     type = ?UNDEFINED,
     name = ?UNDEFINED,
     value = ?UNDEFINED
 }).
 
-%%% Struttura dati che indica quali processi sono stati spawnati, in quale funzione è stata
-%%% chiamata, quali argomenti aveva la spawn e a quali dovrebbero corrispondere nella funzione
+%%% Spanwed processes data stracture
+%%% name: process id
+%%% called_where: in which function the spawn() is been called
+%%% args_called: spawn's arguments
+%%% args_local: cluase match of function
+%%% local_vars: local variables
 -record(spawned_proc, {
     name = ?UNDEFINED,
     called_where = ?UNDEFINED,
     args_called = ?UNDEFINED,
-    args_local = ?UNDEFINED,
-    local_vars = []
+    args_local = ?UNDEFINED
 }).
+
+%%%
+-record(branch, {
+    graph = digraph:new(),
+    last_vertex = 1,
+    proc_pid_m = #{},
+    states_m = #{}
+}).
+
+-record(proc_info, {
+    proc_id,
+    current_vertex = 1,
+    first_marked_edges = [],
+    second_marked_edges = [],
+    local_vars = sets:new(),
+    message_queue = []
+}).
+
+-record(message, {from, data, edge}).
 
 %%%----END FILE----
