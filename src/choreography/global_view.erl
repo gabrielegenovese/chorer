@@ -110,28 +110,24 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, ProcPid, BaseList) -
         fun(Message, ALL) ->
             ProcFrom = Message#message.from,
             MessData = Message#message.data,
-            {Done, E} = manage_recv(ProcPid, Message),
-            ALL ++
-                case Done of
-                    true ->
-                        DupData = dup_branch(BranchData),
-                        NewPid = maps:get(ProcName, DupData#branch.proc_pid_m),
-                        PidFrom = maps:get(ProcFrom, DupData#branch.proc_pid_m),
-                        Label = format_send_label(ProcFrom, ProcName, MessData),
-                        {LastUsedVertex, NewStateMap} = add_vertex_to_graph(
-                            ProcFrom,
-                            get_proc_edge_info(PidFrom, Message#message.edge),
-                            ProcName,
-                            get_proc_edge_info(NewPid, E),
-                            DupData,
-                            Label
-                        ),
-                        NewPid ! {use_transition, E},
-                        del_proc_mess_queue(NewPid, Message),
-                        [DupData#branch{last_vertex = LastUsedVertex, states_m = NewStateMap}];
-                    false ->
-                        []
-                end
+            {Done, ETo} = manage_recv(ProcPid, Message),
+            case Done of
+                true ->
+                    DupData = dup_branch(BranchData),
+                    NewPid = maps:get(ProcName, DupData#branch.proc_pid_m),
+                    PidFrom = maps:get(ProcFrom, DupData#branch.proc_pid_m),
+                    Label = format_send_label(ProcFrom, ProcName, MessData),
+                    EFromInfo = get_proc_edge_info(PidFrom, Message#message.edge),
+                    EToInfo = get_proc_edge_info(NewPid, ETo),
+                    {LastVertex, NewStateMap} = add_vertex_to_graph(
+                        ProcFrom, EFromInfo, ProcName, EToInfo, DupData, Label
+                    ),
+                    del_proc_mess_queue(NewPid, Message),
+                    NewPid ! {use_transition, ETo},
+                    ALL ++ [DupData#branch{last_vertex = LastVertex, states_m = NewStateMap}];
+                false ->
+                    ALL
+            end
         end,
         BaseList,
         MessageQueue
@@ -254,16 +250,15 @@ remove_last(A) ->
 manage_send(SLabel, Data, ProcName, Edge) ->
     ProcPidMap = Data#branch.proc_pid_m,
     ProcPid = maps:get(ProcName, ProcPidMap),
-    ProcPid ! {use_transition, Edge},
     DataSent = get_data_from_label(SLabel),
     ProcSentTemp = ltoa(get_proc_from_label(SLabel)),
     ProcSentName = check_vars(ProcName, ProcPid, ProcSentTemp),
     ProcSentPid = maps:get(ProcSentName, ProcPidMap, no_pid),
     case ProcSentPid of
-        %% TODO : CHECK?
         no_pid -> ?UNDEFINED;
         P -> add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge))
     end,
+    ProcPid ! {use_transition, Edge},
     {Data, true}.
 
 manage_recv(ProcPid, Message) ->
@@ -592,14 +587,26 @@ proc_loop(Data) ->
             IsAlreadyMarkedOnce = lists:member(E, FirstMarkedE),
             case digraph:edge(G, E) of
                 {E, VCurr, VNew, _} when IsAlreadyMarkedOnce ->
+                    NewL =
+                        case VNew =< VCurr of
+                            true -> sets:new();
+                            false -> LocalVars
+                        end,
                     proc_loop(Data#proc_info{
                         current_vertex = VNew,
-                        second_marked_edges = SecondMarkedE ++ [E]
+                        second_marked_edges = SecondMarkedE ++ [E],
+                        local_vars = NewL
                     });
                 {E, VCurr, VNew, _} ->
+                    NewL =
+                        case VNew =< VCurr of
+                            true -> sets:new();
+                            false -> LocalVars
+                        end,
                     proc_loop(Data#proc_info{
                         current_vertex = VNew,
-                        first_marked_edges = FirstMarkedE ++ [E]
+                        first_marked_edges = FirstMarkedE ++ [E],
+                        local_vars = NewL
                     });
                 _ ->
                     io:fwrite("[PROC LOOP] V ~p Edge ~p non trovato in ~p~n", [VCurr, E, ProcName]),
