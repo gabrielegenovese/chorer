@@ -7,5 +7,5 @@ digraph dummy2 {
 	n_3 [id="3", shape=doublecircle, label="3"];
 
 	n_2 -> n_3 [id="[$e|0]", label="receive bello"];
-	n_1 -> n_2 [id="[$e|1]", label="send ciao to dummy10"];
+	n_1 -> n_2 [id="[$e|1]", label="send ciao to dummy1_0"];
 }
