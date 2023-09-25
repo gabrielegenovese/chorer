@@ -16,8 +16,8 @@ generate(OutputDir, EntryPoint) ->
             no_entry_point_found;
         _ ->
             Gr = create_globalview(EntryPoint),
-            MG = fsa:minimize(Gr),
-            common_fun:save_graph_to_file(MG, OutputDir, atol(EntryPoint), global),
+            % MG = fsa:minimize(Gr),
+            common_fun:save_graph_to_file(Gr, OutputDir, atol(EntryPoint), global),
             finished
     end.
 
@@ -90,22 +90,25 @@ progress_single_branch(BData) ->
     end.
 
 %%% Generate new branches for each message accepted from an actor
-gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, ProcPid, BaseList) ->
+gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, _ProcPid, BaseList) ->
     lists:foldl(
         fun(Message, AccList) ->
             %%% Check if there's an edge who accepts the message
-            case manage_recv(ProcPid, Message) of
+            DupData = dup_branch(BranchData),
+            NewMap = DupData#branch.proc_pid_m,
+            NewPid = maps:get(ProcName, NewMap),
+            case manage_recv(NewPid, Message) of
                 ?UNDEFINED ->
+                    stop_processes(NewMap),
                     AccList;
                 %%% If an edge has been found, duplicate the branch and add the transition to the graph
                 EdgeFound ->
                     io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
                     ProcFrom = Message#message.from,
                     MessData = Message#message.data,
-                    DupData = dup_branch(BranchData),
-                    NewPid = maps:get(ProcName, DupData#branch.proc_pid_m),
-                    PidFrom = maps:get(ProcFrom, DupData#branch.proc_pid_m),
+                    PidFrom = maps:get(ProcFrom, NewMap),
                     Label = format_send_label(ProcFrom, ProcName, MessData),
+                    io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
                     EFromInfo = get_proc_edge_info(PidFrom, Message#message.edge),
                     EToInfo = get_proc_edge_info(NewPid, EdgeFound),
                     {LastVertex, NewStateMap} = add_vertex_to_graph(
@@ -258,6 +261,7 @@ manage_send(SLabel, Data, ProcName, Edge) ->
         no_pid -> io:fwrite("[SEND] no pid found for: ~p~n", [ProcSentName]);
         P -> add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge))
     end,
+    io:fwrite("[SEND] PID FOUND: ~p~n", [ProcSentName]),
     %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
     use_proc_transition(ProcPid, Edge),
     {Data, true}.
