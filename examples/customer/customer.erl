@@ -3,8 +3,9 @@
 
 customer() ->
     store ! item,
-    A = true,
-    case A of
+    %%% Simulazione della decisione di un utente
+    Done = true,
+    case Done of
         true ->
             store ! buy,
             purchase();
@@ -32,10 +33,12 @@ store() ->
 payment() ->
     receive
         payment ->
-            A = true,
-            case A of
+            %%% Simulazione del esito del pagamento
+            PaymentDone = true,
+            case PaymentDone of
                 true ->
-                    customer ! accepted;
+                    customer ! accepted,
+                    done;
                 false ->
                     customer ! reject,
                     payment()
