@@ -16,6 +16,7 @@ minimize(NFA) ->
     % Minimization of the DFA
     remove_unreachable(DFA),
     remove_nondistinguishable(DFA),
+    rename_states(DFA),
     DFA.
 
 %%%===================================================================
@@ -319,3 +320,30 @@ set_as_final(G, V) ->
 
 stol(S) -> sets:to_list(S).
 sfroml(S) -> sets:from_list(S).
+
+
+%%% Raname graph's vertex's labels in order
+rename_states(G) ->
+    bfs_with_raname(G, [1], sfroml([1]), 1).
+
+bfs_with_raname(G, VL, MarkedV, LastLabel) ->
+    TempV = sfroml(lists:flatten([digraph:out_neighbours(G, V) || V <- VL])),
+    % io:fwrite("NEIGHBOURS LIST ~p~n", [stol(TempV)]),
+    Rename = stol(sets:subtract(TempV, MarkedV)),
+    % io:fwrite("RENAME LIST ~p~n", [Rename]),
+    case Rename =:= [] of
+        true ->
+            done;
+        false ->
+            Last = lists:foldl(
+                fun(I, AccI) ->
+                    NewL = AccI + 1,
+                    % io:fwrite("RENAME ~p WITH ~p~n", [I, NewL]),
+                    digraph:add_vertex(G, I, NewL),
+                    NewL
+                end,
+                LastLabel,
+                Rename
+            ),
+            bfs_with_raname(G, Rename, sets:union(MarkedV, sfroml(Rename)), Last)
+    end.

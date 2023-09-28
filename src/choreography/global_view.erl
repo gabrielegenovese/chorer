@@ -2,7 +2,7 @@
 -include("../share/common_data.hrl").
 
 %%% API
--export([generate/2, proc_loop/1]).
+-export([generate/2]).
 
 %%%===================================================================
 %%% API
@@ -29,7 +29,7 @@ generate(OutputDir, EntryPoint) ->
 create_globalview(Name) ->
     RetG = digraph:new(),
     VNew = common_fun:add_vertex(RetG),
-    MainProcPid = spawn(?MODULE, proc_loop, [#proc_info{proc_id = Name}]),
+    MainProcPid = spawn(actor_emul, proc_loop, [#proc_info{proc_id = Name}]),
     ProcPidMap = #{Name => MainProcPid},
     % initialize first branch
     progress_procs(RetG, [new_branch(RetG, VNew, ProcPidMap)]).
@@ -67,30 +67,37 @@ progress_procs(GlobalGraph, BranchList) when is_list(BranchList) ->
 %%% Explore the execution of a single branch
 progress_single_branch(BData) ->
     %%% First let's eval each actor until it reaches a recv edges
-    {TempBranchData, OpDone} = eval_proc_until_recv(BData),
+    {TempBranchDataL, OpDone} = eval_proc_until_recv(BData),
     %%% Then, let's eval recv edges for each actor, creating a new execution branch foreach message
-    TempProcPidMap = TempBranchData#branch.proc_pid_m,
-    NewBranchList = maps:fold(
-        fun(Name, Pid, AccList) ->
-            MessageQueue = get_proc_mess_queue(Pid),
-            gen_branch_foreach_mess(TempBranchData, MessageQueue, Name, Pid, AccList)
+    NewBranchList = lists:foldl(
+        fun(TempBranchData, AccL) ->
+            TempProcPidMap = TempBranchData#branch.proc_pid_m,
+            AccL ++
+                maps:fold(
+                    fun(Name, Pid, AccList) ->
+                        MessageQueue = actor_emul:get_proc_mess_queue(Pid),
+                        gen_branch_foreach_mess(TempBranchData, MessageQueue, Name, AccList)
+                    end,
+                    [],
+                    TempProcPidMap
+                )
         end,
         [],
-        TempProcPidMap
+        TempBranchDataL
     ),
     case NewBranchList =:= [] of
         true ->
             case OpDone of
-                true -> progress_single_branch(TempBranchData);
+                true -> TempBranchDataL;
                 false -> []
             end;
         false ->
-            stop_processes(TempProcPidMap),
+            stop_processes(TempBranchDataL),
             NewBranchList
     end.
 
 %%% Generate new branches for each message accepted from an actor
-gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, _ProcPid, BaseList) ->
+gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseList) ->
     lists:foldl(
         fun(Message, AccList) ->
             %%% Check if there's an edge who accepts the message
@@ -108,15 +115,16 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, _ProcPid, BaseList) 
                     MessData = Message#message.data,
                     PidFrom = maps:get(ProcFrom, NewMap),
                     Label = format_send_label(ProcFrom, ProcName, MessData),
-                    io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
-                    EFromInfo = get_proc_edge_info(PidFrom, Message#message.edge),
-                    EToInfo = get_proc_edge_info(NewPid, EdgeFound),
-                    {LastVertex, NewStateMap} = add_vertex_to_graph(
+                    % io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
+                    EFromInfo = actor_emul:get_proc_edge_info(PidFrom, Message#message.edge),
+                    EToInfo = actor_emul:get_proc_edge_info(NewPid, EdgeFound),
+                    %{LastVertex, NewStateMap} =  simple_add_vertex(DupData, Label),
+                    {LastVertex, NewStateMap} = complex_add_vertex(
                         ProcFrom, EFromInfo, ProcName, EToInfo, DupData, Label
                     ),
-                    del_proc_mess_queue(NewPid, Message),
+                    actor_emul:del_proc_mess_queue(NewPid, Message),
                     %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
-                    use_proc_transition(NewPid, EdgeFound),
+                    actor_emul:use_proc_transition(NewPid, EdgeFound),
                     AccList ++ [DupData#branch{last_vertex = LastVertex, states_m = NewStateMap}]
             end
         end,
@@ -137,8 +145,8 @@ duplicate_proccess(ProcMap) ->
     maps:fold(
         fun(K, V, A) ->
             Name = remove_id_from_proc(K),
-            NewPid = spawn(?MODULE, proc_loop, [#proc_info{proc_id = Name}]),
-            set_proc_data(NewPid, get_proc_data(V)),
+            NewPid = spawn(actor_emul, proc_loop, [#proc_info{proc_id = Name}]),
+            actor_emul:set_proc_data(NewPid, actor_emul:get_proc_data(V)),
             maps:put(K, NewPid, A)
         end,
         #{},
@@ -155,41 +163,61 @@ remove_id_from_proc(ProcId) ->
     end.
 
 %%% Evaluate the edges of a local view until it reaches a receive edge foreach actor
+eval_proc_until_recv(BranchDataL) when is_list(BranchDataL) ->
+    lists:fold(
+        fun(BD, {B, L}) ->
+            {NB, NL} = eval_proc_until_recv(BD),
+            {B or NB, L ++ NL}
+        end,
+        {false, []},
+        BranchDataL
+    );
 eval_proc_until_recv(BranchData) ->
     maps:fold(
         fun(Name, Pid, AccData) -> eval_proc_until_recv_loop(Name, Pid, AccData) end,
-        {BranchData, false},
+        {[BranchData], false},
         BranchData#branch.proc_pid_m
     ).
 
 %%% Evaluate the edges of a local view until it reaches a receive edge
 eval_proc_until_recv_loop(ProcName, ProcPid, AccData) ->
-    ProcOD = get_proc_out_degree(ProcPid),
-    {Data, Bool} = AccData,
-    {NewData, OpDone} =
-        if
-            %%% TODO: verify this -> No out edges equals to final state?
-            ProcOD =:= 0 ->
-                {Data, false};
-            ProcOD =:= 1 ->
-                EToEval = choose_edge(ProcPid),
-                case EToEval of
-                    false -> {Data, false};
-                    E -> eval_edge(E, ProcName, ProcPid, Data)
-                end;
-            true ->
-                {Data, false}
+    {DataL, _} = AccData,
+    EL = actor_emul:get_proc_edges(ProcPid),
+    {OP, NNLL} = lists:foldl(
+        fun(Data, AcccLL) ->
+            {BB, LL} = AcccLL,
+            {OpDone, NewBList} = lists:foldl(
+                fun(ItemE, AccL) ->
+                    {B, L} = AccL,
+                    case ItemE of
+                        false ->
+                            AccL;
+                        E ->
+                            EI = actor_emul:get_proc_edge_info(ProcPid, E),
+                            {NewData, OpDone} = eval_edge(EI, ProcName, ProcPid, Data),
+                            {B or OpDone, L ++ [NewData]}
+                    end
+                end,
+                {false, []},
+                EL
+            ),
+            % M = Data#branch.proc_pid_m,
+            % stop_processes(M),
+            {BB or OpDone, LL ++ NewBList}
         end,
-    case OpDone of
-        false -> {NewData, Bool};
-        true -> eval_proc_until_recv_loop(ProcName, ProcPid, {NewData, true})
+        {false, []},
+        DataL
+    ),
+    case OP of
+        false -> AccData;
+        true -> eval_proc_until_recv_loop(ProcName, ProcPid, {NNLL, true})
     end.
 
 %%% Given a list of edges, check if everyone is a receive edge
 is_lists_edgerecv(ProcPid, EL) ->
     lists:foldl(
         fun(E, A) ->
-            {E, _, _, Label} = get_proc_edge_info(ProcPid, E),
+            {E, _, _, Label} = actor_emul:get_proc_edge_info(ProcPid, E),
             SLabel = atol(Label),
             IsRecv = string:find(SLabel, "receive"),
             A and is_list(IsRecv)
@@ -197,12 +225,6 @@ is_lists_edgerecv(ProcPid, EL) ->
         true,
         EL
     ).
-
-%%% Pick a transition's info from an actor
-choose_edge(ProcPid) ->
-    EL = get_proc_edges(ProcPid),
-    E = common_fun:first(EL),
-    get_proc_edge_info(ProcPid, E).
 
 %%% Evaluate a transition from an actor
 eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
@@ -214,12 +236,12 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     IsSend = is_list(string:find(SLabel, "send")),
     if
         IsArg ->
-            use_proc_transition(ProcPid, Edge),
+            actor_emul:use_proc_transition(ProcPid, Edge),
             {BData, true};
         IsSpawn ->
             {VNew, NewM} = add_spawn_to_global(SLabel, ProcName, BData),
             NewBData = BData#branch{last_vertex = VNew, proc_pid_m = NewM},
-            use_proc_transition(ProcPid, Edge),
+            actor_emul:use_proc_transition(ProcPid, Edge),
             {NewBData, true};
         IsSend ->
             manage_send(SLabel, BData, ProcName, Edge);
@@ -231,7 +253,7 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
 add_spawn_to_global(SLabel, ProcName, Data) ->
     ProcId = string:prefix(SLabel, "spawn "),
     FuncName = remove_last(remove_last(ProcId)),
-    FuncPid = spawn(?MODULE, proc_loop, [#proc_info{proc_id = ltoa(FuncName)}]),
+    FuncPid = spawn(actor_emul, proc_loop, [#proc_info{proc_id = ltoa(FuncName)}]),
     NewMap = maps:put(ltoa(ProcId), FuncPid, Data#branch.proc_pid_m),
     VNew = common_fun:add_vertex(Data#branch.graph),
     %%% Δ means spawned
@@ -259,16 +281,15 @@ manage_send(SLabel, Data, ProcName, Edge) ->
     ProcSentPid = maps:get(ProcSentName, ProcPidMap, no_pid),
     case ProcSentPid of
         no_pid -> io:fwrite("[SEND] no pid found for: ~p~n", [ProcSentName]);
-        P -> add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge))
+        P -> actor_emul:add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge))
     end,
-    io:fwrite("[SEND] PID FOUND: ~p~n", [ProcSentName]),
     %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
-    use_proc_transition(ProcPid, Edge),
+    actor_emul:use_proc_transition(ProcPid, Edge),
     {Data, true}.
 
 %%% Evaluate a receive transition of an actor
 manage_recv(ProcPid, Message) ->
-    EL = get_proc_edges(ProcPid),
+    EL = actor_emul:get_proc_edges(ProcPid),
     %%% TODO: trovare il modo di valutare in ordine i rami del receive (in quanto è molto rilevante nell'esecuzione)
     IsRecv = is_lists_edgerecv(ProcPid, EL),
     From = Message#message.from,
@@ -295,7 +316,7 @@ manage_recv(ProcPid, Message) ->
                         true ->
                             {B, Ret};
                         false ->
-                            {E, _, _, ELabel} = get_proc_edge_info(ProcPid, E),
+                            {E, _, _, ELabel} = actor_emul:get_proc_edge_info(ProcPid, E),
                             IsIt = is_message_compatible(ProcPid, From, ELabel, Message),
                             case IsIt of
                                 true -> {true, E};
@@ -312,7 +333,7 @@ manage_recv(ProcPid, Message) ->
 %%% Find the actor id from a variable's list, given the variable name
 check_vars(ProcName, ProcPid, VarName) ->
     Name = remove_id_from_proc(ProcName),
-    GlobalViewLocalVars = get_proc_localvars(ProcPid),
+    GlobalViewLocalVars = actor_emul:get_proc_localvars(ProcPid),
     LocalViewLocalVars = db_manager:get_fun_local_vars(Name),
     SpInfoP = find_spawn_info(ProcName),
     ArgsVars =
@@ -443,7 +464,7 @@ check_mess_comp(ProcPid, CallingProc, PatternMatching, Message) ->
         PatternMS =:= MessageS ->
             {true, []};
         IsFirstCharUpperCase ->
-            {true, [{ProcPid, CallingProc, ltoa(PatternMS), check_pid_self(Message, CallingProc)}]};
+            {true, [{ProcPid, ltoa(PatternMS), check_pid_self(Message, CallingProc)}]};
         [FirstPChar] =:= "_" ->
             {true, []};
         true ->
@@ -452,24 +473,14 @@ check_mess_comp(ProcPid, CallingProc, PatternMatching, Message) ->
 
 %%% Register a actor's variable
 register_var(Data) ->
-    {ProcPid, ProcName, Name, Type} = Data,
-    io:fwrite("[Register] PName ~p VName ~p VType ~p~n", [ProcName, Name, Type]),
-    IsPid = string:prefix(Type, "pid_"),
-    [FC | _] = Type,
-    IsLower = common_fun:is_lowercase([FC]),
-    TVal =
-        if
-            is_list(IsPid) -> ltoa("pid_" ++ atol(ProcName));
-            IsLower -> atom;
-            true -> ltoa(Type)
-        end,
-    V = #variable{name = ltoa(Name), type = TVal},
+    {ProcPid, Name, Type} = Data,
+    V = #variable{name = ltoa(Name), type = ltoa(Type)},
     io:fwrite("Added Var ~p~n", [V]),
-    add_proc_localvars(ProcPid, V).
+    actor_emul:add_proc_localvars(ProcPid, V).
 
 %%% Substitute pif_self to pid_procId
 check_pid_self(Data, ProcId) ->
-    io:fwrite("[C]Data ~p proc id ~p~n", [Data, ProcId]),
+    % io:fwrite("[C]Data ~p proc id ~p~n", [Data, ProcId]),
     lists:flatten(string:replace(atol(Data), "pid_self", "pid_" ++ atol(ProcId))).
 
 %%% Custom recursive and
@@ -485,7 +496,7 @@ and_rec([{B, L} | T]) ->
     end.
 
 %%% Add a send/recv vertex to the global view, with some checks
-add_vertex_to_graph(Proc1, EdgeInfo1, Proc2, EdgeInfo2, Data, Label) ->
+complex_add_vertex(Proc1, EdgeInfo1, Proc2, EdgeInfo2, Data, Label) ->
     StateM = Data#branch.states_m,
     VLast = Data#branch.last_vertex,
     G = Data#branch.graph,
@@ -524,6 +535,14 @@ add_vertex_to_graph(Proc1, EdgeInfo1, Proc2, EdgeInfo2, Data, Label) ->
             {VRet, StateM}
     end.
 
+% simple_add_vertex(Data, Label) ->
+%     StateM = Data#branch.states_m,
+%     VLast = Data#branch.last_vertex,
+%     G = Data#branch.graph,
+%     VAdded = common_fun:add_vertex(G),
+%     digraph:add_edge(G, VLast, VAdded, Label),
+%     {VAdded, StateM}.
+
 %%% Returns the outgoing vertex given a label and a list of transition
 check_same_label(G, EL, Label) ->
     lists:foldl(
@@ -551,107 +570,18 @@ get_data_from_label(S) ->
 get_proc_from_label(S) -> lists:reverse(lists:nth(1, string:split(lists:reverse(S), " ", all))).
 
 %%% Stop all the processes from the process map
-stop_processes(ProcMap) -> maps:foreach(fun(_K, V) -> V ! stop end, ProcMap).
+stop_processes(DataL) when is_list(DataL) ->
+    lists:foreach(
+        fun(D) ->
+            M = D#branch.proc_pid_m,
+            stop_processes(M)
+        end,
+        DataL
+    );
+stop_processes(ProcMap) ->
+    maps:foreach(fun(_K, V) -> V ! stop end, ProcMap).
 
 atol(A) when is_list(A) -> A;
 atol(A) when is_atom(A) -> atom_to_list(A).
 ltoa(L) when is_atom(L) -> L;
 ltoa(L) when is_list(L) -> list_to_atom(L).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Actor simulator functions %%%
-%%%%%%%%%%%&&&&%%%%%%%%%%%%%%%%%%
-
-%%% API
-use_proc_transition(P, E) -> P ! {use_transition, E}.
-get_proc_edges(P) -> send_recv(P, {self(), get_edges}).
-get_proc_out_degree(P) -> send_recv(P, {self(), get_out_degree}).
-get_proc_edge_info(P, E) -> send_recv(P, {self(), get_edge_info, E}).
-get_proc_localvars(P) -> send_recv(P, {self(), get_local_vars}).
-add_proc_localvars(P, V) -> P ! {add_local_var, V}.
-get_proc_data(P) -> send_recv(P, {self(), get_data}).
-set_proc_data(P, Data) -> P ! {set_data, Data}.
-get_proc_mess_queue(P) -> send_recv(P, {self(), get_mess_queue}).
-add_proc_mess_queue(P, M) -> P ! {add_mess_queue, M}.
-del_proc_mess_queue(P, M) -> P ! {del_mess_queue, M}.
-
-send_recv(P, Data) ->
-    P ! Data,
-    receive
-        {D} -> D
-    end.
-
-%%% Actor simulator main function
-proc_loop(Data) ->
-    ProcName = Data#proc_info.proc_id,
-    G = db_manager:get_fun_graph(ProcName),
-    % timer:sleep(200),
-    VCurr = Data#proc_info.current_vertex,
-    FirstMarkedE = Data#proc_info.first_marked_edges,
-    SecondMarkedE = Data#proc_info.second_marked_edges,
-    MessageQueue = Data#proc_info.message_queue,
-    LocalVars = Data#proc_info.local_vars,
-    receive
-        {use_transition, E} ->
-            IsAlreadyMarkedOnce = lists:member(E, FirstMarkedE),
-            case digraph:edge(G, E) of
-                {E, VCurr, VNew, _} when IsAlreadyMarkedOnce ->
-                    NewL =
-                        case VNew =< VCurr of
-                            true -> sets:new();
-                            false -> LocalVars
-                        end,
-                    proc_loop(Data#proc_info{
-                        current_vertex = VNew,
-                        second_marked_edges = SecondMarkedE ++ [E],
-                        local_vars = NewL
-                    });
-                {E, VCurr, VNew, _} ->
-                    NewL =
-                        case VNew =< VCurr of
-                            true -> sets:new();
-                            false -> LocalVars
-                        end,
-                    proc_loop(Data#proc_info{
-                        current_vertex = VNew,
-                        first_marked_edges = FirstMarkedE ++ [E],
-                        local_vars = NewL
-                    });
-                _ ->
-                    io:fwrite("[PROC LOOP] V ~p Edge ~p non trovato in ~p~n", [VCurr, E, ProcName]),
-                    proc_loop(Data)
-            end;
-        {P, get_edges} ->
-            EL = digraph:out_edges(G, VCurr),
-            ERet = filter_marked_edges(EL, SecondMarkedE),
-            P ! {ERet},
-            proc_loop(Data);
-        {P, get_out_degree} ->
-            P ! {digraph:out_degree(G, VCurr)},
-            proc_loop(Data);
-        {P, get_edge_info, E} ->
-            P ! {digraph:edge(G, E)},
-            proc_loop(Data);
-        {P, get_data} ->
-            P ! {Data},
-            proc_loop(Data);
-        {set_data, NewData} ->
-            proc_loop(NewData);
-        {P, get_local_vars} ->
-            P ! {sets:to_list(LocalVars)},
-            proc_loop(Data);
-        {add_local_var, V} ->
-            proc_loop(Data#proc_info{local_vars = sets:add_element(V, LocalVars)});
-        {P, get_mess_queue} ->
-            P ! {MessageQueue},
-            proc_loop(Data);
-        {add_mess_queue, M} ->
-            proc_loop(Data#proc_info{message_queue = MessageQueue ++ [M]});
-        {del_mess_queue, M} ->
-            proc_loop(Data#proc_info{message_queue = lists:delete(M, MessageQueue)});
-        stop ->
-            ok
-    end.
-
-%%% Filter and edge list, given a list of edges
-filter_marked_edges(EdgeL, MarkedE) -> [E || E <- EdgeL, not lists:member(E, MarkedE)].
