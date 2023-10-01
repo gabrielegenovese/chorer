@@ -16,8 +16,8 @@ generate(OutputDir, EntryPoint) ->
             no_entry_point_found;
         _ ->
             Gr = create_globalview(EntryPoint),
-            % MG = fsa:minimize(Gr),
-            common_fun:save_graph_to_file(Gr, OutputDir, atol(EntryPoint), global),
+            MG = fsa:minimize(Gr),
+            common_fun:save_graph_to_file(MG, OutputDir, atol(EntryPoint), global),
             finished
     end.
 
@@ -52,7 +52,8 @@ new_message(F, D, E) ->
 progress_procs(G, []) ->
     G;
 progress_procs(GlobalGraph, BranchList) when is_list(BranchList) ->
-    io:fwrite("Branch to eval ~p~n", [length(BranchList)]),
+    RealList = lists:flatten(BranchList),
+    io:fwrite("Branch to eval ~p~n", [length(RealList)]),
     NewBL = lists:foldl(
         fun(Item, AccL) ->
             io:fwrite("Eval branch~n"),
@@ -60,39 +61,33 @@ progress_procs(GlobalGraph, BranchList) when is_list(BranchList) ->
             AccL ++ NewBreanches
         end,
         [],
-        BranchList
+        RealList
     ),
     progress_procs(GlobalGraph, NewBL).
 
 %%% Explore the execution of a single branch
 progress_single_branch(BData) ->
     %%% First let's eval each actor until it reaches a recv edges
-    {TempBranchDataL, OpDone} = eval_proc_until_recv(BData),
+    {TempBranchData, OpDone, NBL} = eval_branch_until_recv(BData),
     %%% Then, let's eval recv edges for each actor, creating a new execution branch foreach message
-    NewBranchList = lists:foldl(
-        fun(TempBranchData, AccL) ->
-            TempProcPidMap = TempBranchData#branch.proc_pid_m,
-            AccL ++
-                maps:fold(
-                    fun(Name, Pid, AccList) ->
-                        MessageQueue = actor_emul:get_proc_mess_queue(Pid),
-                        gen_branch_foreach_mess(TempBranchData, MessageQueue, Name, AccList)
-                    end,
-                    [],
-                    TempProcPidMap
-                )
-        end,
-        [],
-        TempBranchDataL
-    ),
+    TempProcPidMap = TempBranchData#branch.proc_pid_m,
+    NewBranchList =
+        NBL ++
+            maps:fold(
+                fun(Name, Pid, AccList) ->
+                    MessageQueue = actor_emul:get_proc_mess_queue(Pid),
+                    gen_branch_foreach_mess(TempBranchData, MessageQueue, Name, AccList)
+                end,
+                [],
+                TempProcPidMap
+            ),
     case NewBranchList =:= [] of
         true ->
             case OpDone of
-                true -> TempBranchDataL;
+                true -> [TempBranchData];
                 false -> []
             end;
         false ->
-            stop_processes(TempBranchDataL),
             NewBranchList
     end.
 
@@ -118,7 +113,7 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseList) ->
                     % io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
                     EFromInfo = actor_emul:get_proc_edge_info(PidFrom, Message#message.edge),
                     EToInfo = actor_emul:get_proc_edge_info(NewPid, EdgeFound),
-                    %{LastVertex, NewStateMap} =  simple_add_vertex(DupData, Label),
+                    %LastVertex =  simple_add_vertex(DupData, Label),
                     {LastVertex, NewStateMap} = complex_add_vertex(
                         ProcFrom, EFromInfo, ProcName, EToInfo, DupData, Label
                     ),
@@ -163,54 +158,58 @@ remove_id_from_proc(ProcId) ->
     end.
 
 %%% Evaluate the edges of a local view until it reaches a receive edge foreach actor
-eval_proc_until_recv(BranchDataL) when is_list(BranchDataL) ->
-    lists:fold(
-        fun(BD, {B, L}) ->
-            {NB, NL} = eval_proc_until_recv(BD),
-            {B or NB, L ++ NL}
+eval_branch_until_recv(BranchData) ->
+    Map = BranchData#branch.proc_pid_m,
+    {NewData, OP, LL} = maps:fold(
+        fun(Name, Pid, {D, B, L}) ->
+            {ND, BB, LL} = eval_proc_branch(Name, Pid, D),
+            {ND, B or BB, L ++ [LL]}
         end,
-        {false, []},
-        BranchDataL
-    );
-eval_proc_until_recv(BranchData) ->
-    maps:fold(
-        fun(Name, Pid, AccData) -> eval_proc_until_recv_loop(Name, Pid, AccData) end,
-        {[BranchData], false},
-        BranchData#branch.proc_pid_m
-    ).
-
-%%% Evaluate the edges of a local view until it reaches a receive edge
-eval_proc_until_recv_loop(ProcName, ProcPid, AccData) ->
-    {DataL, _} = AccData,
-    EL = actor_emul:get_proc_edges(ProcPid),
-    {OP, NNLL} = lists:foldl(
-        fun(Data, AcccLL) ->
-            {BB, LL} = AcccLL,
-            {OpDone, NewBList} = lists:foldl(
-                fun(ItemE, AccL) ->
-                    {B, L} = AccL,
-                    case ItemE of
-                        false ->
-                            AccL;
-                        E ->
-                            EI = actor_emul:get_proc_edge_info(ProcPid, E),
-                            {NewData, OpDone} = eval_edge(EI, ProcName, ProcPid, Data),
-                            {B or OpDone, L ++ [NewData]}
-                    end
-                end,
-                {false, []},
-                EL
-            ),
-            % M = Data#branch.proc_pid_m,
-            % stop_processes(M),
-            {BB or OpDone, LL ++ NewBList}
-        end,
-        {false, []},
-        DataL
+        {BranchData, false, []},
+        Map
     ),
     case OP of
-        false -> AccData;
-        true -> eval_proc_until_recv_loop(ProcName, ProcPid, {NNLL, true})
+        true ->
+            {ND, _, L} = eval_branch_until_recv(NewData),
+            {ND, true, LL ++ L};
+        false ->
+            {NewData, false, LL}
+    end.
+
+%%% Evaluate the edges of a local view until it reaches a receive edge
+eval_proc_branch(ProcName, ProcPid, Data) ->
+    EL = actor_emul:get_proc_edges(ProcPid),
+    ELLength = length(EL),
+    if
+        ELLength =:= 0 ->
+            {Data, false, []};
+        ELLength =:= 1 ->
+            E = common_fun:first(EL),
+            EI = actor_emul:get_proc_edge_info(ProcPid, E),
+            {D, B} = eval_edge(EI, ProcName, ProcPid, Data),
+            {D, B, []};
+        true ->
+            LL = lists:foldl(
+                fun(ItemE, L) ->
+                    DD = dup_branch(Data),
+                    PP = maps:get(ProcName, DD#branch.proc_pid_m),
+                    EI = actor_emul:get_proc_edge_info(PP, ItemE),
+                    {D, B} = eval_edge(EI, ProcName, PP, DD),
+                    case B of
+                        true -> L ++ [D];
+                        false -> L
+                    end
+                end,
+                [],
+                EL
+            ),
+            case LL =:= [] of
+                true ->
+                    {Data, false, []};
+                false ->
+                    [F | H] = LL,
+                    {F, true, H}
+            end
     end.
 
 %%% Given a list of edges, check if everyone is a receive edge
@@ -244,7 +243,7 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             actor_emul:use_proc_transition(ProcPid, Edge),
             {NewBData, true};
         IsSend ->
-            manage_send(SLabel, BData, ProcName, Edge);
+            manage_send(SLabel, BData, ProcName, ProcPid, Edge);
         true ->
             {BData, false}
     end.
@@ -267,9 +266,8 @@ remove_last(List) when is_list(List) ->
     Rest.
 
 %%% Evaluate a send transition of an actor
-manage_send(SLabel, Data, ProcName, Edge) ->
+manage_send(SLabel, Data, ProcName, ProcPid, Edge) ->
     ProcPidMap = Data#branch.proc_pid_m,
-    ProcPid = maps:get(ProcName, ProcPidMap),
     DataSent = get_data_from_label(SLabel),
     ProcSentTemp = ltoa(get_proc_from_label(SLabel)),
     IsVar = common_fun:is_erlvar(ProcSentTemp),
@@ -280,12 +278,15 @@ manage_send(SLabel, Data, ProcName, Edge) ->
         end,
     ProcSentPid = maps:get(ProcSentName, ProcPidMap, no_pid),
     case ProcSentPid of
-        no_pid -> io:fwrite("[SEND] no pid found for: ~p~n", [ProcSentName]);
-        P -> actor_emul:add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge))
-    end,
-    %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
-    actor_emul:use_proc_transition(ProcPid, Edge),
-    {Data, true}.
+        no_pid ->
+            io:fwrite("[SEND-ERR] no pid found for: ~p~n", [ProcSentName]),
+            {Data, false};
+        P ->
+            actor_emul:add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge)),
+            %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
+            actor_emul:use_proc_transition(ProcPid, Edge),
+            {Data, true}
+    end.
 
 %%% Evaluate a receive transition of an actor
 manage_recv(ProcPid, Message) ->
@@ -363,7 +364,8 @@ check_vars(ProcName, ProcPid, VarName) ->
     end.
 
 %%% Remove the "pid_" part from a variable's type
-remove_pid_part(Data) -> ltoa(lists:flatten(string:replace(atol(Data), "pid_", ""))).
+remove_pid_part(Data) ->
+    ltoa(lists:flatten(string:replace(atol(Data), "pid_", ""))).
 
 %%% Get the spawn info given an actor id
 find_spawn_info(PId) ->
@@ -483,7 +485,7 @@ check_pid_self(Data, ProcId) ->
     % io:fwrite("[C]Data ~p proc id ~p~n", [Data, ProcId]),
     lists:flatten(string:replace(atol(Data), "pid_self", "pid_" ++ atol(ProcId))).
 
-%%% Custom recursive and
+%%% Custom recursive logic and
 and_rec([]) ->
     {true, []};
 and_rec([{B, L} | T]) ->
@@ -495,7 +497,7 @@ and_rec([{B, L} | T]) ->
             {B, []}
     end.
 
-%%% Add a send/recv vertex to the global view, with some checks
+%%% Add a send/recv vertex to the global view, with some checks for recusive edges
 complex_add_vertex(Proc1, EdgeInfo1, Proc2, EdgeInfo2, Data, Label) ->
     StateM = Data#branch.states_m,
     VLast = Data#branch.last_vertex,
@@ -536,12 +538,11 @@ complex_add_vertex(Proc1, EdgeInfo1, Proc2, EdgeInfo2, Data, Label) ->
     end.
 
 % simple_add_vertex(Data, Label) ->
-%     StateM = Data#branch.states_m,
 %     VLast = Data#branch.last_vertex,
 %     G = Data#branch.graph,
 %     VAdded = common_fun:add_vertex(G),
 %     digraph:add_edge(G, VLast, VAdded, Label),
-%     {VAdded, StateM}.
+%     VAdded.
 
 %%% Returns the outgoing vertex given a label and a list of transition
 check_same_label(G, EL, Label) ->
@@ -567,7 +568,8 @@ get_data_from_label(S) ->
     end.
 
 %%% Get the process from a send local view's label
-get_proc_from_label(S) -> lists:reverse(lists:nth(1, string:split(lists:reverse(S), " ", all))).
+get_proc_from_label(S) ->
+    lists:reverse(lists:nth(1, string:split(lists:reverse(S), " ", all))).
 
 %%% Stop all the processes from the process map
 stop_processes(DataL) when is_list(DataL) ->

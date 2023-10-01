@@ -1,23 +1,21 @@
 digraph global {
 	rankdir="LR";
 	n_0 [label="global", shape="plaintext"];
-	n_1 [id="5", shape=circle, label="5"];
-	n_2 [id="6", shape=circle, label="6"];
+	n_1 [id="5", shape=circle, label="6"];
+	n_2 [id="6", shape=circle, label="7"];
 	n_3 [id="1", shape=circle, label="1"];
 	n_0 -> n_3 [arrowhead=none];
 	n_4 [id="2", shape=circle, label="2"];
-	n_5 [id="8", shape=circle, label="8"];
-	n_6 [id="4", shape=circle, label="4"];
-	n_7 [id="7", shape=circle, label="7"];
-	n_8 [id="3", shape=circle, label="3"];
+	n_5 [id="8", shape=circle, label="4"];
+	n_6 [id="4", shape=circle, label="5"];
+	n_7 [id="3", shape=circle, label="3"];
 
-	n_4 -> n_8 [id="[$e|1]", label="mainΔstore_0"];
-	n_2 -> n_7 [id="[$e|6]", label="store_0→customer_0:accepted"];
-	n_1 -> n_2 [id="[$e|5]", label="customer_0→store_0:payment"];
-	n_6 -> n_1 [id="[$e|3]", label="customer_0→store_0:buy"];
-	n_6 -> n_8 [id="[$e|4]", label="customer_0→store_0:more"];
-	n_1 -> n_5 [id="[$e|8]", label="store_0→customer_0:accepted"];
-	n_3 -> n_4 [id="[$e|0]", label="mainΔcustomer_0"];
-	n_8 -> n_6 [id="[$e|2]", label="customer_0→store_0:item"];
-	n_2 -> n_1 [id="[$e|7]", label="store_0→customer_0:reject"];
+	n_6 -> n_1 [id="[$e|1]", label="customer_0→store_0:payment"];
+	n_1 -> n_6 [id="[$e|5]", label="store_0→customer_0:reject"];
+	n_5 -> n_7 [id="[$e|9]", label="customer_0→store_0:more"];
+	n_3 -> n_4 [id="[$e|4]", label="mainΔcustomer_0"];
+	n_5 -> n_6 [id="[$e|8]", label="customer_0→store_0:buy"];
+	n_1 -> n_2 [id="[$e|0]", label="store_0→customer_0:accepted"];
+	n_4 -> n_7 [id="[$e|2]", label="mainΔstore_0"];
+	n_7 -> n_5 [id="[$e|7]", label="customer_0→store_0:item"];
 }
