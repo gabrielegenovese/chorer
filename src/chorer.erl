@@ -1,12 +1,15 @@
--module(chorer_app).
+-module(chorer).
 -include("share/common_data.hrl").
 
 %%% API
--export([generate/2, generate/3, generate/4]).
+-export([main/1, generate/2, generate/3, generate/4]).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
+
+main([InputFile, EntryPoint, OutputDir] = _Args) ->
+    generate(InputFile, list_to_atom(EntryPoint), OutputDir).
 
 %%% Generate the local and global view of an Erlang File source.
 generate(InputFile, EntryPoint) ->

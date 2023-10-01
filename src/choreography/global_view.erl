@@ -15,8 +15,8 @@ generate(OutputDir, EntryPoint) ->
         no_graph_found ->
             no_entry_point_found;
         _ ->
-            Gr = create_globalview(EntryPoint),
-            MG = fsa:minimize(Gr),
+            G = create_globalview(EntryPoint),
+            MG = fsa:minimize(G),
             common_fun:save_graph_to_file(MG, OutputDir, atol(EntryPoint), global),
             finished
     end.
