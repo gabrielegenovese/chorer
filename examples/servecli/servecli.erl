@@ -3,7 +3,6 @@
 
 client() ->
     server ! {req, self()},
-
     receive
         {res, Handle} ->
             cli_loop(Handle)
@@ -34,6 +33,7 @@ handle_request(C) ->
     end.
 
 main() ->
-    spawn(?MODULE, server, []),
+    S = spawn(?MODULE, server, []),
+    register(server, S),
     spawn(?MODULE, client, []),
     done.

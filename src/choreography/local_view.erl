@@ -29,7 +29,7 @@ create_localview(ActorName, OutputDir, Options) ->
             io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]);
         _ ->
             {SetFinalState, SetAdditionalInfo} = Options,
-            Graph = get_localview(ActorName, ActorAst, SetFinalState, SetAdditionalInfo),
+            Graph = get_localview(ActorName, ActorAst, [], SetFinalState, SetAdditionalInfo),
             MinGraph = fsa:minimize(Graph),
             %%% Send the graph to the dbmanager
             db_manager:send_fun_graph(ActorName, MinGraph),
@@ -37,7 +37,7 @@ create_localview(ActorName, OutputDir, Options) ->
     end.
 
 %%% Get the local view of a function
-get_localview(FunName, Code, SetFinal, SetPm) when is_list(Code) ->
+get_localview(FunName, Code, LocalVars, SetFinal, SetPm) when is_list(Code) ->
     Gr = digraph:new(),
     VStart = common_fun:add_vertex(Gr),
     lists:foreach(
@@ -46,7 +46,7 @@ get_localview(FunName, Code, SetFinal, SetPm) when is_list(Code) ->
                 {clause, _, Vars, Guard, Content} ->
                     %%% Show the pattern matching options to view the complete local view
                     VN = add_args_to_graph(Gr, Vars, Guard, VStart, SetPm),
-                    VFinal = eval_pm_clause(Content, FunName, Gr, VN, [], SetPm),
+                    VFinal = eval_pm_clause(Content, FunName, Gr, VN, LocalVars, SetPm),
                     set_as_final(SetFinal, Gr, VFinal);
                 _ ->
                     ?UNDEFINED
@@ -107,12 +107,15 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         %%% Evaluate the register() function
         {call, _, {atom, _, register}, [{atom, _, AtomV}, {var, _, VarV}]} ->
             manage_register(LocalVarL, AtomV, VarV),
+            io:fwrite("[LOCAL] AtomV ~p VarV ~p~n", [AtomV, VarV]),
             AccData;
         %%% Evaluate a generic function
         %%% Attention: don't change the position of this pattern matching branch
         %%% TODO: implement argument list evaluation feature
-        {call, _, {atom, _, Name}, _ArgList} ->
-            NewG = eval_func(Name, SetPm),
+        {call, _, {atom, _, Name}, ArgList} ->
+            {V, _, NewL} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
+            io:fwrite("[LOCAL] V ~p NewL ~p Name ~p~n", [V, NewL, FunName]),
+            NewG = eval_func(Name, [], SetPm),
             case NewG of
                 %%% If the function called is a built-in or a module function,
                 %%% then we don't have the Ast. Just return the last added vertex
@@ -346,12 +349,12 @@ merge_graph(MainG, GToAdd, VLast) ->
     maps:get(lists:max(maps:keys(VEquiMap)), VEquiMap).
 
 %%% Returns an FSA graph of the function if the ast exist, otherwise return error.
-eval_func(FuncName, SetPm) ->
+eval_func(FuncName, LocalVar, SetPm) ->
     FunAst = db_manager:get_fun_ast(FuncName),
     case FunAst of
         no_ast_found -> no_graph;
         %%% get the graph but don't set the final state
-        _ -> get_localview(FuncName, FunAst, false, SetPm)
+        _ -> get_localview(FuncName, FunAst, LocalVar, false, SetPm)
     end.
 
 %%% Evaluate Pattern Matching's list of clauses: evaluate every branch alone, then
@@ -424,7 +427,7 @@ guards_to_string(GlobalToVal, BaseL) ->
         _ -> BaseL
     end.
 
-%%% Link each vertex of a vertex's list to a given vertex, with a defined label 
+%%% Link each vertex of a vertex's list to a given vertex, with a defined label
 add_edges_recursive(G, VertexList, VertexToLink, Label, Except) ->
     %%% Link every V in the VertexList to the VertexToLink, with a specified label
     [

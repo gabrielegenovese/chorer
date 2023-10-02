@@ -16,8 +16,8 @@ generate(OutputDir, EntryPoint) ->
             no_entry_point_found;
         _ ->
             G = create_globalview(EntryPoint),
-            MG = fsa:minimize(G),
-            common_fun:save_graph_to_file(MG, OutputDir, atol(EntryPoint), global),
+            % MG = fsa:minimize(G),
+            common_fun:save_graph_to_file(G, OutputDir, atol(EntryPoint), global),
             finished
     end.
 
@@ -516,11 +516,19 @@ complex_add_vertex(Proc1, EdgeInfo1, Proc2, EdgeInfo2, Data, Label) ->
                 ?UNDEFINED ->
                     case Vsecond of
                         ?UNDEFINED ->
-                            %%% Add a new vertex, because no match found in StateM
-                            VAdded = common_fun:add_vertex(G),
-                            digraph:add_edge(G, VLast, VAdded, Label),
-                            NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
-                            {VAdded, NewM};
+                            Cond = (V1 =:= V2) and (PV1 =:= PV2),
+                            case Cond of
+                                true ->
+                                    digraph:add_edge(G, VLast, VLast, Label),
+                                    NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
+                                    {VLast, NewM};
+                                %%% Add a new vertex, because no match found in StateM
+                                false ->
+                                    VAdded = common_fun:add_vertex(G),
+                                    digraph:add_edge(G, VLast, VAdded, Label),
+                                    NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
+                                    {VAdded, NewM}
+                            end;
                         _ ->
                             %%% Match second vertex
                             digraph:add_edge(G, VLast, Vsecond, Label),
