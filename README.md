@@ -29,5 +29,5 @@ The tool will create a DOT file for each actor's local view and a DOT file for t
 
 ## Credits
 
-This project was made for the Bachelor's degree Thesis of the Computer Science course at Alma Mater Studiotum - University of Bologna.
-I am grateful to the professor [Ivan Lanese](https://github.com/lanese), who supervised the develpment of this project.
+This project was made for the Bachelor's degree Thesis of the Computer Science course at Alma Mater Studiorum - University of Bologna.
+I am grateful to the professor [Ivan Lanese](https://github.com/lanese), who supervised the development of this project.
