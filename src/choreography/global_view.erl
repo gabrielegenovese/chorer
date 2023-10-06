@@ -318,7 +318,7 @@ manage_recv(ProcPid, Message) ->
                             {B, Ret};
                         false ->
                             {E, _, _, ELabel} = actor_emul:get_proc_edge_info(ProcPid, E),
-                            IsIt = is_message_compatible(ProcPid, From, ELabel, Message),
+                            IsIt = is_pm_msg_compatible(ProcPid, From, ELabel, Message),
                             case IsIt of
                                 true -> {true, E};
                                 false -> {B, Ret}
@@ -431,9 +431,9 @@ find_var([H | T], VarName) ->
         false -> find_var(T, VarName)
     end.
 
-%%% Check if a pattern metching match a message, then register the
-is_message_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
-    {RetBool, RegList} = check_mess_comp(
+%%% Check if a pattern metching match a message, then register the new variables
+is_pm_msg_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
+    {RetBool, RegList} = check_msg_comp(
         ProcPid, CallingProc, PatternMatching, Message#message.data
     ),
     lists:foreach(
@@ -443,7 +443,7 @@ is_message_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
     RetBool.
 
 %%% Check if a pattern metching match a message
-check_mess_comp(ProcPid, CallingProc, PatternMatching, Message) ->
+check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
     MessageS = atol(Message),
     PatternMS = lists:flatten(string:replace(atol(PatternMatching), "receive ", "")),
     [FirstPChar | RestP] = PatternMS,
@@ -459,7 +459,7 @@ check_mess_comp(ProcPid, CallingProc, PatternMatching, Message) ->
             ML = string:split(ContentM, ",", all),
             B = lists:enumerate(ML),
             BoolList = [
-                check_mess_comp(ProcPid, CallingProc, IA, IB)
+                check_msg_comp(ProcPid, CallingProc, IA, IB)
              || {BA, IA} <- A, {BB, IB} <- B, BA =:= BB
             ],
             and_rec(BoolList);
