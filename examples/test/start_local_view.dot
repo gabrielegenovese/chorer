@@ -1,0 +1,16 @@
+digraph start {
+	rankdir="LR";
+	n_0 [label="start", shape="plaintext"];
+	n_1 [id="3", shape=circle, label="3"];
+	n_2 [id="6", shape=circle, label="4"];
+	n_3 [id="5", shape=circle, label="5"];
+	n_4 [id="2", shape=circle, label="2"];
+	n_5 [id="1", shape=circle, label="1"];
+	n_0 -> n_5 [arrowhead=none];
+
+	n_1 -> n_3 [id="[$e|1]", label="receive kill"];
+	n_4 -> n_1 [id="[$e|7]", label="send 3 to start"];
+	n_2 -> n_1 [id="[$e|4]", label="send {pid_self,none} to Pong"];
+	n_5 -> n_4 [id="[$e|5]", label="spawn pong_0"];
+	n_1 -> n_2 [id="[$e|2]", label="receive N"];
+}
