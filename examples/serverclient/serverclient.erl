@@ -1,5 +1,5 @@
--module(servecli).
--export([main/0, client/0, server/0, handle_request/1]).
+-module(serverclient).
+-export([main/0, client/0, server/0, handle_req/1]).
 
 client() ->
     server ! {req, self()},
@@ -21,14 +21,16 @@ cli_loop(Handle) ->
 server() ->
     receive
         {req, P} ->
-            H = spawn(?MODULE, handle_request, [P]),
+            H = spawn(?MODULE, handle_req, [P]),
             P ! {res, H},
-            server()
+            server();
+        ciao ->
+            spawn(?MODULE, handle_req, [self()])
     end.
 
-handle_request(C) ->
+handle_req(C) ->
     receive
-        next -> handle_request(C);
+        next -> handle_req(C);
         done -> done
     end.
 

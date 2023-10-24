@@ -16,8 +16,13 @@ generate(OutputDir, EntryPoint) ->
             no_entry_point_found;
         _ ->
             G = create_globalview(EntryPoint),
-            % MG = fsa:minimize(G),
-            common_fun:save_graph_to_file(G, OutputDir, atol(EntryPoint), global),
+            {ok, [In]} = io:fread("Minimize global view? [y/n] ", "~a"),
+            CG =
+                case In of
+                    n -> G;
+                    _ -> fsa:minimize(G)
+                end,
+            common_fun:save_graph_to_file(CG, OutputDir, atol(EntryPoint), global),
             finished
     end.
 
