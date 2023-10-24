@@ -8,8 +8,8 @@ recv_dummy() ->
     end.
 
 dummy(Pid) -> 
-    Pid ! {self(), "Hello from dummy (1)"},
-    Pid ! {self(), "Hello from dummy (2)"}.
+    Pid ! {self(), hello1},
+    Pid ! {self(), hello2}.
 
 main() ->
     spawn(?MODULE, dummy, [self()]),

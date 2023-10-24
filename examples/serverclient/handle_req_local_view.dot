@@ -1,6 +1,6 @@
-digraph handle_request {
+digraph handle_req {
 	rankdir="LR";
-	n_0 [label="handle_request", shape="plaintext"];
+	n_0 [label="handle_req", shape="plaintext"];
 	n_1 [id="1", shape=circle, label="1"];
 	n_0 -> n_1 [arrowhead=none];
 	n_2 [id="2", shape=circle, label="2"];
