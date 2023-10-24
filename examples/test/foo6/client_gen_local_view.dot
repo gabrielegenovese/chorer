@@ -1,0 +1,13 @@
+digraph client_gen {
+	rankdir="LR";
+	n_0 [label="client_gen", shape="plaintext"];
+	n_1 [id="3", shape=circle, label="2"];
+	n_2 [id="2", shape=circle, label="3"];
+	n_3 [id="1", shape=circle, label="1"];
+	n_0 -> n_3 [arrowhead=none];
+
+	n_1 -> n_2 [id="[$e|1]", label="spawn client_4"];
+	n_3 -> n_1 [id="[$e|3]", label="spawn client_5"];
+	n_3 -> n_2 [id="[$e|0]", label="spawn client_4"];
+	n_1 -> n_1 [id="[$e|2]", label="spawn client_5"];
+}
