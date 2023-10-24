@@ -1,0 +1,64 @@
+Concuerror v0.18-86-ga0b428 started at 14 Mar 2018 10:45:40
+ Options:
+  [{after_timeout,infinity},
+   {assertions_only,false},
+   {assume_racing,false},
+   {depth_bound,500},
+   {disable_sleep_sets,false},
+   {dpor,optimal},
+   {entry_point,{halt_error,test1,[]}},
+   {exclude_module,[]},
+   {files,["/Users/stavros.aronis/git/Concuerror/tests/suites/basic_tests/src/halt_error.erl"]},
+   {ignore_error,[]},
+   {instant_delivery,true},
+   {interleaving_bound,infinity},
+   {keep_going,true},
+   {non_racing_system,[]},
+   {print_depth,20},
+   {quiet,true},
+   {scheduling,round_robin},
+   {scheduling_bound_type,none},
+   {show_races,false},
+   {strict_scheduling,false},
+   {symbolic_names,true},
+   {timeout,500},
+   {treat_as_normal,[]},
+   {use_receive_patterns,true}]
+################################################################################
+Interleaving #1
+--------------------------------------------------------------------------------
+Errors found:
+* At step 2 process P called halt with an abnormal status
+    Status:
+      1
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: P.1 = erlang:spawn(erlang, apply, [#Fun<halt_error.0.32220410>,[]])
+    in erlang.erl line 2516
+   2: P: no_return = erlang:halt(1)
+    in halt_error.erl line 13
+################################################################################
+Exploration completed!
+################################################################################
+Warnings:
+--------------------------------------------------------------------------------
+* A process called erlang:halt/1. Concuerror does not do race analysis for calls to erlang:halt/1 as such analysis would require reordering such calls with too many other built-in operations.
+
+################################################################################
+Tips:
+--------------------------------------------------------------------------------
+* Check '--help attributes' for info on how to pass options via module attributes.
+* Increase '--print_depth' if output/graph contains "...".
+
+################################################################################
+Info:
+--------------------------------------------------------------------------------
+* Automatically instrumented module io_lib
+* Instrumented & loaded module halt_error
+* Automatically instrumented module erlang
+* Automatically instrumented module io
+* Continuing after error (-k)
+
+################################################################################
+Done at 14 Mar 2018 10:45:41 (Exit status: error)
+  Summary: 1 errors, 1/1 interleavings explored

@@ -1,0 +1,46 @@
+################################################################################
+
+Concuerror started with options:
+  [{after_timeout,infinity},
+   {assertions_only,false},
+   {assume_racing,false},
+   {depth_bound,5000},
+   {entry_point,{test,test_2workers_small,[]}},
+   {files,["/home/stavros/git/Concuerror/tests/suites/advanced_tests/src/manolis/rush_hour.erl",
+           "/home/stavros/git/Concuerror/tests/suites/advanced_tests/src/manolis/search.erl",
+           "/home/stavros/git/Concuerror/tests/suites/advanced_tests/src/manolis/test.erl"]},
+   {ignore_error,[]},
+   {instant_delivery,false},
+   {interleaving_bound,infinity},
+   {keep_going,true},
+   {non_racing_system,[]},
+   {optimal,true},
+   {print_depth,20},
+   {scheduling,oldest},
+   {scheduling_bound,infinity},
+   {scheduling_bound_type,none},
+   {show_races,false},
+   {strict_scheduling,false},
+   {symbolic_names,true},
+   {timeout,infinity},
+   {treat_as_normal,[]}]
+################################################################################
+
+  No errors found!
+################################################################################
+
+Info:
+--------------------------------------------------------------------------------
+
+Instrumented rush_hour
+Instrumented search
+Instrumented test
+Instrumented io_lib
+Instrumented lists
+Instrumented erlang
+You can see pairs of racing instructions (in the report and --graph) with '--show_races true'
+
+################################################################################
+
+Done! (Exit status: completed)
+  Summary: 0 errors, 1314/1314 interleavings explored

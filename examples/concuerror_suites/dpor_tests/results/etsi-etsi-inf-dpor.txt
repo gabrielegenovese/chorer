@@ -1,0 +1,259 @@
+################################################################################
+Concuerror started with options:
+  [{'after-timeout',infinite},
+   {bound,-1},
+   {distributed,true},
+   {files,["/home/stavros/git/Concuerror/tests/suites/dpor_tests/src/etsi.erl"]},
+   {'light-dpor',false},
+   {symbolic,true},
+   {target,{etsi,etsi,[]}},
+   {verbose,0},
+   {wait,5000}]
+################################################################################
+Erroneous interleaving 1:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in etsi.erl line 16
+    P.1 in etsi.erl line 31
+    P.2 in etsi.erl line 31
+    P.3 in etsi.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in etsi.erl line 9
+   2: P: true = ets:insert(table, {x,0})
+    in etsi.erl line 10
+   3: P: true = ets:insert(table, {y,0})
+    in etsi.erl line 11
+   4: P: true = ets:insert(table, {z,0})
+    in etsi.erl line 12
+   5: P: P.1 = erlang:spawn(erlang, apply, [#Fun<etsi.0.21000170>,[]])
+    in erlang.erl line 2188
+   6: P: P.2 = erlang:spawn(erlang, apply, [#Fun<etsi.1.21000170>,[]])
+    in erlang.erl line 2188
+   7: P: P.3 = erlang:spawn(erlang, apply, [#Fun<etsi.2.21000170>,[]])
+    in erlang.erl line 2188
+   8: P.1: [{x,0}] = ets:lookup(table, x)
+    in etsi.erl line 26
+   9: P.1: true = ets:insert(table, {y,1})
+    in etsi.erl line 28
+  10: P.2: [{y,1}] = ets:lookup(table, y)
+    in etsi.erl line 26
+  11: P.2: true = ets:insert(table, {x,0})
+    in etsi.erl line 29
+  12: P.3: [{z,0}] = ets:lookup(table, z)
+    in etsi.erl line 26
+  13: P.3: true = ets:insert(table, {x,1})
+    in etsi.erl line 28
+################################################################################
+Erroneous interleaving 2:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in etsi.erl line 16
+    P.1 in etsi.erl line 31
+    P.2 in etsi.erl line 31
+    P.3 in etsi.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in etsi.erl line 9
+   2: P: true = ets:insert(table, {x,0})
+    in etsi.erl line 10
+   3: P: true = ets:insert(table, {y,0})
+    in etsi.erl line 11
+   4: P: true = ets:insert(table, {z,0})
+    in etsi.erl line 12
+   5: P: P.1 = erlang:spawn(erlang, apply, [#Fun<etsi.0.21000170>,[]])
+    in erlang.erl line 2188
+   6: P: P.2 = erlang:spawn(erlang, apply, [#Fun<etsi.1.21000170>,[]])
+    in erlang.erl line 2188
+   7: P: P.3 = erlang:spawn(erlang, apply, [#Fun<etsi.2.21000170>,[]])
+    in erlang.erl line 2188
+   8: P.1: [{x,0}] = ets:lookup(table, x)
+    in etsi.erl line 26
+   9: P.1: true = ets:insert(table, {y,1})
+    in etsi.erl line 28
+  10: P.2: [{y,1}] = ets:lookup(table, y)
+    in etsi.erl line 26
+  11: P.3: [{z,0}] = ets:lookup(table, z)
+    in etsi.erl line 26
+  12: P.3: true = ets:insert(table, {x,1})
+    in etsi.erl line 28
+  13: P.2: true = ets:insert(table, {x,0})
+    in etsi.erl line 29
+################################################################################
+Erroneous interleaving 3:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in etsi.erl line 16
+    P.1 in etsi.erl line 31
+    P.2 in etsi.erl line 31
+    P.3 in etsi.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in etsi.erl line 9
+   2: P: true = ets:insert(table, {x,0})
+    in etsi.erl line 10
+   3: P: true = ets:insert(table, {y,0})
+    in etsi.erl line 11
+   4: P: true = ets:insert(table, {z,0})
+    in etsi.erl line 12
+   5: P: P.1 = erlang:spawn(erlang, apply, [#Fun<etsi.0.21000170>,[]])
+    in erlang.erl line 2188
+   6: P: P.2 = erlang:spawn(erlang, apply, [#Fun<etsi.1.21000170>,[]])
+    in erlang.erl line 2188
+   7: P: P.3 = erlang:spawn(erlang, apply, [#Fun<etsi.2.21000170>,[]])
+    in erlang.erl line 2188
+   8: P.1: [{x,0}] = ets:lookup(table, x)
+    in etsi.erl line 26
+   9: P.3: [{z,0}] = ets:lookup(table, z)
+    in etsi.erl line 26
+  10: P.2: [{y,0}] = ets:lookup(table, y)
+    in etsi.erl line 26
+  11: P.1: true = ets:insert(table, {y,1})
+    in etsi.erl line 28
+  12: P.2: true = ets:insert(table, {z,1})
+    in etsi.erl line 28
+  13: P.3: true = ets:insert(table, {x,1})
+    in etsi.erl line 28
+################################################################################
+Erroneous interleaving 4:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in etsi.erl line 16
+    P.1 in etsi.erl line 31
+    P.2 in etsi.erl line 31
+    P.3 in etsi.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in etsi.erl line 9
+   2: P: true = ets:insert(table, {x,0})
+    in etsi.erl line 10
+   3: P: true = ets:insert(table, {y,0})
+    in etsi.erl line 11
+   4: P: true = ets:insert(table, {z,0})
+    in etsi.erl line 12
+   5: P: P.1 = erlang:spawn(erlang, apply, [#Fun<etsi.0.21000170>,[]])
+    in erlang.erl line 2188
+   6: P: P.2 = erlang:spawn(erlang, apply, [#Fun<etsi.1.21000170>,[]])
+    in erlang.erl line 2188
+   7: P: P.3 = erlang:spawn(erlang, apply, [#Fun<etsi.2.21000170>,[]])
+    in erlang.erl line 2188
+   8: P.1: [{x,0}] = ets:lookup(table, x)
+    in etsi.erl line 26
+   9: P.2: [{y,0}] = ets:lookup(table, y)
+    in etsi.erl line 26
+  10: P.1: true = ets:insert(table, {y,1})
+    in etsi.erl line 28
+  11: P.2: true = ets:insert(table, {z,1})
+    in etsi.erl line 28
+  12: P.3: [{z,1}] = ets:lookup(table, z)
+    in etsi.erl line 26
+  13: P.3: true = ets:insert(table, {y,0})
+    in etsi.erl line 29
+################################################################################
+Erroneous interleaving 5:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in etsi.erl line 16
+    P.1 in etsi.erl line 31
+    P.2 in etsi.erl line 31
+    P.3 in etsi.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in etsi.erl line 9
+   2: P: true = ets:insert(table, {x,0})
+    in etsi.erl line 10
+   3: P: true = ets:insert(table, {y,0})
+    in etsi.erl line 11
+   4: P: true = ets:insert(table, {z,0})
+    in etsi.erl line 12
+   5: P: P.1 = erlang:spawn(erlang, apply, [#Fun<etsi.0.21000170>,[]])
+    in erlang.erl line 2188
+   6: P: P.2 = erlang:spawn(erlang, apply, [#Fun<etsi.1.21000170>,[]])
+    in erlang.erl line 2188
+   7: P: P.3 = erlang:spawn(erlang, apply, [#Fun<etsi.2.21000170>,[]])
+    in erlang.erl line 2188
+   8: P.1: [{x,0}] = ets:lookup(table, x)
+    in etsi.erl line 26
+   9: P.2: [{y,0}] = ets:lookup(table, y)
+    in etsi.erl line 26
+  10: P.2: true = ets:insert(table, {z,1})
+    in etsi.erl line 28
+  11: P.3: [{z,1}] = ets:lookup(table, z)
+    in etsi.erl line 26
+  12: P.3: true = ets:insert(table, {y,0})
+    in etsi.erl line 29
+  13: P.1: true = ets:insert(table, {y,1})
+    in etsi.erl line 28
+################################################################################
+Erroneous interleaving 6:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in etsi.erl line 16
+    P.1 in etsi.erl line 31
+    P.2 in etsi.erl line 31
+    P.3 in etsi.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in etsi.erl line 9
+   2: P: true = ets:insert(table, {x,0})
+    in etsi.erl line 10
+   3: P: true = ets:insert(table, {y,0})
+    in etsi.erl line 11
+   4: P: true = ets:insert(table, {z,0})
+    in etsi.erl line 12
+   5: P: P.1 = erlang:spawn(erlang, apply, [#Fun<etsi.0.21000170>,[]])
+    in erlang.erl line 2188
+   6: P: P.2 = erlang:spawn(erlang, apply, [#Fun<etsi.1.21000170>,[]])
+    in erlang.erl line 2188
+   7: P: P.3 = erlang:spawn(erlang, apply, [#Fun<etsi.2.21000170>,[]])
+    in erlang.erl line 2188
+   8: P.3: [{z,0}] = ets:lookup(table, z)
+    in etsi.erl line 26
+   9: P.3: true = ets:insert(table, {x,1})
+    in etsi.erl line 28
+  10: P.1: [{x,1}] = ets:lookup(table, x)
+    in etsi.erl line 26
+  11: P.1: true = ets:insert(table, {z,0})
+    in etsi.erl line 29
+  12: P.2: [{y,0}] = ets:lookup(table, y)
+    in etsi.erl line 26
+  13: P.2: true = ets:insert(table, {z,1})
+    in etsi.erl line 28
+################################################################################
+Erroneous interleaving 7:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in etsi.erl line 16
+    P.1 in etsi.erl line 31
+    P.2 in etsi.erl line 31
+    P.3 in etsi.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in etsi.erl line 9
+   2: P: true = ets:insert(table, {x,0})
+    in etsi.erl line 10
+   3: P: true = ets:insert(table, {y,0})
+    in etsi.erl line 11
+   4: P: true = ets:insert(table, {z,0})
+    in etsi.erl line 12
+   5: P: P.1 = erlang:spawn(erlang, apply, [#Fun<etsi.0.21000170>,[]])
+    in erlang.erl line 2188
+   6: P: P.2 = erlang:spawn(erlang, apply, [#Fun<etsi.1.21000170>,[]])
+    in erlang.erl line 2188
+   7: P: P.3 = erlang:spawn(erlang, apply, [#Fun<etsi.2.21000170>,[]])
+    in erlang.erl line 2188
+   8: P.3: [{z,0}] = ets:lookup(table, z)
+    in etsi.erl line 26
+   9: P.3: true = ets:insert(table, {x,1})
+    in etsi.erl line 28
+  10: P.1: [{x,1}] = ets:lookup(table, x)
+    in etsi.erl line 26
+  11: P.2: [{y,0}] = ets:lookup(table, y)
+    in etsi.erl line 26
+  12: P.2: true = ets:insert(table, {z,1})
+    in etsi.erl line 28
+  13: P.1: true = ets:insert(table, {z,0})
+    in etsi.erl line 29
+################################################################################
+Done! (Exit status: completed)
+  Summary: 7 errors, 7/7 interleavings explored

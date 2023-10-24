@@ -1,0 +1,107 @@
+Concuerror 0.20.0+build.2156.refc966f32 started at 15 Aug 2018 12:13:24
+ Options:
+  [{after_timeout,infinity},
+   {assertions_only,false},
+   {assume_racing,false},
+   {depth_bound,500},
+   {disable_sleep_sets,false},
+   {dpor,optimal},
+   {entry_point,{gen_server_bug,test_register,[]}},
+   {exclude_module,[]},
+   {files,["/Users/stavros.aronis/git/Concuerror/tests/suites/advanced_tests/src/gen_server_bug.erl"]},
+   {first_process_errors_only,false},
+   {ignore_error,[]},
+   {instant_delivery,false},
+   {interleaving_bound,infinity},
+   {keep_going,true},
+   {non_racing_system,[]},
+   {print_depth,20},
+   {quiet,true},
+   {scheduling,round_robin},
+   {scheduling_bound_type,none},
+   {show_races,false},
+   {strict_scheduling,false},
+   {symbolic_names,true},
+   {timeout,5000},
+   {treat_as_normal,[]},
+   {use_receive_patterns,true}]
+################################################################################
+Interleaving #2
+--------------------------------------------------------------------------------
+Errors found:
+* At step 18 process <P> exited abnormally
+    Reason:
+      {{badmatch,{error,{already_started,<P.1/gen_server_bug>}}},
+       [{gen_server_bug,test_register,0,
+                        [{file,"/Users/stavros.aronis/git/Concuerror/tests/suites/advanced_tests/src/gen_server_bug.erl"},
+                         {line,19}]}]}
+    Stacktrace:
+      [{gen_server_bug,test_register,0,
+                       [{file,"/Users/stavros.aronis/git/Concuerror/tests/suites/advanced_tests/src/gen_server_bug.erl"},
+                        {line,19}]}]
+--------------------------------------------------------------------------------
+Event trace:
+   1: <P>: undefined = erlang:whereis(gen_server_bug)
+    in gen.erl line 299
+   2: <P>: [] = erlang:process_info(<P>, registered_name)
+    in proc_lib.erl line 731
+   3: <P>: {<P.1/gen_server_bug>,#Ref<0.513134522.3478388737.4410>} = erlang:spawn_opt({proc_lib,init_p,[<P>,[],gen,init_it,[gen_server,<P>,self,{local,gen_server_bug},gen_server_bug,[],[]]],[monitor]})
+    in erlang.erl line 2868
+   4: <P.1/gen_server_bug>: true = erlang:register(gen_server_bug, <P.1/gen_server_bug>)
+    in gen.erl line 302
+   5: <P.1/gen_server_bug>: {ack,<P.1/gen_server_bug>,{ok,<P.1/gen_server_bug>}} = <P> ! {ack,<P.1/gen_server_bug>,{ok,<P.1/gen_server_bug>}}
+    in proc_lib.erl line 392
+   6: Message ({ack,<P.1/gen_server_bug>,{ok,<P.1/gen_server_bug>}}) from <P.1/gen_server_bug> reaches <P>
+   7: <P>: receives message ({ack,<P.1/gen_server_bug>,{ok,<P.1/gen_server_bug>}})
+    in proc_lib.erl line 361
+   8: <P>: true = erlang:demonitor(#Ref<0.513134522.3478388737.4410>, [flush])
+    in proc_lib.erl line 363
+   9: <P>: #Ref<0.513134522.3478388737.4420> = erlang:monitor(process, <P.1/gen_server_bug>)
+    in gen.erl line 156
+  10: <P>: ok = erlang:send(<P.1/gen_server_bug>, {'$gen_call',{<P>,#Ref<0.513134522.3478388737.4420>},stop}, [noconnect])
+    in gen.erl line 167
+  11: Message ({'$gen_call',{<P>,#Ref<0.513134522.3478388737.4420>},stop}) from <P> reaches <P.1/gen_server_bug>
+  12: <P.1/gen_server_bug>: receives message ({'$gen_call',{<P>,#Ref<0.513134522.3478388737.4420>},stop})
+    in gen_server.erl line 381
+  13: <P.1/gen_server_bug>: {#Ref<0.513134522.3478388737.4420>,ok} = <P> ! {#Ref<0.513134522.3478388737.4420>,ok}
+    in gen_server.erl line 243
+  14: Message ({#Ref<0.513134522.3478388737.4420>,ok}) from <P.1/gen_server_bug> reaches <P>
+  15: <P>: receives message ({#Ref<0.513134522.3478388737.4420>,ok})
+    in gen.erl line 169
+  16: <P>: true = erlang:demonitor(#Ref<0.513134522.3478388737.4420>, [flush])
+    in gen.erl line 171
+  17: <P>: <P.1/gen_server_bug> = erlang:whereis(gen_server_bug)
+    in gen.erl line 299
+  18: <P>: exits abnormally ({{badmatch,{error,{already_started,<P.1/gen_server_bug>}}},[{gen_server_bug,test_register,0,[{file,[47,85,115,101,114,115,47,115,116|...]},{line,19}]}]})
+  19: <P.1/gen_server_bug>: exits normally
+  20: <P.1/gen_server_bug>: {'DOWN',#Ref<0.513134522.3478388737.4410>,process,<P.1/gen_server_bug>,normal} = erlang:send(<P>, {'DOWN',#Ref<0.513134522.3478388737.4410>,process,<P.1/gen_server_bug>,normal})
+    (while exiting)
+  21: <P.1/gen_server_bug>: {'DOWN',#Ref<0.513134522.3478388737.4420>,process,<P.1/gen_server_bug>,normal} = erlang:send(<P>, {'DOWN',#Ref<0.513134522.3478388737.4420>,process,<P.1/gen_server_bug>,normal})
+    (while exiting)
+  22: Message ({'DOWN',#Ref<0.513134522.3478388737.4410>,process,<P.1/gen_server_bug>,normal}) from <P.1/gen_server_bug> reaches <P>
+  23: Message ({'DOWN',#Ref<0.513134522.3478388737.4420>,process,<P.1/gen_server_bug>,normal}) from <P.1/gen_server_bug> reaches <P>
+################################################################################
+Exploration completed!
+################################################################################
+Tips:
+--------------------------------------------------------------------------------
+* Running without a scheduling_bound corresponds to verification and may take a long time.
+* Increase '--print_depth' if output/graph contains "...".
+
+################################################################################
+Info:
+--------------------------------------------------------------------------------
+* Writing results in /Users/stavros.aronis/git/Concuerror/tests/results/advanced_tests/results/gen_server_bug-test_register-inf-dpor.txt
+* Automatically instrumented module io_lib
+* Showing PIDs as "<symbolic name(/last registered name)>" ('-h symbolic_names').
+* Instrumented & loaded module gen_server_bug
+* Automatically instrumented module gen_server
+* Automatically instrumented module gen
+* Automatically instrumented module proc_lib
+* Automatically instrumented module erlang
+* You can see pairs of racing instructions (in the report and '--graph') with '--show_races true'
+* Continuing after error (-k)
+
+################################################################################
+Done at 15 Aug 2018 12:13:25 (Exit status: error)
+  Summary: 1 errors, 2/2 interleavings explored

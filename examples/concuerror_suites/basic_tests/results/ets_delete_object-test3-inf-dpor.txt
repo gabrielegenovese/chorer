@@ -1,0 +1,2119 @@
+Concuerror 0.17 (d20441c) started at 24 Nov 2016 14:18:10.
+ Options:
+  [{after_timeout,infinity},
+   {assertions_only,false},
+   {assume_racing,false},
+   {depth_bound,500},
+   {disable_sleep_sets,false},
+   {dpor,optimal},
+   {entry_point,{ets_delete_object,test3,[]}},
+   {files,["/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"]},
+   {ignore_error,[]},
+   {instant_delivery,true},
+   {interleaving_bound,infinity},
+   {keep_going,true},
+   {non_racing_system,[]},
+   {print_depth,20},
+   {scheduling,round_robin},
+   {scheduling_bound_type,none},
+   {show_races,false},
+   {strict_scheduling,false},
+   {symbolic_names,true},
+   {timeout,infinity},
+   {treat_as_normal,[]}]
+################################################################################
+Interleaving #1
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  11: P.2: exits normally
+  12: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  13: P.3: exits normally
+  14: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  15: P.4: exits normally
+  16: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  17: P.5: exits normally
+  18: P.6: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  19: P.6: exits normally
+################################################################################
+Interleaving #2
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  11: P.2: exits normally
+  12: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  13: P.3: exits normally
+  14: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  15: P.4: exits normally
+  16: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  17: P.6: exits normally
+  18: P.5: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  19: P.5: exits normally
+################################################################################
+Interleaving #3
+--------------------------------------------------------------------------------
+Errors found:
+* At step 15 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* At step 17 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  11: P.2: exits normally
+  12: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  13: P.3: exits normally
+  14: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  15: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  16: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  17: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  18: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  19: P.4: exits normally
+################################################################################
+Interleaving #4
+--------------------------------------------------------------------------------
+Errors found:
+* At step 15 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  11: P.2: exits normally
+  12: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  13: P.3: exits normally
+  14: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  15: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  16: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  17: P.4: exits normally
+  18: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  19: P.6: exits normally
+################################################################################
+Interleaving #5
+--------------------------------------------------------------------------------
+Errors found:
+* At step 15 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  11: P.2: exits normally
+  12: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  13: P.3: exits normally
+  14: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  15: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  16: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  17: P.4: exits normally
+  18: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  19: P.5: exits normally
+################################################################################
+Interleaving #6
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  13: P.4: exits normally
+  14: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  15: P.5: exits normally
+  16: P.6: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  17: P.6: exits normally
+  18: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  19: P.2: exits normally
+################################################################################
+Interleaving #7
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  13: P.4: exits normally
+  14: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  15: P.5: exits normally
+  16: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  17: P.2: exits normally
+  18: P.6: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  19: P.6: exits normally
+################################################################################
+Interleaving #8
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  13: P.4: exits normally
+  14: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  15: P.6: exits normally
+  16: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  17: P.2: exits normally
+  18: P.5: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  19: P.5: exits normally
+################################################################################
+Interleaving #9
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  13: P.4: exits normally
+  14: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  15: P.6: exits normally
+  16: P.5: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  17: P.5: exits normally
+  18: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  19: P.2: exits normally
+################################################################################
+Interleaving #10
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  13: P.4: exits normally
+  14: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  15: P.2: exits normally
+  16: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  17: P.5: exits normally
+  18: P.6: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  19: P.6: exits normally
+################################################################################
+Interleaving #11
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  13: P.4: exits normally
+  14: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  15: P.2: exits normally
+  16: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  17: P.6: exits normally
+  18: P.5: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  19: P.5: exits normally
+################################################################################
+Interleaving #12
+--------------------------------------------------------------------------------
+Errors found:
+* At step 13 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* At step 15 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  13: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  15: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  16: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  17: P.2: exits normally
+  18: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  19: P.4: exits normally
+################################################################################
+Interleaving #13
+--------------------------------------------------------------------------------
+Errors found:
+* At step 13 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* At step 15 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  13: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  15: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  16: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  17: P.4: exits normally
+  18: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  19: P.2: exits normally
+################################################################################
+Interleaving #14
+--------------------------------------------------------------------------------
+Errors found:
+* At step 13 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  13: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  15: P.2: exits normally
+  16: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  17: P.4: exits normally
+  18: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  19: P.6: exits normally
+################################################################################
+Interleaving #15
+--------------------------------------------------------------------------------
+Errors found:
+* At step 13 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* At step 17 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  13: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  15: P.2: exits normally
+  16: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  17: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  18: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  19: P.4: exits normally
+################################################################################
+Interleaving #16
+--------------------------------------------------------------------------------
+Errors found:
+* At step 13 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  13: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  15: P.4: exits normally
+  16: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  17: P.6: exits normally
+  18: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  19: P.2: exits normally
+################################################################################
+Interleaving #17
+--------------------------------------------------------------------------------
+Errors found:
+* At step 13 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  13: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  15: P.4: exits normally
+  16: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  17: P.2: exits normally
+  18: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  19: P.6: exits normally
+################################################################################
+Interleaving #18
+--------------------------------------------------------------------------------
+Errors found:
+* At step 13 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  13: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  15: P.2: exits normally
+  16: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  17: P.4: exits normally
+  18: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  19: P.5: exits normally
+################################################################################
+Interleaving #19
+--------------------------------------------------------------------------------
+Errors found:
+* At step 13 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* At step 17 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  13: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  15: P.2: exits normally
+  16: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  17: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  18: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  19: P.4: exits normally
+################################################################################
+Interleaving #20
+--------------------------------------------------------------------------------
+Errors found:
+* At step 13 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  13: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  15: P.4: exits normally
+  16: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  17: P.5: exits normally
+  18: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  19: P.2: exits normally
+################################################################################
+Interleaving #21
+--------------------------------------------------------------------------------
+Errors found:
+* At step 13 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+   9: P.1: exits normally
+  10: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  11: P.3: exits normally
+  12: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  13: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  15: P.4: exits normally
+  16: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  17: P.2: exits normally
+  18: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  19: P.5: exits normally
+################################################################################
+Interleaving #22
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+   9: P.2: exits normally
+  10: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  11: P.4: exits normally
+  12: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  13: P.5: exits normally
+  14: P.6: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  15: P.6: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #23
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+   9: P.2: exits normally
+  10: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  11: P.4: exits normally
+  12: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  13: P.6: exits normally
+  14: P.5: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  15: P.5: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #24
+--------------------------------------------------------------------------------
+Errors found:
+* At step 11 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* At step 13 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+   9: P.2: exits normally
+  10: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  11: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  12: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  13: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  15: P.4: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #25
+--------------------------------------------------------------------------------
+Errors found:
+* At step 11 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+   9: P.2: exits normally
+  10: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  11: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  12: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  13: P.4: exits normally
+  14: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  15: P.6: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #26
+--------------------------------------------------------------------------------
+Errors found:
+* At step 11 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+   9: P.2: exits normally
+  10: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  11: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  12: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  13: P.4: exits normally
+  14: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  15: P.5: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #27
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+   9: P.4: exits normally
+  10: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  11: P.5: exits normally
+  12: P.6: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  13: P.6: exits normally
+  14: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  15: P.2: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #28
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+   9: P.4: exits normally
+  10: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  11: P.5: exits normally
+  12: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  13: P.2: exits normally
+  14: P.6: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  15: P.6: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #29
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+   9: P.4: exits normally
+  10: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  11: P.6: exits normally
+  12: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  13: P.2: exits normally
+  14: P.5: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  15: P.5: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #30
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+   9: P.4: exits normally
+  10: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  11: P.6: exits normally
+  12: P.5: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  13: P.5: exits normally
+  14: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  15: P.2: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #31
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+   9: P.4: exits normally
+  10: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  11: P.2: exits normally
+  12: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  13: P.5: exits normally
+  14: P.6: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  15: P.6: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #32
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+   9: P.4: exits normally
+  10: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  11: P.2: exits normally
+  12: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  13: P.6: exits normally
+  14: P.5: 4 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  15: P.5: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #33
+--------------------------------------------------------------------------------
+Errors found:
+* At step 9 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* At step 11 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+   9: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  10: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  11: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  12: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  13: P.2: exits normally
+  14: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  15: P.4: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #34
+--------------------------------------------------------------------------------
+Errors found:
+* At step 9 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* At step 11 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+   9: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  10: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  11: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  12: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  13: P.4: exits normally
+  14: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  15: P.2: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #35
+--------------------------------------------------------------------------------
+Errors found:
+* At step 9 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+   9: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  10: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  11: P.2: exits normally
+  12: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  13: P.4: exits normally
+  14: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  15: P.6: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #36
+--------------------------------------------------------------------------------
+Errors found:
+* At step 9 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* At step 13 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+   9: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  10: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  11: P.2: exits normally
+  12: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  13: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  15: P.4: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #37
+--------------------------------------------------------------------------------
+Errors found:
+* At step 9 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+   9: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  10: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  11: P.4: exits normally
+  12: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  13: P.6: exits normally
+  14: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  15: P.2: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #38
+--------------------------------------------------------------------------------
+Errors found:
+* At step 9 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+   9: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  10: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  11: P.4: exits normally
+  12: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  13: P.2: exits normally
+  14: P.6: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+  15: P.6: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #39
+--------------------------------------------------------------------------------
+Errors found:
+* At step 9 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+   9: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  10: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  11: P.2: exits normally
+  12: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  13: P.4: exits normally
+  14: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  15: P.5: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #40
+--------------------------------------------------------------------------------
+Errors found:
+* At step 9 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* At step 13 process P.5 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [33,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [33,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+   9: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  10: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  11: P.2: exits normally
+  12: P.5: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  13: P.5: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[33,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  14: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  15: P.4: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #41
+--------------------------------------------------------------------------------
+Errors found:
+* At step 9 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+   9: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  10: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  11: P.4: exits normally
+  12: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  13: P.5: exits normally
+  14: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  15: P.2: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Interleaving #42
+--------------------------------------------------------------------------------
+Errors found:
+* At step 9 process P.6 exited abnormally
+    Reason:
+      {badarg,[{ets,update_counter,
+                    [table,bar,1],
+                    [34,
+                     {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]}
+    Stacktrace:
+      [{ets,update_counter,
+            [table,bar,1],
+            [34,
+             {file,"/home/stavros/git/Concuerror/tests/suites/basic_tests/src/ets_delete_object.erl"}]}]
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_delete_object.erl line 35
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: table = ets:new(table, [named_table,public])
+    in ets_delete_object.erl line 26
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-0-'.0>,[]])
+    in erlang.erl line 2603
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-1-'.0>,[]])
+    in erlang.erl line 2603
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-2-'.0>,[]])
+    in erlang.erl line 2603
+   5: P: P.4 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-3-'.0>,[]])
+    in erlang.erl line 2603
+   6: P: P.5 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-4-'.0>,[]])
+    in erlang.erl line 2603
+   7: P: P.6 = erlang:spawn(erlang, apply, [#Fun<ets_delete_object.'-test3/0-fun-5-'.0>,[]])
+    in erlang.erl line 2603
+   8: P.6: Exception badarg raised by: ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 34
+   9: P.6: exits abnormally ({badarg,[{ets,update_counter,[table,bar,1],[34,{file,[47,104,111,109,101,47,115,116|...]}]}]})
+  10: P.4: true = ets:insert(table, {bar,2})
+    in ets_delete_object.erl line 32
+  11: P.4: exits normally
+  12: P.2: true = ets:delete_object(table, {bar,1})
+    in ets_delete_object.erl line 30
+  13: P.2: exits normally
+  14: P.5: 3 = ets:update_counter(table, bar, 1)
+    in ets_delete_object.erl line 33
+  15: P.5: exits normally
+  16: P.3: [] = ets:lookup(table, foo)
+    in ets_delete_object.erl line 31
+  17: P.3: exits normally
+  18: P.1: true = ets:delete_object(table, {foo,1})
+    in ets_delete_object.erl line 29
+  19: P.1: exits normally
+################################################################################
+Exploration completed!
+################################################################################
+Tips:
+--------------------------------------------------------------------------------
+Each of the first 10 interleavings explored so far had some error. This can make later debugging difficult, as the generated report will include too much info. Consider refactoring your code, or using the appropriate options to filter out irrelevant errors.
+
+################################################################################
+Info:
+--------------------------------------------------------------------------------
+Instrumented ets_delete_object
+Instrumented io_lib
+Instrumented gen_server
+Instrumented erlang
+You can see pairs of racing instructions (in the report and --graph) with '--show_races true'
+Continuing after error (-k)
+
+################################################################################
+Done at 24 Nov 2016 14:18:11 (Exit status: error)
+  Summary: 42 errors, 42/42 interleavings explored

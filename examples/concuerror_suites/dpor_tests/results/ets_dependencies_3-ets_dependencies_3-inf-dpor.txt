@@ -1,0 +1,1022 @@
+################################################################################
+Concuerror started with options:
+  [{'after-timeout',infinite},
+   {bound,-1},
+   {distributed,true},
+   {files,["/home/stavros/git/Concuerror/tests/suites/dpor_tests/src/ets_dependencies_3.erl"]},
+   {'light-dpor',false},
+   {symbolic,true},
+   {target,{ets_dependencies_3,ets_dependencies_3,[]}},
+   {verbose,0},
+   {wait,5000}]
+################################################################################
+Erroneous interleaving 1:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.1: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   6: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+   7: Message (ok) from P.1 reaches P
+   8: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+   9: P.1: exits normally
+  10: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+  11: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  12: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  13: Message (ok) from P.2 reaches P
+  14: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  15: P.2: exits normally
+  16: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+  17: P.3: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  18: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  19: Message (ok) from P.3 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+  21: P.3: exits normally
+################################################################################
+Erroneous interleaving 2:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.1: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   6: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+   7: Message (ok) from P.1 reaches P
+   8: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+   9: P.1: exits normally
+  10: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+  11: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  12: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  13: P.2: exits normally
+  14: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+  15: P.3: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  16: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  17: P.3: exits normally
+  18: Message (ok) from P.3 reaches P
+  19: Message (ok) from P.2 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 3:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.1: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   6: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+   7: Message (ok) from P.1 reaches P
+   8: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+   9: P.1: exits normally
+  10: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+  11: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+  12: P.3: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  13: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  14: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  15: Message (ok) from P.2 reaches P
+  16: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  17: P.2: exits normally
+  18: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  19: Message (ok) from P.3 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+  21: P.3: exits normally
+################################################################################
+Erroneous interleaving 4:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.1: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   6: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+   7: Message (ok) from P.1 reaches P
+   8: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+   9: P.1: exits normally
+  10: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+  11: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+  12: P.3: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  13: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  14: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  15: P.2: exits normally
+  16: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  17: P.3: exits normally
+  18: Message (ok) from P.3 reaches P
+  19: Message (ok) from P.2 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 5:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.1: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   6: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+   7: P.1: exits normally
+   8: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   9: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  10: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  11: P.2: exits normally
+  12: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+  13: P.3: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  14: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  15: P.3: exits normally
+  16: Message (ok) from P.2 reaches P
+  17: Message (ok) from P.1 reaches P
+  18: Message (ok) from P.3 reaches P
+  19: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 6:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.1: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   6: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+   7: P.1: exits normally
+   8: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   9: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  10: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  11: P.2: exits normally
+  12: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+  13: P.3: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  14: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  15: P.3: exits normally
+  16: Message (ok) from P.2 reaches P
+  17: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  18: Message (ok) from P.3 reaches P
+  19: Message (ok) from P.1 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 7:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.1: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   6: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+   7: P.1: exits normally
+   8: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   9: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  10: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  11: P.2: exits normally
+  12: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+  13: P.3: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  14: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  15: P.3: exits normally
+  16: Message (ok) from P.3 reaches P
+  17: Message (ok) from P.1 reaches P
+  18: Message (ok) from P.2 reaches P
+  19: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 8:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.1: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   6: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+   7: P.1: exits normally
+   8: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   9: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  10: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  11: P.2: exits normally
+  12: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+  13: P.3: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  14: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  15: P.3: exits normally
+  16: Message (ok) from P.3 reaches P
+  17: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  18: Message (ok) from P.2 reaches P
+  19: Message (ok) from P.1 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 9:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.1: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   6: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+   7: P.1: exits normally
+   8: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   9: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+  10: P.3: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  11: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  12: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  13: P.2: exits normally
+  14: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  15: P.3: exits normally
+  16: Message (ok) from P.2 reaches P
+  17: Message (ok) from P.1 reaches P
+  18: Message (ok) from P.3 reaches P
+  19: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 10:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.1: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   6: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+   7: P.1: exits normally
+   8: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   9: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+  10: P.3: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  11: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  12: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  13: P.2: exits normally
+  14: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  15: P.3: exits normally
+  16: Message (ok) from P.2 reaches P
+  17: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  18: Message (ok) from P.3 reaches P
+  19: Message (ok) from P.1 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 11:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.1: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   6: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+   7: P.1: exits normally
+   8: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   9: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+  10: P.3: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  11: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  12: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  13: P.2: exits normally
+  14: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  15: P.3: exits normally
+  16: Message (ok) from P.3 reaches P
+  17: Message (ok) from P.1 reaches P
+  18: Message (ok) from P.2 reaches P
+  19: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 12:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.1: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   6: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+   7: P.1: exits normally
+   8: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   9: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+  10: P.3: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  11: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  12: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  13: P.2: exits normally
+  14: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  15: P.3: exits normally
+  16: Message (ok) from P.3 reaches P
+  17: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  18: Message (ok) from P.2 reaches P
+  19: Message (ok) from P.1 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 13:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   6: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+   7: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+   8: P.1: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   9: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+  10: Message (ok) from P.1 reaches P
+  11: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  12: P.1: exits normally
+  13: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  14: Message (ok) from P.2 reaches P
+  15: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  16: P.2: exits normally
+  17: P.3: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  18: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  19: Message (ok) from P.3 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+  21: P.3: exits normally
+################################################################################
+Erroneous interleaving 14:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   6: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+   7: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+   8: P.1: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   9: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+  10: Message (ok) from P.1 reaches P
+  11: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  12: P.1: exits normally
+  13: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  14: P.2: exits normally
+  15: P.3: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  16: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  17: P.3: exits normally
+  18: Message (ok) from P.3 reaches P
+  19: Message (ok) from P.2 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 15:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   6: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+   7: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+   8: P.1: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   9: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+  10: P.1: exits normally
+  11: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  12: P.2: exits normally
+  13: P.3: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  14: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  15: P.3: exits normally
+  16: Message (ok) from P.2 reaches P
+  17: Message (ok) from P.1 reaches P
+  18: Message (ok) from P.3 reaches P
+  19: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 16:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   6: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+   7: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+   8: P.1: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   9: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+  10: P.1: exits normally
+  11: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  12: P.2: exits normally
+  13: P.3: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  14: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  15: P.3: exits normally
+  16: Message (ok) from P.2 reaches P
+  17: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  18: Message (ok) from P.3 reaches P
+  19: Message (ok) from P.1 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 17:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   6: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+   7: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+   8: P.1: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   9: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+  10: P.1: exits normally
+  11: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  12: P.2: exits normally
+  13: P.3: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  14: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  15: P.3: exits normally
+  16: Message (ok) from P.3 reaches P
+  17: Message (ok) from P.1 reaches P
+  18: Message (ok) from P.2 reaches P
+  19: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 18:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   6: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+   7: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+   8: P.1: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+   9: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+  10: P.1: exits normally
+  11: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  12: P.2: exits normally
+  13: P.3: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+  14: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+  15: P.3: exits normally
+  16: Message (ok) from P.3 reaches P
+  17: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  18: Message (ok) from P.2 reaches P
+  19: Message (ok) from P.1 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 19:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   6: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+   7: P.3: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+   8: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+   9: P.3: exits normally
+  10: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  11: Message (ok) from P.3 reaches P
+  12: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  13: P.1: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+  14: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+  15: Message (ok) from P.1 reaches P
+  16: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  17: P.1: exits normally
+  18: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  19: Message (ok) from P.2 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+  21: P.2: exits normally
+################################################################################
+Erroneous interleaving 20:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   6: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+   7: P.3: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+   8: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+   9: P.3: exits normally
+  10: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  11: Message (ok) from P.3 reaches P
+  12: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  13: P.1: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+  14: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+  15: P.1: exits normally
+  16: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  17: P.2: exits normally
+  18: Message (ok) from P.2 reaches P
+  19: Message (ok) from P.1 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 21:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   6: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+   7: P.3: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+   8: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+   9: P.3: exits normally
+  10: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  11: P.1: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+  12: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+  13: P.1: exits normally
+  14: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  15: P.2: exits normally
+  16: Message (ok) from P.1 reaches P
+  17: Message (ok) from P.2 reaches P
+  18: Message (ok) from P.3 reaches P
+  19: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 22:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   6: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+   7: P.3: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+   8: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+   9: P.3: exits normally
+  10: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  11: P.1: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+  12: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+  13: P.1: exits normally
+  14: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  15: P.2: exits normally
+  16: Message (ok) from P.1 reaches P
+  17: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  18: Message (ok) from P.3 reaches P
+  19: Message (ok) from P.2 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 23:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   6: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+   7: P.3: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+   8: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+   9: P.3: exits normally
+  10: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  11: P.1: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+  12: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+  13: P.1: exits normally
+  14: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  15: P.2: exits normally
+  16: Message (ok) from P.2 reaches P
+  17: Message (ok) from P.1 reaches P
+  18: Message (ok) from P.3 reaches P
+  19: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Erroneous interleaving 24:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in ets_dependencies_3.erl line 31
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in ets_dependencies_3.erl line 10
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.0.36711117>,[]])
+    in erlang.erl line 2188
+   3: P: P.2 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.1.36711117>,[]])
+    in erlang.erl line 2188
+   4: P: P.3 = erlang:spawn(erlang, apply, [#Fun<ets_dependencies_3.2.36711117>,[]])
+    in erlang.erl line 2188
+   5: P.2: true = ets:insert(table, {y,2})
+    in ets_dependencies_3.erl line 16
+   6: P.3: true = ets:insert(table, {z,3})
+    in ets_dependencies_3.erl line 21
+   7: P.3: [] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 22
+   8: P.3: ok = P ! ok
+    in ets_dependencies_3.erl line 23
+   9: P.3: exits normally
+  10: P.2: true = ets:insert(table, {x,1})
+    in ets_dependencies_3.erl line 17
+  11: P.1: [{x,1}] = ets:lookup(table, x)
+    in ets_dependencies_3.erl line 12
+  12: P.1: ok = P ! ok
+    in ets_dependencies_3.erl line 13
+  13: P.1: exits normally
+  14: P.2: ok = P ! ok
+    in ets_dependencies_3.erl line 18
+  15: P.2: exits normally
+  16: Message (ok) from P.2 reaches P
+  17: P: receives message (ok)
+    in ets_dependencies_3.erl line 25
+  18: Message (ok) from P.3 reaches P
+  19: Message (ok) from P.1 reaches P
+  20: P: receives message (ok)
+    in ets_dependencies_3.erl line 27
+  21: P: receives message (ok)
+    in ets_dependencies_3.erl line 29
+################################################################################
+Done! (Exit status: completed)
+  Summary: 24 errors, 24/24 interleavings explored
