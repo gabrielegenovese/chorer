@@ -28,11 +28,20 @@ create_localview(ActorName, OutputDir, Options) ->
         no_ast_found ->
             io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]);
         _ ->
-            {SetFinalState, SetAdditionalInfo} = Options,
-            Graph = get_localview(ActorName, ActorAst, [], SetFinalState, SetAdditionalInfo),
-            MinGraph = fsa:minimize(Graph),
+            TempG = db_manager:get_fun_graph(ActorName),
+            case TempG of
+                no_graph_found ->
+                    {SetFinalState, SetAdditionalInfo} = Options,
+                    Graph = get_localview(
+                        ActorName, ActorAst, [], SetFinalState, SetAdditionalInfo
+                    ),
+                    MinGraph = fsa:minimize(Graph),
+                    db_manager:send_fun_graph(ActorName, MinGraph);
+                G ->
+                    MinGraph = fsa:minimize(G),
+                    db_manager:send_fun_graph(ActorName, MinGraph)
+            end,
             %%% Send the graph to the dbmanager
-            db_manager:send_fun_graph(ActorName, MinGraph),
             common_fun:save_graph_to_file(MinGraph, OutputDir, atol(ActorName), local)
     end.
 
@@ -116,6 +125,7 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
             {V, _, NewL} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
             io:fwrite("[LOCAL] V ~p NewL ~p Name ~p~n", [V, NewL, FunName]),
             NewG = eval_func(Name, [], SetPm),
+            db_manager:send_fun_graph(Name, NewG),
             case NewG of
                 %%% If the function called is a built-in or a module function,
                 %%% then we don't have the Ast. Just return the last added vertex
