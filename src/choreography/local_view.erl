@@ -408,19 +408,14 @@ explore_pm(PMList, G, VLast, LocalVarL, FunName, Base, SetPm) ->
 
 %%% Format the Variables with the guards in a label for the FSA
 format_label_pm_edge(SetPm, VarList, GuardList, BaseLabel) when is_list(BaseLabel) ->
-    remove_last(
-        remove_last(
-            case SetPm of
-                true ->
-                    VarsS = lists:foldl(
-                        fun(V, Acc) -> astvar_to_string(V, Acc) ++ ", " end, BaseLabel, VarList
-                    ),
-                    lists:foldl(fun(G, Acc) -> guards_to_string(G, Acc) end, VarsS, GuardList);
-                false ->
-                    'ɛ'
-            end
-        )
-    ).
+    case SetPm of
+        true ->
+            VarsS = lists:foldl(fun(V, Acc) -> astvar_to_s(V, Acc) ++ ", " end, BaseLabel, VarList),
+            VarGuardS = lists:foldl(fun(G, Acc) -> guards_to_s(G, Acc) end, VarsS, GuardList),
+            remove_last(remove_last(VarGuardS));
+        false ->
+            'ɛ'
+    end.
 
 %%% Remove the last element froom a list
 remove_last(List) when is_list(List) ->
@@ -428,24 +423,24 @@ remove_last(List) when is_list(List) ->
     Rest.
 
 %%% Convert a data type (ast format) to a string
-astvar_to_string(VarToVal) ->
-    astvar_to_string(VarToVal, "").
-astvar_to_string(VarToVal, BaseL) ->
+astvar_to_s(VarToVal) ->
+    astvar_to_s(VarToVal, "").
+astvar_to_s(VarToVal, BaseL) ->
     BaseL ++
         case VarToVal of
             %% TODO: espandere o fare refactor di sta parte
             {integer, _, Value} -> integer_to_list(Value);
             {var, _, '_'} -> "_";
-            {tuple, _, LVar} -> format_tuple(LVar, fun astvar_to_string/1);
+            {tuple, _, LVar} -> format_tuple(LVar, fun astvar_to_s/1);
             {var, _, Var} -> atol(Var);
             {atom, _, Atom} -> atol(Atom);
-            {cons, _, H, T} -> "[" ++ astvar_to_string(H) ++ ", " ++ astvar_to_string(T) ++ "]";
+            {cons, _, H, T} -> "[" ++ astvar_to_s(H) ++ ", " ++ astvar_to_s(T) ++ "]";
             {nil, _} -> "null";
             _ -> atol(?UNDEFINED)
         end.
 
 %%% Convert the guard (ast format) to a string
-guards_to_string(GlobalToVal, BaseL) ->
+guards_to_s(GlobalToVal, BaseL) ->
     case GlobalToVal of
         %%% Add guards if there's a guard
         %%% TODO: add more infos
