@@ -58,10 +58,10 @@ progress_procs(G, []) ->
     G;
 progress_procs(GlobalGraph, BranchList) when is_list(BranchList) ->
     RealList = lists:flatten(BranchList),
-    io:fwrite("Branch to eval ~p~n", [length(RealList)]),
+    %io:fwrite("Branch to eval ~p~n", [length(RealList)]),
     NewBL = lists:foldl(
         fun(Item, AccL) ->
-            io:fwrite("Eval branch~n"),
+            %io:fwrite("Eval branch~n"),
             NewBreanches = progress_single_branch(Item),
             AccL ++ NewBreanches
         end,
@@ -110,12 +110,12 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseList) ->
                     AccList;
                 %%% If an edge has been found, duplicate the branch and add the transition to the graph
                 EdgeFound ->
-                    io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
+                    %io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
                     ProcFrom = Message#message.from,
                     MessData = Message#message.data,
                     PidFrom = maps:get(ProcFrom, NewMap),
                     Label = format_send_label(ProcFrom, ProcName, MessData),
-                    % io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
+                    % %io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
                     EFromInfo = actor_emul:get_proc_edge_info(PidFrom, Message#message.edge),
                     EToInfo = actor_emul:get_proc_edge_info(NewPid, EdgeFound),
                     %LastVertex =  simple_add_vertex(DupData, Label),
@@ -233,7 +233,7 @@ is_lists_edgerecv(ProcPid, EL) ->
 %%% Evaluate a transition from an actor
 eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     {Edge, _, _, PLabel} = EdgeInfo,
-    io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
+    %io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
     SLabel = atol(PLabel),
     IsArg = is_list(string:find(SLabel, "arg")),
     IsSpawn = is_list(string:find(SLabel, "spawn")),
@@ -284,7 +284,7 @@ manage_send(SLabel, Data, ProcName, ProcPid, Edge) ->
     ProcSentPid = maps:get(ProcSentName, ProcPidMap, no_pid),
     case ProcSentPid of
         no_pid ->
-            io:fwrite("[SEND-ERR] no pid found for: ~p~n", [ProcSentName]),
+            %io:fwrite("[SEND-ERR] no pid found for: ~p~n", [ProcSentName]),
             {Data, false};
         P ->
             actor_emul:add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge)),
@@ -352,7 +352,7 @@ check_vars(ProcName, ProcPid, VarName) ->
                 )
         end,
     SeachList = ArgsVars ++ LocalViewLocalVars ++ GlobalViewLocalVars,
-    io:fwrite("Find var ~p in ~p from ~p~n", [VarName, SeachList, ProcName]),
+    %io:fwrite("Find var ~p in ~p from ~p~n", [VarName, SeachList, ProcName]),
     VarValue = find_var(SeachList, VarName),
     case VarValue of
         nomatch ->
@@ -482,12 +482,12 @@ check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
 register_var(Data) ->
     {ProcPid, Name, Type} = Data,
     V = #variable{name = ltoa(Name), type = ltoa(Type)},
-    io:fwrite("Added Var ~p~n", [V]),
+    %io:fwrite("Added Var ~p~n", [V]),
     actor_emul:add_proc_localvars(ProcPid, V).
 
 %%% Substitute pif_self to pid_procId
 check_pid_self(Data, ProcId) ->
-    % io:fwrite("[C]Data ~p proc id ~p~n", [Data, ProcId]),
+    % %io:fwrite("[C]Data ~p proc id ~p~n", [Data, ProcId]),
     lists:flatten(string:replace(atol(Data), "pid_self", "pid_" ++ atol(ProcId))).
 
 %%% Custom recursive logic and
@@ -542,7 +542,7 @@ complex_add_vertex(Proc1, EdgeInfo1, Proc2, EdgeInfo2, Data, Label) ->
                     end;
                 _ ->
                     %%% Match First vertex
-                    io:fwrite("[ADD]First defined!!~n"),
+                    %io:fwrite("[ADD]First defined!!~n"),
                     digraph:add_edge(G, VLast, Vfirst, Label),
                     {Vfirst, StateM}
             end;

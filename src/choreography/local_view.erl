@@ -31,22 +31,19 @@ create_localview(ActorName, OutputDir, Options) ->
             TempG = db_manager:get_fun_graph(ActorName),
             case TempG of
                 no_graph_found ->
-                    {SetFinalState, SetAdditionalInfo} = Options,
-                    Graph = get_localview(
-                        ActorName, ActorAst, [], SetFinalState, SetAdditionalInfo
-                    ),
-                    MinGraph = fsa:minimize(Graph),
-                    db_manager:send_fun_graph(ActorName, MinGraph);
+                    {SetFinalS, SetAdditionalInfo} = Options,
+                    G = get_localview(ActorName, ActorAst, [], SetFinalS, SetAdditionalInfo);
                 G ->
-                    MinGraph = fsa:minimize(G),
-                    db_manager:send_fun_graph(ActorName, MinGraph)
+                    G
             end,
+            MinGraph = fsa:minimize(G),
+            db_manager:send_fun_graph(ActorName, MinGraph),
             %%% Send the graph to the dbmanager
             common_fun:save_graph_to_file(MinGraph, OutputDir, atol(ActorName), local)
     end.
 
 %%% Get the local view of a function
-get_localview(FunName, Code, LocalVars, SetFinal, SetPm) when is_list(Code) ->
+get_localview(FunName, Code, LocalVars, _SetFinal, SetPm) when is_list(Code) ->
     Gr = digraph:new(),
     VStart = common_fun:add_vertex(Gr),
     lists:foreach(
@@ -55,8 +52,9 @@ get_localview(FunName, Code, LocalVars, SetFinal, SetPm) when is_list(Code) ->
                 {clause, _, Vars, Guard, Content} ->
                     %%% Show the pattern matching options to view the complete local view
                     VN = add_args_to_graph(Gr, Vars, Guard, VStart, SetPm),
-                    VFinal = eval_pm_clause(Content, FunName, Gr, VN, LocalVars, SetPm),
-                    set_as_final(SetFinal, Gr, VFinal);
+                    _VFinal = eval_pm_clause(Content, FunName, Gr, VN, LocalVars, false);
+                % TODO: capire perché questa linea rompe tutto.
+                % set_as_final(SetFinal, Gr, VFinal);
                 _ ->
                     ?UNDEFINED
             end
@@ -124,7 +122,11 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         {call, _, {atom, _, Name}, ArgList} ->
             {V, _, NewL} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
             io:fwrite("[LOCAL] V ~p NewL ~p Name ~p~n", [V, NewL, FunName]),
-            NewG = eval_func(Name, [], SetPm),
+            NewG =
+                case db_manager:get_fun_graph(Name) of
+                    no_graph_found -> eval_func(Name, [], SetPm);
+                    G -> G
+                end,
             db_manager:send_fun_graph(Name, NewG),
             case NewG of
                 %%% If the function called is a built-in or a module function,
@@ -251,6 +253,7 @@ find_proc_in_varl(Name, [H | T]) ->
 
 %%% Convert a variable (record) to a string
 recordvar_to_string(Var) ->
+    io:fwrite("[Var] ~p~n", [Var]),
     case Var#variable.type of
         ?UNDEFINED ->
             atol(Var#variable.name);
@@ -405,13 +408,24 @@ explore_pm(PMList, G, VLast, LocalVarL, FunName, Base, SetPm) ->
 
 %%% Format the Variables with the guards in a label for the FSA
 format_label_pm_edge(SetPm, VarList, GuardList, BaseLabel) when is_list(BaseLabel) ->
-    case SetPm of
-        true ->
-            VarsS = lists:foldl(fun(V, Acc) -> astvar_to_string(V, Acc) end, BaseLabel, VarList),
-            lists:foldl(fun(G, Acc) -> guards_to_string(G, Acc) end, VarsS, GuardList);
-        false ->
-            'ɛ'
-    end.
+    remove_last(
+        remove_last(
+            case SetPm of
+                true ->
+                    VarsS = lists:foldl(
+                        fun(V, Acc) -> astvar_to_string(V, Acc) ++ ", " end, BaseLabel, VarList
+                    ),
+                    lists:foldl(fun(G, Acc) -> guards_to_string(G, Acc) end, VarsS, GuardList);
+                false ->
+                    'ɛ'
+            end
+        )
+    ).
+
+%%% Remove the last element froom a list
+remove_last(List) when is_list(List) ->
+    {Rest, _} = lists:split(length(List) - 1, List),
+    Rest.
 
 %%% Convert a data type (ast format) to a string
 astvar_to_string(VarToVal) ->
@@ -419,6 +433,8 @@ astvar_to_string(VarToVal) ->
 astvar_to_string(VarToVal, BaseL) ->
     BaseL ++
         case VarToVal of
+            %% TODO: espandere o fare refactor di sta parte
+            {integer, _, Value} -> integer_to_list(Value);
             {var, _, '_'} -> "_";
             {tuple, _, LVar} -> format_tuple(LVar, fun astvar_to_string/1);
             {var, _, Var} -> atol(Var);
