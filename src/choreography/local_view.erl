@@ -53,7 +53,7 @@ get_localview(FunName, Code, LocalVars, _SetFinal, SetPm) when is_list(Code) ->
                     %%% Show the pattern matching options to view the complete local view
                     VN = add_args_to_graph(Gr, Vars, Guard, VStart, SetPm),
                     _VFinal = eval_pm_clause(Content, FunName, Gr, VN, LocalVars, false);
-                % TODO: capire perché questa linea rompe tutto.
+                % TODO: test why this line broke the minimize functionality
                 % set_as_final(SetFinal, Gr, VFinal);
                 _ ->
                     ?UNDEFINED
@@ -460,6 +460,9 @@ add_edges_recursive(G, VertexList, VertexToLink, Label, Except) ->
     ].
 
 %%% Set a vertex as a final state
+%%%
+%%% Info: if this funtion is used, it will broke with the minimize function
+%%% DO NOT USE until further exploration
 set_as_final(ShouldBeSet, Graph, Vertex) ->
     {_, LastLabel} = digraph:vertex(Graph, Vertex),
     if
