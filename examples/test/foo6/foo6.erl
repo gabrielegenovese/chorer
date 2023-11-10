@@ -10,7 +10,7 @@ client_server(N) ->
 
 server() ->
     receive 
-        X -> ok
+        X -> X
     end,
     server().
 

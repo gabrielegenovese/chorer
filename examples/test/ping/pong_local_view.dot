@@ -1,14 +1,14 @@
 digraph pong {
 	rankdir="LR";
 	n_0 [label="pong", shape="plaintext"];
-	n_1 [id="3", shape=circle, label="4"];
-	n_2 [id="5", shape=circle, label="3"];
+	n_1 [id="5", shape=circle, label="3"];
+	n_2 [id="1", shape=circle, label="1"];
+	n_0 -> n_2 [arrowhead=none];
 	n_3 [id="2", shape=circle, label="2"];
-	n_4 [id="1", shape=circle, label="1"];
-	n_0 -> n_4 [arrowhead=none];
+	n_4 [id="3", shape=circle, label="4"];
 
-	n_4 -> n_2 [id="[$e|4]", label="receive {S,N}"];
-	n_4 -> n_3 [id="[$e|3]", label="receive {S,none}"];
-	n_2 -> n_4 [id="[$e|6]", label="send N to S"];
-	n_3 -> n_1 [id="[$e|2]", label="send kill to S"];
+	n_1 -> n_2 [id="[$e|6]", label="send any to S"];
+	n_2 -> n_3 [id="[$e|3]", label="receive {S,0}"];
+	n_2 -> n_1 [id="[$e|4]", label="receive {S,N}"];
+	n_3 -> n_4 [id="[$e|2]", label="send kill to S"];
 }

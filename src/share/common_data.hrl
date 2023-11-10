@@ -3,6 +3,7 @@
 -define(FINALTAG, "final").
 -define(DBMANAGER, dbmanager).
 -define(UNDEFINED, none).
+-define(ANYDATA, any).
 
 %%% fsa_states, a structure to keep track of all the state of a Finite State Automata
 %%% start_state: a singlular starting poin, final_states: list of states
@@ -33,9 +34,9 @@
 %%% Variable data structure
 %%% type could be integrer, float, etc... or pid_prodId
 -record(variable, {
-    type = ?UNDEFINED,
+    type = ?ANYDATA,
     name = ?UNDEFINED,
-    value = ?UNDEFINED
+    value = ?ANYDATA
 }).
 
 %%% Spanwed processes data stracture

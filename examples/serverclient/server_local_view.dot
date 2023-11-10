@@ -10,7 +10,7 @@ digraph server {
 
 	n_3 -> n_5 [id="[$e|1]", label="spawn handle_req_0"];
 	n_4 -> n_1 [id="[$e|6]", label="spawn handle_req_1"];
+	n_5 -> n_2 [id="[$e|7]", label="send {res,pid_handle_req_0} to P"];
 	n_2 -> n_3 [id="[$e|4]", label="receive {req,P}"];
 	n_2 -> n_4 [id="[$e|0]", label="receive ciao"];
-	n_5 -> n_2 [id="[$e|7]", label="send {res,pid_handle_req_0} to P"];
 }
