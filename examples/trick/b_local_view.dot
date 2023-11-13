@@ -4,8 +4,8 @@ digraph b {
 	n_1 [id="1", shape=circle, label="1"];
 	n_0 -> n_1 [arrowhead=none];
 	n_2 [id="2", shape=circle, label="2"];
-	n_3 [id="3", shape=circle, label="3"];
+	n_3 [id="3", shape=doublecircle, label="3"];
 
-	n_2 -> n_3 [id="[$e|0]", label="send v2 to c_0"];
-	n_1 -> n_2 [id="[$e|1]", label="receive v2"];
+	n_2 -> n_3 [id="[$e|1]", label="send v2 to c_0"];
+	n_1 -> n_2 [id="[$e|0]", label="receive v2"];
 }

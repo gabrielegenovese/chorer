@@ -10,7 +10,9 @@
     del_vertex/2,
     is_erlvar/1,
     is_uppercase/1,
-    is_lowercase/1
+    is_lowercase/1,
+    atol/1,
+    ltoa/1
 ]).
 
 %%%===================================================================
@@ -86,5 +88,7 @@ format_global_name(Name) -> Name ++ "_global_view.dot".
 %%% Get a new label for a given graph
 new_label(Graph) -> length(digraph:vertices(Graph)) + 1.
 
+ltoa(L) when is_list(L) -> list_to_atom(L);
+ltoa(L) when is_atom(L) -> L.
 atol(A) when is_atom(A) -> atom_to_list(A);
 atol(A) when is_list(A) -> A.

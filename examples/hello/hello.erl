@@ -4,10 +4,12 @@
 greet() ->
     Me = self(),
     Me ! hello1,
-    Me ! hello2,
-    receive
-        M -> M
-    end,
-    receive
-        N -> N
+    if
+        true ->
+            Me ! hello1,
+            greet();
+        false ->
+            receive
+                hello1 -> done
+            end
     end.

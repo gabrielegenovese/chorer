@@ -321,7 +321,6 @@ set_as_final(G, V) ->
 stol(S) -> sets:to_list(S).
 sfroml(S) -> sets:from_list(S).
 
-
 %%% Raname graph's vertex's labels in order
 rename_states(G) ->
     bfs_with_raname(G, [1], sfroml([1]), 1).
@@ -337,10 +336,15 @@ bfs_with_raname(G, VL, MarkedV, LastLabel) ->
         false ->
             Last = lists:foldl(
                 fun(I, AccI) ->
-                    NewL = AccI + 1,
-                    % io:fwrite("RENAME ~p WITH ~p~n", [I, NewL]),
-                    digraph:add_vertex(G, I, NewL),
-                    NewL
+                    LNum = AccI + 1,
+                    C = is_final_state(G, I),
+                    FinalL =
+                        case C of
+                            true -> ?FINALTAG ++ integer_to_list(LNum);
+                            false -> LNum
+                        end,
+                    digraph:add_vertex(G, I, FinalL),
+                    LNum
                 end,
                 LastLabel,
                 Rename

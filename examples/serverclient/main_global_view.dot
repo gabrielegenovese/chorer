@@ -1,20 +1,20 @@
 digraph global {
 	rankdir="LR";
 	n_0 [label="global", shape="plaintext"];
-	n_1 [id="5", shape=circle, label="7"];
+	n_1 [id="5", shape=circle, label="5"];
 	n_2 [id="6", shape=circle, label="6"];
 	n_3 [id="1", shape=circle, label="1"];
 	n_0 -> n_3 [arrowhead=none];
 	n_4 [id="2", shape=circle, label="2"];
-	n_5 [id="4", shape=circle, label="5"];
-	n_6 [id="7", shape=circle, label="4"];
+	n_5 [id="4", shape=circle, label="4"];
+	n_6 [id="7", shape=circle, label="7"];
 	n_7 [id="3", shape=circle, label="3"];
 
-	n_2 -> n_1 [id="[$e|1]", label="client_0→handle_req_0:done"];
-	n_4 -> n_7 [id="[$e|3]", label="mainΔclient_0"];
-	n_3 -> n_4 [id="[$e|2]", label="mainΔserver_0"];
-	n_5 -> n_2 [id="[$e|5]", label="server_0→client_0:{res,pid_handle_req_0}"];
-	n_7 -> n_6 [id="[$e|6]", label="client_0→server_0:{req,pid_self}"];
-	n_6 -> n_5 [id="[$e|4]", label="server_0Δhandle_req_0"];
-	n_2 -> n_2 [id="[$e|0]", label="client_0→handle_req_0:next"];
+	n_2 -> n_6 [id="[$e|5]", label="client_0→handle_req_0:done"];
+	n_4 -> n_7 [id="[$e|1]", label="mainΔclient_0"];
+	n_7 -> n_5 [id="[$e|2]", label="client_0→server_0:{req,pid_self}"];
+	n_2 -> n_2 [id="[$e|6]", label="client_0→handle_req_0:next"];
+	n_5 -> n_1 [id="[$e|3]", label="server_0Δhandle_req_0"];
+	n_1 -> n_2 [id="[$e|4]", label="server_0→client_0:{res,pid_handle_req_0}"];
+	n_3 -> n_4 [id="[$e|0]", label="mainΔserver_0"];
 }
