@@ -17,7 +17,7 @@ generate(InputFile, EntryPoint) ->
     generate(InputFile, EntryPoint, OutputDir).
 
 generate(InputFile, EntryPoint, OutputDir) ->
-    generate(InputFile, EntryPoint, OutputDir, {true, false}).
+    generate(InputFile, EntryPoint, OutputDir, {false}).
 
 -spec generate(InputFile, EntryPoint, OutputDir, Options) -> atom() when
     InputFile :: string(),

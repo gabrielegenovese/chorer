@@ -95,7 +95,13 @@ get_spawned_loop(Code, FunName) when is_list(Code) ->
                     %%% Evaluate recursively statement with possible spawn in it
                     {clause, _, _, _, Content} ->
                         get_spawned_loop(Content, FunName);
-                    {match, _, _VarName, LeftContent} ->
+                    {match, _, {var, _, VarName}, {'fun', _, {clauses, FunAst}}} ->
+                        db_manager:send_fun_ast(VarName, FunAst),
+                        case is_list(FunAst) of
+                            true -> get_spawned_loop(FunAst, FunName);
+                            false -> get_spawned_loop([FunAst], FunName)
+                        end;
+                    {match, _, _, LeftContent} ->
                         case is_list(LeftContent) of
                             true -> get_spawned_loop(LeftContent, FunName);
                             false -> get_spawned_loop([LeftContent], FunName)
@@ -109,6 +115,15 @@ get_spawned_loop(Code, FunName) when is_list(Code) ->
                     {op, _, '!', DataSentAst} ->
                         get_spawned_loop([DataSentAst], FunName);
                     %%% When a spawn is found, send the data to the db manager
+                    {call, _, {atom, _, spawn}, [{var, _, Name}]} ->
+                        ActorList = db_manager:get_actors(),
+                        db_manager:send_actor_list(ActorList ++ [Name]),
+                        C = db_manager:inc_spawn_counter(Name),
+                        FName = list_to_atom(atom_to_list(Name) ++ "_" ++ integer_to_list(C)),
+                        % TODO: come evitare loop infiniti?
+                        FAst = db_manager:get_fun_ast(Name),
+                        L = get_spawned_loop(FAst, Name),
+                        [new_spawned_proc(FName, FunName, {}, {})] ++ L;
                     {call, _, {atom, _, spawn}, [_, {atom, _, Name}, ArgList]} ->
                         ArgVars = get_clause_vars(Name),
                         C = db_manager:inc_spawn_counter(Name),

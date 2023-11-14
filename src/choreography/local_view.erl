@@ -23,7 +23,7 @@ generate(OutputDir, Options) ->
 
 %%% Create a local view for an actor
 create_localview(ActorName, OutputDir, Options) ->
-    {SetFinal, SetMoreInfo} = Options,
+    {SetMoreInfo} = Options,
     ActorAst = db_manager:get_fun_ast(ActorName),
     case ActorAst of
         no_ast_found ->
@@ -32,7 +32,7 @@ create_localview(ActorName, OutputDir, Options) ->
             TempG = db_manager:get_fun_graph(ActorName),
             ToMinG =
                 case TempG of
-                    no_graph_found -> get_localview(ActorName, ActorAst, [], SetFinal, SetMoreInfo);
+                    no_graph_found -> get_localview(ActorName, ActorAst, [], SetMoreInfo);
                     G -> G
                 end,
             set_final(ToMinG),
@@ -43,7 +43,7 @@ create_localview(ActorName, OutputDir, Options) ->
     end.
 
 %%% Get the local view of a function
-get_localview(FunName, Code, LocalVars, _SetFinal, SetPm) when is_list(Code) ->
+get_localview(FunName, Code, LocalVars, SetPm) when is_list(Code) ->
     Gr = digraph:new(),
     VStart = common_fun:add_vertex(Gr),
     lists:foreach(
@@ -92,12 +92,25 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         {match, _, {var, _, VarName}, LeftContent} ->
             {Var, V, NewL} = eval_codeline(LeftContent, FunName, G, AccData, SetPm),
             NewVarEntry = Var#variable{name = VarName},
+            case Var#variable.type of
+                function -> done;
+                _ -> ?UNDEFINED
+            end,
             {Var, V, NewL ++ [NewVarEntry]};
         %%% If there's a recursive call, just add an epsilon edge to the first state
         {call, _, {atom, _, FunName}, _ArgList} ->
             digraph:add_edge(G, VLast, 1, 'ɛ'),
             {#variable{}, 1, LocalVarL};
         %%% Evaluate the spawn() function
+        {call, _, {atom, _, spawn}, [{var, _, Name}]} ->
+            % VarFound = find_var(LocalVarL, Name),
+            C = db_manager:inc_spawn_counter(Name),
+            S = atol(Name) ++ "_" ++ integer_to_list(C),
+            VNew = common_fun:add_vertex(G),
+            digraph:add_edge(G, VLast, VNew, "spawn " ++ S),
+            % {VarArgL, _, _} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
+            % db_manager:add_fun_arg(S, VarArgL#variable.value),
+            {#variable{type = ltoa("pid_" ++ S)}, VNew, LocalVarL};
         {call, _, {atom, _, spawn}, [_, {atom, _, Name}, ArgList]} ->
             C = db_manager:inc_spawn_counter(Name),
             S = atol(Name) ++ "_" ++ integer_to_list(C),
@@ -141,6 +154,20 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         {call, _, {remote, _, {atom, _, _Package}, {atom, _, _Name}}, _ArgList} ->
             %%% TODO: find the package and the function, create the local view of it
             AccData;
+        %%% TODO: implementare passaggio di variabili
+        {call, _, {var, _, Name}, _ArgList} ->
+            VarFound = find_var(LocalVarL, Name),
+            {clauses, Ast} = VarFound#variable.value,
+            %% TODO: get returned var
+            NewG = get_localview(Name, Ast, LocalVarL, SetPm),
+            case NewG of
+                %%% If the function called is a built-in or a module function,
+                %%% then we don't have the Ast. Just return the last added vertex
+                no_graph -> AccData;
+                %%% If there's no error, then we have a graph, then we need to
+                %%% add the graph to the main graph
+                _ -> {LastRetVar, merge_graph(G, NewG, VLast), LocalVarL}
+            end;
         %%% Evaluate Case and If
         {'case', _, {var, _, Var}, PMList} ->
             BaseLabel = get_base_label(SetPm, atol(Var) ++ " match "),
@@ -200,6 +227,8 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
             digraph:add_edge(G, VLast, VNew, SLabel),
             {#variable{type = atom, value = DataSent}, VNew, NewL};
         %%% Evaluate Types
+        {'fun', _, Ast} ->
+            {#variable{type = function, value = Ast}, VLast, LocalVarL};
         {cons, _, HeadList, TailList} ->
             {Var, _, _} = eval_codeline(HeadList, FunName, G, AccData, SetPm),
             {VarList, _, _} = eval_codeline(TailList, FunName, G, AccData, SetPm),
@@ -364,7 +393,7 @@ eval_func(FuncName, LocalVar, SetPm) ->
     case FunAst of
         no_ast_found -> no_graph;
         %%% get the graph but don't set the final state
-        _ -> get_localview(FuncName, FunAst, LocalVar, false, SetPm)
+        _ -> get_localview(FuncName, FunAst, LocalVar, SetPm)
     end.
 
 %%% Evaluate Pattern Matching's list of clauses: evaluate every branch alone, then
