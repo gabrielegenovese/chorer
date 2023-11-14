@@ -112,7 +112,7 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         %%% Evaluate the register() function
         {call, _, {atom, _, register}, [{atom, _, AtomV}, {var, _, VarV}]} ->
             manage_register(LocalVarL, AtomV, VarV),
-            io:fwrite("[LOCAL] AtomV ~p VarV ~p~n", [AtomV, VarV]),
+            % io:fwrite("[LOCAL] AtomV ~p VarV ~p~n", [AtomV, VarV]),
             AccData;
         %%% Evaluate a generic function
         %%% Attention: don't change the position of this pattern matching branch
@@ -251,7 +251,6 @@ find_proc_in_varl(Name, [H | T]) ->
 
 %%% Convert a variable (record) to a string
 recordvar_to_string(Var) ->
-    io:fwrite("[Var] ~p~n", [Var]),
     case Var#variable.type of
         ?UNDEFINED ->
             atol(Var#variable.name);

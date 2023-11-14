@@ -81,6 +81,7 @@ progress_single_branch(BData) ->
             maps:fold(
                 fun(Name, Pid, AccList) ->
                     MessageQueue = actor_emul:get_proc_mess_queue(Pid),
+                    %io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
                     gen_branch_foreach_mess(TempBranchData, MessageQueue, Name, AccList)
                 end,
                 [],
@@ -115,7 +116,7 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseList) ->
                     MessData = Message#message.data,
                     PidFrom = maps:get(ProcFrom, NewMap),
                     Label = format_send_label(ProcFrom, ProcName, MessData),
-                    % %io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
+                    %io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
                     EFromInfo = actor_emul:get_proc_edge_info(PidFrom, Message#message.edge),
                     EToInfo = actor_emul:get_proc_edge_info(NewPid, EdgeFound),
                     %LastVertex =  simple_add_vertex(DupData, Label),
@@ -194,39 +195,43 @@ eval_proc_branch(ProcName, ProcPid, Data) ->
             {D, B} = eval_edge(EI, ProcName, ProcPid, Data),
             {D, B, []};
         true ->
-            LL = lists:foldl(
-                fun(ItemE, L) ->
-                    DD = dup_branch(Data),
-                    PP = maps:get(ProcName, DD#branch.proc_pid_m),
-                    EI = actor_emul:get_proc_edge_info(PP, ItemE),
-                    {D, B} = eval_edge(EI, ProcName, PP, DD),
-                    case B of
-                        true -> L ++ [D];
-                        false -> L
-                    end
-                end,
-                [],
-                EL
-            ),
-            case LL =:= [] of
+            Cond = is_lists_edgerecv(ProcPid, EL),
+            case Cond of
                 true ->
                     {Data, false, []};
                 false ->
-                    [F | H] = LL,
-                    {F, true, H}
+                    LL = lists:foldl(
+                        fun(ItemE, L) ->
+                            DD = dup_branch(Data),
+                            PP = maps:get(ProcName, DD#branch.proc_pid_m),
+                            EI = actor_emul:get_proc_edge_info(PP, ItemE),
+                            {D, B} = eval_edge(EI, ProcName, PP, DD),
+                            case B of
+                                true -> L ++ [D];
+                                false -> L
+                            end
+                        end,
+                        [],
+                        EL
+                    ),
+                    case LL =:= [] of
+                        true ->
+                            {Data, false, []};
+                        false ->
+                            [F | H] = LL,
+                            {F, true, H}
+                    end
             end
     end.
 
-%%% Given a list of edges, check if everyone is a receive edge
+%%% Given a list of edges, check if one is a receive edge
 is_lists_edgerecv(ProcPid, EL) ->
     lists:foldl(
         fun(E, A) ->
             {E, _, _, Label} = actor_emul:get_proc_edge_info(ProcPid, E),
-            SLabel = atol(Label),
-            IsRecv = string:find(SLabel, "receive"),
-            A and is_list(IsRecv)
+            A or is_substring(atol(Label), "receive")
         end,
-        true,
+        false,
         EL
     ).
 
@@ -235,9 +240,9 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     {Edge, _, _, PLabel} = EdgeInfo,
     %io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
     SLabel = atol(PLabel),
-    IsArg = is_list(string:find(SLabel, "arg")),
-    IsSpawn = is_list(string:find(SLabel, "spawn")),
-    IsSend = is_list(string:find(SLabel, "send")),
+    IsArg = is_substring(SLabel, "arg"),
+    IsSpawn = is_substring(SLabel, "spawn"),
+    IsSend = is_substring(SLabel, "send"),
     if
         IsArg ->
             actor_emul:use_proc_transition(ProcPid, Edge),
@@ -252,6 +257,8 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
         true ->
             {BData, false}
     end.
+
+is_substring(S, SubS) -> is_list(string:find(S, SubS)).
 
 %%% Add a spanw transition to the global view
 add_spawn_to_global(SLabel, ProcName, Data) ->
@@ -298,6 +305,7 @@ manage_recv(ProcPid, Message) ->
     EL = actor_emul:get_proc_edges(ProcPid),
     %%% TODO: trovare il modo di valutare in ordine i rami del receive (in quanto è molto rilevante nell'esecuzione)
     IsRecv = is_lists_edgerecv(ProcPid, EL),
+    %io:fwrite("IsRECV ~p EL ~p~n", [IsRecv, EL]),
     From = Message#message.from,
     case IsRecv of
         false ->
