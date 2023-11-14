@@ -23,20 +23,20 @@ generate(OutputDir, Options) ->
 
 %%% Create a local view for an actor
 create_localview(ActorName, OutputDir, Options) ->
+    {SetFinal, SetMoreInfo} = Options,
     ActorAst = db_manager:get_fun_ast(ActorName),
     case ActorAst of
         no_ast_found ->
             io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]);
         _ ->
             TempG = db_manager:get_fun_graph(ActorName),
-            case TempG of
-                no_graph_found ->
-                    {SetFinalS, SetAdditionalInfo} = Options,
-                    G = get_localview(ActorName, ActorAst, [], SetFinalS, SetAdditionalInfo);
-                G ->
-                    G
-            end,
-            MinGraph = fsa:minimize(G),
+            ToMinG =
+                case TempG of
+                    no_graph_found -> get_localview(ActorName, ActorAst, [], SetFinal, SetMoreInfo);
+                    G -> G
+                end,
+            set_final(ToMinG),
+            MinGraph = fsa:minimize(ToMinG),
             db_manager:send_fun_graph(ActorName, MinGraph),
             %%% Send the graph to the dbmanager
             common_fun:save_graph_to_file(MinGraph, OutputDir, atol(ActorName), local)
@@ -53,8 +53,6 @@ get_localview(FunName, Code, LocalVars, _SetFinal, SetPm) when is_list(Code) ->
                     %%% Show the pattern matching options to view the complete local view
                     VN = add_args_to_graph(Gr, Vars, Guard, VStart, SetPm),
                     _VFinal = eval_pm_clause(Content, FunName, Gr, VN, LocalVars, false);
-                % TODO: test why this line broke the minimize functionality
-                % set_as_final(SetFinal, Gr, VFinal);
                 _ ->
                     ?UNDEFINED
             end
@@ -114,7 +112,7 @@ eval_codeline(CodeLine, FunName, G, AccData, SetPm) ->
         %%% Evaluate the register() function
         {call, _, {atom, _, register}, [{atom, _, AtomV}, {var, _, VarV}]} ->
             manage_register(LocalVarL, AtomV, VarV),
-            io:fwrite("[LOCAL] AtomV ~p VarV ~p~n", [AtomV, VarV]),
+            % io:fwrite("[LOCAL] AtomV ~p VarV ~p~n", [AtomV, VarV]),
             AccData;
         %%% Evaluate a generic function
         %%% Attention: don't change the position of this pattern matching branch
@@ -253,7 +251,6 @@ find_proc_in_varl(Name, [H | T]) ->
 
 %%% Convert a variable (record) to a string
 recordvar_to_string(Var) ->
-    io:fwrite("[Var] ~p~n", [Var]),
     case Var#variable.type of
         ?UNDEFINED ->
             atol(Var#variable.name);
@@ -384,6 +381,8 @@ explore_pm(PMList, G, VLast, LocalVarL, FunName, Base, SetPm) ->
         fun(CodeLine, AddedVertexList) ->
             case CodeLine of
                 {clause, _, Vars, Guard, Content} ->
+                    V = common_fun:add_vertex(G),
+                    digraph:add_edge(G, VLast, V, 'ɛ'),
                     IsReceive = is_list(string:find(atol(Base), "receive")),
                     %%% if it's a receive pm, then the label must be written
                     EdLabel = format_label_pm_edge(IsReceive or SetPm, Vars, Guard, atol(Base)),
@@ -391,10 +390,10 @@ explore_pm(PMList, G, VLast, LocalVarL, FunName, Base, SetPm) ->
                         case IsReceive or SetPm of
                             true ->
                                 VNew = common_fun:add_vertex(G),
-                                digraph:add_edge(G, VLast, VNew, EdLabel),
+                                digraph:add_edge(G, V, VNew, EdLabel),
                                 VNew;
                             false ->
-                                VLast
+                                V
                         end,
                     VRet = eval_pm_clause(Content, FunName, G, VL, LocalVarL, SetPm),
                     AddedVertexList ++ [VRet];
@@ -459,23 +458,23 @@ add_edges_recursive(G, VertexList, VertexToLink, Label, Except) ->
         V =/= Except
     ].
 
-%%% Set a vertex as a final state
-%%%
-%%% Info: if this funtion is used, it will broke with the minimize function
-%%% DO NOT USE until further exploration
-set_as_final(ShouldBeSet, Graph, Vertex) ->
-    {_, LastLabel} = digraph:vertex(Graph, Vertex),
-    if
-        %%% we can add *and (LastLabel =/= 1) ->* to the guard bacause there could be problems with loops
-        %%% Future TODO: in eval_codeline potrei tornare il vertice e un booleano che rappresenti se la
-        %%% funzione sia un loop o meno e settare lo stato finale di conseguenza
-        ShouldBeSet and (is_integer(LastLabel)) ->
-            %%% A final state is a state with the final tag in the label
-            FormattedLabel = ?FINALTAG ++ integer_to_list(LastLabel),
-            digraph:add_vertex(Graph, Vertex, FormattedLabel);
-        true ->
-            ?UNDEFINED
-    end.
+%%% Set vertices as a final state if they do not have out edges
+set_final(Graph) ->
+    VL = digraph:vertices(Graph),
+    lists:foreach(
+        fun(Vertex) ->
+            OD = digraph:out_degree(Graph, Vertex),
+            {_, Label} = digraph:vertex(Graph, Vertex),
+            case OD =:= 0 of
+                true ->
+                    FormattedLabel = ?FINALTAG ++ integer_to_list(Label),
+                    digraph:add_vertex(Graph, Vertex, FormattedLabel);
+                false ->
+                    do_nothing
+            end
+        end,
+        VL
+    ).
 
 ltoa(L) when is_list(L) -> list_to_atom(L);
 ltoa(L) when is_atom(L) -> L.

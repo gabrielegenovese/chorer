@@ -2,15 +2,15 @@ digraph server {
 	rankdir="LR";
 	n_0 [label="server", shape="plaintext"];
 	n_1 [id="5", shape=circle, label="5"];
-	n_2 [id="1", shape=circle, label="1"];
-	n_0 -> n_2 [arrowhead=none];
-	n_3 [id="2", shape=circle, label="2"];
-	n_4 [id="4", shape=circle, label="3"];
-	n_5 [id="3", shape=circle, label="4"];
+	n_2 [id="6", shape=doublecircle, label="4"];
+	n_3 [id="1", shape=circle, label="1"];
+	n_0 -> n_3 [arrowhead=none];
+	n_4 [id="2", shape=circle, label="3"];
+	n_5 [id="3", shape=circle, label="2"];
 
-	n_3 -> n_5 [id="[$e|1]", label="spawn handle_req_0"];
-	n_4 -> n_1 [id="[$e|6]", label="spawn handle_req_1"];
-	n_5 -> n_2 [id="[$e|7]", label="send {res,pid_handle_req_0} to P"];
-	n_2 -> n_3 [id="[$e|4]", label="receive {req,P}"];
-	n_2 -> n_4 [id="[$e|0]", label="receive ciao"];
+	n_3 -> n_5 [id="[$e|5]", label="receive ciao"];
+	n_3 -> n_4 [id="[$e|2]", label="receive {req,P}"];
+	n_1 -> n_3 [id="[$e|7]", label="send {res,pid_handle_req_0} to P"];
+	n_5 -> n_2 [id="[$e|6]", label="spawn handle_req_1"];
+	n_4 -> n_1 [id="[$e|0]", label="spawn handle_req_0"];
 }
