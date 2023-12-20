@@ -1,13 +1,9 @@
 digraph a {
 	rankdir="LR";
 	n_0 [label="a", shape="plaintext"];
-	n_1 [id="3", shape=circle, label="3"];
-	n_2 [id="4", shape=circle, label="4"];
-	n_3 [id="2", shape=circle, label="2"];
-	n_4 [id="1", shape=circle, label="1"];
-	n_0 -> n_4 [arrowhead=none];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="2", shape=doublecircle, label="2"];
 
-	n_4 -> n_3 [id="[$e|1]", label="send 1 to B"];
-	n_1 -> n_2 [id="[$e|0]", label="send 3 to B"];
-	n_3 -> n_1 [id="[$e|2]", label="send 2 to C"];
+	n_1 -> n_2 [id="[$e|0]", label="send 2 to C"];
 }

@@ -8,7 +8,7 @@ start() ->
 
 spawn_process() ->
     Tac = spawn(?MODULE, tac_loop, []),
-    register(tac_loop, Tac),
+    register(tac_loop, Tac),  %% TODO: register da considerare dinamica
     Tic = spawn(?MODULE, tic_loop, []),
     register(tic_loop, Tic),
     spawn(?MODULE, random, []).

@@ -1,14 +1,23 @@
 -module(foo2).
--export([test/0,a/2,b/0,c/1]).
+-export([test/0, a/1, b/0, c/0]).
 
-test() -> B = spawn(foo2,b,[]),
-          C = spawn(foo2,c,[B]),
-          spawn(foo2,a,[B,C]).
+test() ->
+    C = spawn(?MODULE, c, []),
+    % register(c, C),
+    spawn(?MODULE, a, [C]).
 
-a(B,C) -> B ! 1, C ! 2, B ! 3.
+a(C) ->
+    C ! 2.
 
-b() -> receive X -> X end,
-       receive Y -> Y end,
-       receive Z -> Z end.
+b() ->
+    receive
+        X -> X
+    end,
+    receive
+        Z -> Z
+    end.
 
-c(B) -> receive _ -> B ! 4 end. 
+c() ->
+    receive
+        _ -> b ! 4
+    end.
