@@ -39,16 +39,15 @@ send_recv(P, Data) ->
         {D} -> D
     end.
 
-%%% Actor simulator main function
 proc_loop(Data) ->
-    ProcName = Data#proc_info.proc_id,
+    ProcName = Data#actor_info.proc_id,
     G = db_manager:get_fun_graph(ProcName),
     % timer:sleep(200),
-    VCurr = Data#proc_info.current_vertex,
-    FirstMarkedE = Data#proc_info.first_marked_edges,
-    SecondMarkedE = Data#proc_info.second_marked_edges,
-    MessageQueue = Data#proc_info.message_queue,
-    LocalVars = Data#proc_info.local_vars,
+    VCurr = Data#actor_info.current_state,
+    FirstMarkedE = Data#actor_info.first_marked_edges,
+    SecondMarkedE = Data#actor_info.second_marked_edges,
+    MessageQueue = Data#actor_info.message_queue,
+    LocalVars = Data#actor_info.local_vars,
     receive
         {use_transition, E} ->
             IsAlreadyMarkedOnce = lists:member(E, FirstMarkedE),
@@ -64,8 +63,8 @@ proc_loop(Data) ->
                             false ->
                                 LocalVars
                         end,
-                    proc_loop(Data#proc_info{
-                        current_vertex = VNew,
+                    proc_loop(Data#actor_info{
+                        current_state = VNew,
                         second_marked_edges = SecondMarkedE ++ [E],
                         local_vars = NewL
                     });
@@ -80,8 +79,8 @@ proc_loop(Data) ->
                             false ->
                                 LocalVars
                         end,
-                    proc_loop(Data#proc_info{
-                        current_vertex = VNew,
+                    proc_loop(Data#actor_info{
+                        current_state = VNew,
                         first_marked_edges = FirstMarkedE ++ [E],
                         local_vars = NewL
                     });
@@ -109,17 +108,16 @@ proc_loop(Data) ->
             P ! {sets:to_list(LocalVars)},
             proc_loop(Data);
         {add_local_var, V} ->
-            proc_loop(Data#proc_info{local_vars = sets:add_element(V, LocalVars)});
+            proc_loop(Data#actor_info{local_vars = sets:add_element(V, LocalVars)});
         {P, get_mess_queue} ->
             P ! {MessageQueue},
             proc_loop(Data);
         {add_mess_queue, M} ->
-            proc_loop(Data#proc_info{message_queue = MessageQueue ++ [M]});
+            proc_loop(Data#actor_info{message_queue = MessageQueue ++ [M]});
         {del_mess_queue, M} ->
-            proc_loop(Data#proc_info{message_queue = lists:delete(M, MessageQueue)});
+            proc_loop(Data#actor_info{message_queue = lists:delete(M, MessageQueue)});
         stop ->
             ok
     end.
 
-%%% Filter and edge list, given a list of edges
 filter_marked_edges(EdgeL, MarkedE) -> [E || E <- EdgeL, not lists:member(E, MarkedE)].

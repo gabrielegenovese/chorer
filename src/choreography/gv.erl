@@ -1,4 +1,4 @@
--module(global_view).
+-module(gv).
 -include("../share/common_data.hrl").
 
 %%% API

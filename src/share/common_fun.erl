@@ -26,12 +26,6 @@ pick_random(X) -> lists:nth(rand:uniform(length(X)), X).
 first([]) -> [];
 first([H | _]) -> H.
 
-%%% Save some content into the specified directory with a formatted filename
--spec save_graph_to_file(Graph, Dir, FileName, Type) -> ok when
-    Graph :: digraph:graph(),
-    Dir :: string(),
-    FileName :: string(),
-    Type :: atom().
 save_graph_to_file(Graph, Dir, FileName, Type) ->
     case Type of
         local ->
@@ -45,13 +39,11 @@ save_graph_to_file(Graph, Dir, FileName, Type) ->
     file:make_dir(Dir),
     file:write_file(FilePath, ToWriteData).
 
-%%% Add a vertex to a FSA
 -spec add_vertex(G) -> digraph:vertex() when G :: digraph:graph().
 add_vertex(G) ->
     Label = new_label(G),
     digraph:add_vertex(G, Label, Label).
 
-%%% Delete a vertex to a FSA
 del_vertex(G, V) ->
     % TODO questa funzione cambia solo le label, l'ideale sarebbe cambiare anche il contenuto del vertice ma è difficile da fare
     [digraph:add_vertex(G, Ver, Ver - 1) || Ver <- digraph:vertices(G), Ver > V],

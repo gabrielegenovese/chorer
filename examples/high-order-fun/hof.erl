@@ -12,6 +12,7 @@ greet() ->
             hello -> done
         end
     end,
-    A = spawn(fun() -> recv() end), %% TODO: implementare questa feature
+    A = spawn(fun() -> recv() end),
     A ! hello,
+    self() ! hello,
     Fun().

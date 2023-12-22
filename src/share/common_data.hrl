@@ -1,43 +1,57 @@
 %%%----FILE common_data.hrl----
 
+%%% CONSTANTS
+
 -define(FINALTAG, "final").
 -define(DBMANAGER, dbmanager).
 -define(UNDEFINED, none).
 -define(ANYDATA, any).
 
-%%% fsa_states, a structure to keep track of all the state of a Finite State Automata
-%%% start_state: a singlular starting poin, final_states: list of states
-% -record(fsa_data, {all_states, start_state, final_states, transitions, labels}).
+-define(INPUTAST, input_ast).
+-define(ACTORLIST, actor_list).
+-define(FUNAST, fun_ast).
+-define(LOCALVIEW, lv).
+-define(REGISTERDB, reg).
+-define(SPAWNC, spc).
 
-%%% graph node data, a structure to help the creation of the fsa
-% -record(node_data, {
-%     is_start = false,
-%     is_final = false,
-%     guard = [],
-%     current_operation = none,
-%     label = 'ɛ'
-% }).
+%%% RECORDS
 
-% -record(local_view, {
-%     name,
-%     n_args,
-%     ast,
-%     graph,
-%     current_vartex,
-%     local_vars,
-%     returned_var,
-%     nodes,
-%     transitions,
-%     recv_queue
-% }).
+-record(setting, {
+    more_info_lv = false,
+    debug = false,
+    output_dir = "./"
+}).
+-type setting() :: #setting{
+    more_info_lv :: boolean(),
+    debug :: boolean(),
+    output_dir :: string()
+}.
 
-%%% Variable data structure
-%%% type could be integrer, float, etc... or pid_prodId
 -record(variable, {
     type = ?ANYDATA,
     name = ?UNDEFINED,
     value = ?ANYDATA
 }).
+
+-record(wip_lv, {
+    fun_name,
+    fun_ast,
+    graph = digraph:new(),
+    last_vertex = 1,
+    local_vars = [],
+    ret_var = #variable{},
+    node_map = #{},
+    settings = #setting{}
+}).
+
+-record(node, {
+    id,
+    label,
+    op,
+    out_trans
+}).
+
+-record(actor, {name, arity}).
 
 %%% Spanwed processes data stracture
 %%% name: process id
@@ -52,7 +66,6 @@
     args_local = ?UNDEFINED
 }).
 
-%%%
 -record(branch, {
     graph = digraph:new(),
     last_vertex = 1,
@@ -60,9 +73,9 @@
     states_m = #{}
 }).
 
--record(proc_info, {
-    proc_id,
-    current_vertex = 1,
+-record(actor_info, {
+    proc_id = ?UNDEFINED,
+    current_state = 1,
     first_marked_edges = [],
     second_marked_edges = [],
     local_vars = sets:new(),
