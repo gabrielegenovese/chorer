@@ -9,7 +9,7 @@
 %%%===================================================================
 
 main([InputFile, EntryPoint, OutputDir] = _Args) ->
-    generate(InputFile, list_to_atom(EntryPoint), #setting{output_dir = OutputDir}).
+    generate(InputFile, list_to_atom(EntryPoint), OutputDir).
 
 -spec generate(InputFile, EntryPoint) -> atom() when
     InputFile :: string(),
@@ -20,11 +20,12 @@ generate(InputFile, EntryPoint) -> generate(InputFile, EntryPoint, #setting{}).
     InputFile :: string(),
     EntryPoint :: atom(),
     OutDir :: string().
-generate(InputFile, _EntryPoint, OutDir) ->
+generate(InputFile, EntryPoint, OutDir) ->
     init_db(),
+    Settings = #setting{output_dir = OutDir},
     md:extract(InputFile),
-    lv:generate(#setting{output_dir = OutDir}).
-    % gv:generate(OutputDir, EntryPoint).
+    lv:generate(Settings),
+    gv:generate(Settings, EntryPoint).
 
 %%%===================================================================
 %%% Internal Functions

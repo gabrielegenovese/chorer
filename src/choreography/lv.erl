@@ -20,49 +20,40 @@ generate(Settings) ->
 %%%===================================================================
 
 create_save_localview(ActorName, Settings) ->
-    ActorAst = get_fun_ast(ActorName),
+    ActorAst = common_fun:get_fun_ast(ActorName),
     case ActorAst of
         not_found ->
             io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]);
         _ ->
+            % io:fwrite("[LV] ~p~n", [ActorName]),
             LocalViewData = check_and_get_lv(ActorName, ActorAst, Settings),
             G = LocalViewData#wip_lv.graph,
             set_final(G),
             MinGraph = fsa:minimize(G),
+            ets:insert(?LOCALVIEW, {ActorName, MinGraph}),
             OutputDir = Settings#setting.output_dir,
             common_fun:save_graph_to_file(MinGraph, OutputDir, atol(ActorName), local)
     end.
 
 create_localview(FunName) ->
-    ActorAst = get_fun_ast(FunName),
+    ActorAst = common_fun:get_fun_ast(FunName),
     case ActorAst of
-        not_found ->
-            io:fwrite("Error: Function ~p's AST not found~n", [FunName]);
-        _ ->
-            check_and_get_lv(FunName, ActorAst, #setting{})
-    end.
-
-get_fun_ast(FunName) ->
-    Ast = ets:lookup(?FUNAST, FunName),
-    case Ast of
-        [] -> not_found;
-        [{_, A}] -> A
+        not_found -> io:fwrite("Error: Function ~p's AST not found~n", [FunName]);
+        _ -> check_and_get_lv(FunName, ActorAst, #setting{})
     end.
 
 check_and_get_lv(ActorName, Ast, Settings) ->
-    TempG = ets:lookup(?LOCALVIEW, ActorName),
-    case TempG of
-        [] ->
+    LV = common_fun:get_localview(ActorName),
+    case LV of
+        not_found ->
             BaseData = #wip_lv{fun_name = ActorName, fun_ast = Ast, settings = Settings},
             common_fun:add_vertex(BaseData#wip_lv.graph),
-            D = get_localview(BaseData),
-            ets:insert(?LOCALVIEW, {ActorName, D}),
-            D;
-        [{_, Data}] ->
-            Data
+            build_localview(BaseData);
+        L ->
+            L
     end.
 
-get_localview(Data) ->
+build_localview(Data) ->
     eval_pm_clause(Data#wip_lv.fun_ast, Data).
 
 add_args_to_graph(Gr, Vars, Guard, VStart, SetPm) ->
@@ -77,7 +68,7 @@ add_args_to_graph(Gr, Vars, Guard, VStart, SetPm) ->
     end.
 
 eval_codeline(CodeLine, Data) ->
-    % io:fwrite("evaluating ~p~n", [CodeLine]),
+    % io:fwrite("evaluating ~p on line ~p~n", [element(1, CodeLine), element(2, CodeLine)]),
     case CodeLine of
         {clause, _, _Vars, _Guard, Content} -> eval_pm_clause(Content, Data);
         {match, _, RightContent, LeftContent} -> eval_match(RightContent, LeftContent, Data);
@@ -126,10 +117,14 @@ eval_match(RightContent, LeftContent, Data) ->
 
 eval_call(Function, ArgList, Data) ->
     case Function of
-        {atom, _, Name} -> eval_call_by_atom(Name, ArgList, Data);
-        {var, _, VarName} -> eval_call_by_var(VarName, ArgList, Data);
-        {remote, _, Package, FunName} -> eval_call_by_package(Package, FunName, ArgList, Data);
-        F -> warning("couldn't call function pattern", F, Data)
+        {atom, _, Name} ->
+            eval_call_by_atom(Name, ArgList, Data);
+        {var, _, VarName} ->
+            eval_call_by_var(VarName, ArgList, Data);
+        {remote, _, {atom, _, Package}, {atom, _, FunName}} ->
+            eval_call_by_package(Package, FunName, ArgList, Data);
+        F ->
+            warning("couldn't call function pattern", F, Data)
     end.
 
 eval_call_by_atom(Name, ArgList, Data) ->
@@ -145,8 +140,9 @@ eval_call_by_atom(Name, ArgList, Data) ->
 %%% Dubbio: In questo caso bisogna ritornare i Data così come sono o bisogna impostare il last_vertex all'1?
 %%% TODO: Cosa fare con la lista degli argument?
 eval_recursive(_ArgList, Data) ->
+    % io:fwrite("[RECURSIVE] from vertex ~p~n", [Data#wip_lv.last_vertex]),
     digraph:add_edge(Data#wip_lv.graph, Data#wip_lv.last_vertex, 1, 'ɛ'),
-    Data.
+    Data#wip_lv{last_vertex = ?UNDEFINED}.
 
 eval_spawn(ArgList, Data) ->
     case ArgList of
@@ -170,7 +166,7 @@ eval_spawn_one(Content, Data) ->
     digraph:add_edge(G, VLast, VNew, "spawn " ++ S),
     % {VarArgL, _, _} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
     % db_manager:add_fun_arg(S, VarArgL#variable.value),
-    RetVar = #variable{type = ltoa("pid_" ++ S)},
+    RetVar = #variable{type = pid, value = S},
     Data#wip_lv{ret_var = RetVar, last_vertex = VNew}.
 
 eval_spawn_three(Name, _SpArgList, Data) ->
@@ -182,7 +178,7 @@ eval_spawn_three(Name, _SpArgList, Data) ->
     digraph:add_edge(G, VLast, VNew, "spawn " ++ S),
     % {VarArgL, _, _} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
     % db_manager:add_fun_arg(S, VarArgL#variable.value),
-    RetVar = #variable{type = ltoa("pid_" ++ S)},
+    RetVar = #variable{type = pid, value = S},
     Data#wip_lv{ret_var = RetVar, last_vertex = VNew}.
 
 inc_spawn_counter(Name) ->
@@ -196,7 +192,7 @@ inc_spawn_counter(Name) ->
     end.
 
 eval_self(Data) ->
-    RetVar = #variable{type = ltoa("pid_" ++ atol(Data#wip_lv.fun_name))},
+    RetVar = #variable{type = pid, value = atol(Data#wip_lv.fun_name)},
     Data#wip_lv{ret_var = RetVar}.
 
 eval_register(ArgList, Data) ->
@@ -206,11 +202,9 @@ eval_register(ArgList, Data) ->
         not_found ->
             ?UNDEFINED;
         V ->
-            IsPid = is_type_pid(V#variable.type),
-            Pid = get_pid_from_type(V#variable.type),
-            case IsPid of
+            case V#variable.type == pid of
                 false -> ?UNDEFINED;
-                true -> ets:insert(?REGISTERDB, {AtomName, Pid})
+                true -> ets:insert(?REGISTERDB, {AtomName, V#variable.value})
             end
     end,
     %%% Approx: ignoring returing value
@@ -287,7 +281,7 @@ eval_send(Destination, MessageContent, Data) ->
     LastV = NewData#wip_lv.last_vertex,
     case ProcName of
         ?UNDEFINED ->
-            NewData;
+            warning("Process not found", ProcName, NewData);
         _ ->
             DataSent = recordvar_to_string(NewData#wip_lv.ret_var),
             VNew = common_fun:add_vertex(G),
@@ -297,10 +291,8 @@ eval_send(Destination, MessageContent, Data) ->
     end.
 
 get_pid(Var) ->
-    ST = atol(Var#variable.type),
-    Cond = is_list(string:find(ST, "pid")),
-    case Cond of
-        true -> string:prefix(ST, "pid_");
+    case Var#variable.type == pid of
+        true -> Var#variable.value;
         false -> ?UNDEFINED
     end.
 
@@ -322,7 +314,7 @@ eval_atom(Val, Data) ->
     %%% check if is a registerd atom, return the pid
     case ets:lookup(?REGISTERDB, Val) of
         [] -> eval_simple_type(atom, Val, Data);
-        [{_, Pid}] -> eval_simple_type(Pid, ?ANYDATA, Data)
+        [{_, Pid}] -> eval_simple_type(pid, Pid, Data)
     end.
 
 eval_list(HeadList, TailList, Data) ->
@@ -402,16 +394,6 @@ find_var(Data, Name) ->
     LL = Data#wip_lv.local_vars,
     find_var(LL, Name).
 
-%%% If the input is a string with "pid" in it returns true, otherwise false.
-is_type_pid(Type) ->
-    SL = atol(Type),
-    IsPid = string:find(SL, "pid"),
-    is_list(IsPid).
-
-get_pid_from_type(Type) ->
-    SL = atol(Type),
-    string:prefix(SL, "pid_").
-
 %%% We have a main graph G1, a graph G2 and a G1's vertex.
 %%% We need to append G2 to the G1's vertex.
 %%% Firstly, we add to G1 as many vertex as G2's vertex number.
@@ -442,7 +424,7 @@ merge_graph(MainG, GToAdd, VLast) ->
     maps:get(lists:max(maps:keys(VEquiMap)), VEquiMap).
 
 eval_func(FuncName) ->
-    FunAst = get_fun_ast(FuncName),
+    FunAst = common_fun:get_fun_ast(FuncName),
     case FunAst of
         not_found -> no_graph;
         _ -> create_localview(FuncName)
@@ -456,7 +438,7 @@ eval_pm(PMList, Label, Data) ->
     VLastList = explore_pm(PMList, Label, Data),
     VRet = common_fun:add_vertex(G),
     add_edges_recursive(G, VLastList, VRet, 'ɛ', VLast),
-    Data#wip_lv{last_vertex = VRet}.
+    Data#wip_lv{graph = G, last_vertex = VRet}.
 
 %%% Explore every pm's branch and returns the list of last added vertex
 explore_pm(PMList, Base, Data) ->
@@ -480,8 +462,8 @@ explore_pm(PMList, Base, Data) ->
                             false ->
                                 V
                         end,
-                    VRet = eval_pm_clause(Content, Data#wip_lv{last_vertex = VL}),
-                    AddedVertexList ++ [VRet];
+                    VDataRet = eval_pm_clause(Content, Data#wip_lv{last_vertex = VL}),
+                    AddedVertexList ++ [VDataRet#wip_lv.last_vertex];
                 _ ->
                     AddedVertexList
             end
@@ -534,14 +516,16 @@ guards_to_s(GlobalToVal, BaseL) ->
 
 %%% Link each vertex of a vertex's list to a given vertex, with a defined label
 add_edges_recursive(G, VertexList, VertexToLink, Label, Except) ->
-    %%% Link every V in the VertexList to the VertexToLink, with a specified label
-    [
-        digraph:add_edge(G, V, VertexToLink, Label)
-     || V <- VertexList,
-        %%% exclude the start vertex
-        V =/= 1,
-        V =/= Except
-    ].
+    lists:foreach(
+        fun(V) ->
+            Cond = (V =/= Except) and (V =/= 1),
+            case Cond of
+                true -> digraph:add_edge(G, V, VertexToLink, Label);
+                false -> done
+            end
+        end,
+        VertexList
+    ).
 
 %%% Set vertices as a final state if they do not have out edges
 set_final(Graph) ->

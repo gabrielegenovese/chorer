@@ -11,6 +11,8 @@
     is_erlvar/1,
     is_uppercase/1,
     is_lowercase/1,
+    get_fun_ast/1,
+    get_localview/1,
     atol/1,
     ltoa/1
 ]).
@@ -66,6 +68,20 @@ is_lowercase(Char) when
     (is_list(Char)) and (length(Char) =:= 1)
 ->
     (Char >= "a") and (Char =< "z").
+
+get_fun_ast(FunName) ->
+    Ast = ets:lookup(?FUNAST, FunName),
+    case Ast of
+        [] -> not_found;
+        [{_, A}] -> A
+    end.
+
+get_localview(FunName) ->
+    Ast = ets:lookup(?LOCALVIEW, FunName),
+    case Ast of
+        [] -> not_found;
+        [{_, A}] -> A
+    end.
 
 %%%===================================================================
 %%% Internal Functions

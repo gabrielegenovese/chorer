@@ -9,10 +9,11 @@
 %%%===================================================================
 
 %%% Generate the glabal view from an entrypoint and save it in a specified folder
-generate(OutputDir, EntryPoint) ->
-    MainGraph = db_manager:get_fun_graph(EntryPoint),
+generate(Settings, EntryPoint) ->
+    OutputDir = Settings#setting.output_dir,
+    MainGraph =  common_fun:get_localview(EntryPoint),
     case MainGraph of
-        no_graph_found ->
+        not_found ->
             no_entry_point_found;
         _ ->
             G = create_globalview(EntryPoint),
@@ -346,9 +347,9 @@ manage_recv(ProcPid, Message) ->
 
 %%% Find the actor id from a variable's list, given the variable name
 check_vars(ProcName, ProcPid, VarName) ->
-    Name = remove_id_from_proc(ProcName),
+    % Name = remove_id_from_proc(ProcName),
     GlobalViewLocalVars = actor_emul:get_proc_localvars(ProcPid),
-    LocalViewLocalVars = db_manager:get_fun_local_vars(Name),
+    % LocalViewLocalVars = db_manager:get_fun_local_vars(Name),
     SpInfoP = find_spawn_info(ProcName),
     ArgsVars =
         case SpInfoP =:= [] of
@@ -359,7 +360,7 @@ check_vars(ProcName, ProcPid, VarName) ->
                     SpInfoP#spawned_proc.args_called, SpInfoP#spawned_proc.args_local
                 )
         end,
-    SeachList = ArgsVars ++ LocalViewLocalVars ++ GlobalViewLocalVars,
+    SeachList = ArgsVars ++ GlobalViewLocalVars, %++ LocalViewLocalVars,
     %io:fwrite("Find var ~p in ~p from ~p~n", [VarName, SeachList, ProcName]),
     VarValue = find_var(SeachList, VarName),
     case VarValue of

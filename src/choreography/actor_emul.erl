@@ -41,7 +41,7 @@ send_recv(P, Data) ->
 
 proc_loop(Data) ->
     ProcName = Data#actor_info.proc_id,
-    G = db_manager:get_fun_graph(ProcName),
+    G = common_fun:get_localview(ProcName),
     % timer:sleep(200),
     VCurr = Data#actor_info.current_state,
     FirstMarkedE = Data#actor_info.first_marked_edges,
@@ -58,7 +58,7 @@ proc_loop(Data) ->
                     NewL =
                         case ToLabel =< FromLabel of
                             true ->
-                                io:fwrite("[PROC LOOP] RESET LOCALV IN ~p~n", [ProcName]),
+                                % io:fwrite("[PROC LOOP] RESET LOCALV IN ~p~n", [ProcName]),
                                 sets:new();
                             false ->
                                 LocalVars
@@ -74,7 +74,7 @@ proc_loop(Data) ->
                     NewL =
                         case ToLabel =< FromLabel of
                             true ->
-                                io:fwrite("[PROC LOOP] RESET LOCALV IN ~p~n", [ProcName]),
+                                % io:fwrite("[PROC LOOP] RESET LOCALV IN ~p~n", [ProcName]),
                                 sets:new();
                             false ->
                                 LocalVars
