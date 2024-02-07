@@ -21,6 +21,7 @@ generate(InputFile, EntryPoint) -> generate(InputFile, EntryPoint, #setting{}).
     EntryPoint :: atom(),
     OutDir :: string().
 generate(InputFile, EntryPoint, OutDir) ->
+    io:fwrite("Analysing ~p, entrypoint: '~p'~n", [InputFile, EntryPoint]),
     init_db(),
     Settings = #setting{output_dir = OutDir},
     md:extract(InputFile),
@@ -32,6 +33,7 @@ generate(InputFile, EntryPoint, OutDir) ->
 %%%===================================================================
 
 init_db() ->
+    ets:new(?CLINE, [set, named_table]),
     ets:new(?DBMANAGER, [set, named_table]),
     ets:new(?FUNAST, [set, named_table]),
     ets:new(?LOCALVIEW, [set, named_table]),

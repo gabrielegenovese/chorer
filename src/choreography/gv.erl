@@ -382,9 +382,10 @@ remove_pid_part(Data) ->
     ltoa(lists:flatten(string:replace(atol(Data), "pid_", ""))).
 
 %%% Get the spawn info given an actor id
-find_spawn_info(PId) ->
-    SpInfoAll = db_manager:get_spawn_info(),
-    common_fun:first(lists:filter(fun(S) -> S#spawned_proc.name =:= PId end, SpInfoAll)).
+find_spawn_info(_PId) ->
+    % SpInfoAll = db_manager:get_spawn_info(),
+    % common_fun:first(lists:filter(fun(S) -> S#spawned_proc.name =:= PId end, SpInfoAll)),
+    [].
 
 %%% Convert a list AST in a variable's list
 convertL_in_variable(A, B) ->

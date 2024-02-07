@@ -68,7 +68,9 @@ add_args_to_graph(Gr, Vars, Guard, VStart, SetPm) ->
     end.
 
 eval_codeline(CodeLine, Data) ->
-    % io:fwrite("evaluating ~p on line ~p~n", [element(1, CodeLine), element(2, CodeLine)]),
+    Line = element(2, CodeLine),
+    ets:insert(?CLINE, {line, Line}),
+    % io:fwrite("evaluating ~p on line ~p~n", [element(1, CodeLine), Line),
     case CodeLine of
         {clause, _, _Vars, _Guard, Content} -> eval_pm_clause(Content, Data);
         {match, _, RightContent, LeftContent} -> eval_match(RightContent, LeftContent, Data);
@@ -91,7 +93,8 @@ eval_codeline(CodeLine, Data) ->
     end.
 
 warning(String, Content, Data) ->
-    io:fwrite("WARNING: " ++ String ++ " ~p~n", [Content]),
+    [{_, Line}] = ets:lookup(?CLINE, line),
+    io:fwrite("WARNING on line ~p: " ++ String ++ " ~p~n", [Line, Content]),
     Data.
 
 eval_pm_clause(Code, Data) ->
@@ -279,21 +282,16 @@ eval_send(Destination, MessageContent, Data) ->
     ProcName = get_pid(TempData#wip_lv.ret_var),
     NewData = eval_codeline(MessageContent, TempData),
     LastV = NewData#wip_lv.last_vertex,
-    case ProcName of
-        ?UNDEFINED ->
-            warning("Process not found", ProcName, NewData);
-        _ ->
-            DataSent = recordvar_to_string(NewData#wip_lv.ret_var),
-            VNew = common_fun:add_vertex(G),
-            SLabel = "send " ++ DataSent ++ " to " ++ ProcName,
-            digraph:add_edge(G, LastV, VNew, SLabel),
-            NewData#wip_lv{last_vertex = VNew}
-    end.
+    DataSent = recordvar_to_string(NewData#wip_lv.ret_var),
+    VNew = common_fun:add_vertex(G),
+    SLabel = "send " ++ DataSent ++ " to " ++ ProcName,
+    digraph:add_edge(G, LastV, VNew, SLabel),
+    NewData#wip_lv{last_vertex = VNew}.
 
 get_pid(Var) ->
     case Var#variable.type == pid of
         true -> Var#variable.value;
-        false -> ?UNDEFINED
+        false -> atol(Var#variable.name)
     end.
 
 eval_anon_fun(Content, N, Data) ->
@@ -333,7 +331,7 @@ eval_tuple(Val, Data) ->
     {NewVal, NewData} = lists:foldl(
         fun(I, {A, D}) ->
             ND = eval_codeline(I, D),
-            A ++ [ND#wip_lv.ret_var]
+            {A ++ [ND#wip_lv.ret_var], ND}
         end,
         {[], Data},
         Val
