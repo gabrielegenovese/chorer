@@ -5,6 +5,6 @@ digraph agent {
 	n_0 -> n_1 [arrowhead=none];
 	n_2 [id="3", shape=circle, label="2"];
 
-	n_2 -> n_1 [id="[$e|3]", label="receive {booked,_}"];
 	n_1 -> n_2 [id="[$e|1]", label="send {sell,pid} to Pid2"];
+	n_2 -> n_1 [id="[$e|3]", label="receive {booked,_}"];
 }

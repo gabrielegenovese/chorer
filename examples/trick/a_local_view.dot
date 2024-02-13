@@ -6,6 +6,6 @@ digraph a {
 	n_2 [id="2", shape=circle, label="2"];
 	n_3 [id="3", shape=doublecircle, label="3"];
 
-	n_2 -> n_3 [id="[$e|1]", label="send v2 to b_0"];
 	n_1 -> n_2 [id="[$e|0]", label="send v1 to c_0"];
+	n_2 -> n_3 [id="[$e|1]", label="send v2 to b_0"];
 }

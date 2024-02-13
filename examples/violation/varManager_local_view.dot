@@ -5,7 +5,7 @@ digraph varManager {
 	n_0 -> n_1 [arrowhead=none];
 	n_2 [id="3", shape=circle, label="2"];
 
-	n_1 -> n_2 [id="[$e|5]", label="receive {read,Pid}"];
-	n_1 -> n_1 [id="[$e|8]", label="receive {write,NewVal}"];
 	n_2 -> n_1 [id="[$e|7]", label="send any to Pid"];
+	n_1 -> n_1 [id="[$e|8]", label="receive {write,NewVal}"];
+	n_1 -> n_2 [id="[$e|5]", label="receive {read,Pid}"];
 }

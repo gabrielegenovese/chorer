@@ -4,13 +4,14 @@
 main() ->
     spawn(?MODULE, agent, [self()]),
     spawn(?MODULE, agent, [self()]),
-    seats(3).
+    seats(self(), 3).
 
-seats(Num) ->
+seats(Pid, Num) ->
+    Pid ! 2,
     receive
         {sell, Pid1} ->
             Pid1 ! {booked, Num},
-            seats(Num - 1)
+            seats(Pid, Num - 1)
     end.
 
 agent(Pid2) ->

@@ -26,27 +26,29 @@ create_save_localview(ActorName, Settings) ->
             io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]);
         _ ->
             % io:fwrite("[LV] ~p~n", [ActorName]),
-            LocalViewData = check_and_get_lv(ActorName, ActorAst, Settings),
+            LocalViewData = check_and_get_lv(ActorName, ActorAst, [], Settings),
             G = LocalViewData#wip_lv.graph,
             set_final(G),
             MinGraph = fsa:minimize(G),
-            ets:insert(?LOCALVIEW, {ActorName, MinGraph}),
+            ets:insert(?LOCALVIEW, {ActorName, LocalViewData}),
             OutputDir = Settings#setting.output_dir,
             common_fun:save_graph_to_file(MinGraph, OutputDir, atol(ActorName), local)
     end.
 
-create_localview(FunName) ->
+create_localview(FunName, LocalVars) ->
     ActorAst = common_fun:get_fun_ast(FunName),
     case ActorAst of
         not_found -> io:fwrite("Error: Function ~p's AST not found~n", [FunName]);
-        _ -> check_and_get_lv(FunName, ActorAst, #setting{})
+        _ -> check_and_get_lv(FunName, ActorAst, LocalVars, #setting{})
     end.
 
-check_and_get_lv(ActorName, Ast, Settings) ->
-    LV = common_fun:get_localview(ActorName),
+check_and_get_lv(ActorName, Ast, LovalVars, Settings) ->
+    LV = common_fun:get_graph(ActorName),
     case LV of
         not_found ->
-            BaseData = #wip_lv{fun_name = ActorName, fun_ast = Ast, settings = Settings},
+            BaseData = #wip_lv{
+                fun_name = ActorName, fun_ast = Ast, settings = Settings, input_vars = LovalVars
+            },
             common_fun:add_vertex(BaseData#wip_lv.graph),
             build_localview(BaseData);
         L ->
@@ -54,25 +56,30 @@ check_and_get_lv(ActorName, Ast, Settings) ->
     end.
 
 build_localview(Data) ->
-    eval_pm_clause(Data#wip_lv.fun_ast, Data).
+    eval_pm_clause(Data#wip_lv.fun_ast, [], Data).
 
-add_args_to_graph(Gr, Vars, Guard, VStart, SetPm) ->
-    case SetPm of
-        true ->
-            VN = common_fun:add_vertex(Gr),
-            EdLabel = format_label_pm_edge(SetPm, Vars, Guard, "arg "),
-            digraph:add_edge(Gr, VStart, VN, EdLabel),
-            VN;
-        false ->
-            VStart
-    end.
+% add_args_to_graph(Gr, Vars, Guard, VStart, SetPm) ->
+%     case SetPm of
+%         true ->
+%             VN = common_fun:add_vertex(Gr),
+%             EdLabel = format_label_pm_edge(SetPm, Vars, Guard, "arg "),
+%             digraph:add_edge(Gr, VStart, VN, EdLabel),
+%             VN;
+%         false ->
+%             VStart
+%     end.
 
 eval_codeline(CodeLine, Data) ->
-    Line = element(2, CodeLine),
-    ets:insert(?CLINE, {line, Line}),
-    % io:fwrite("evaluating ~p on line ~p~n", [element(1, CodeLine), Line),
+    if
+        is_tuple(CodeLine) ->
+            Line = element(2, CodeLine),
+            % io:fwrite("evaluating ~p on line ~p~n", [element(1, CodeLine), Line]),
+            ets:insert(?CLINE, {line, Line});
+        true ->
+            done
+    end,
     case CodeLine of
-        {clause, _, _Vars, _Guard, Content} -> eval_pm_clause(Content, Data);
+        {clause, _, Vars, _Guard, Content} -> eval_pm_clause(Content, Vars, Data);
         {match, _, RightContent, LeftContent} -> eval_match(RightContent, LeftContent, Data);
         {call, _, Function, ArgList} -> eval_call(Function, ArgList, Data);
         {'case', _, Content, PMList} -> eval_case(Content, PMList, Data);
@@ -89,6 +96,8 @@ eval_codeline(CodeLine, Data) ->
         {map, _, Val} -> eval_map(Val, Data);
         {tuple, _, Val} -> eval_tuple(Val, Data);
         {var, _, VarName} -> eval_variable(VarName, Data);
+        [] -> eval_simple_type(list, [], Data);
+        [H | T] -> eval_list(H, T, Data);
         _ -> warning("couldn't parse code line", CodeLine, Data)
     end.
 
@@ -97,11 +106,29 @@ warning(String, Content, Data) ->
     io:fwrite("WARNING on line ~p: " ++ String ++ " ~p~n", [Line, Content]),
     Data.
 
-eval_pm_clause(Code, Data) ->
-    % db_manager:add_fun_local_vars(FunName, LocalVars),
+eval_pm_clause(Code, Vars, Data) ->
+    LocalV = Data#wip_lv.local_vars,
+    ND =
+        case Vars =:= [] of
+            true ->
+                Data;
+            false ->
+                Input = Data#wip_lv.input_vars,
+                {LL, _} = lists:foldl(
+                    fun({var, _, Name}, {A, In}) ->
+                        case In of
+                            [] -> {A ++ [#variable{name = Name}], []};
+                            [H | T] -> {A ++ [H#variable{name = Name}], T}
+                        end
+                    end,
+                    {[], Input},
+                    Vars
+                ),
+                Data#wip_lv{local_vars = LocalV ++ LL}
+        end,
     lists:foldl(
         fun(Line, AccData) -> eval_codeline(Line, AccData) end,
-        Data,
+        ND,
         Code
     ).
 
@@ -137,7 +164,7 @@ eval_call_by_atom(Name, ArgList, Data) ->
         spawn -> eval_spawn(ArgList, Data);
         self -> eval_self(Data);
         register -> eval_register(ArgList, Data);
-        Name -> eval_generic_call(Name, Data)
+        Name -> eval_generic_call(ArgList, Name, Data)
     end.
 
 %%% Dubbio: In questo caso bisogna ritornare i Data così come sono o bisogna impostare il last_vertex all'1?
@@ -167,22 +194,22 @@ eval_spawn_one(Content, Data) ->
     S = Id ++ "_" ++ integer_to_list(C),
     VNew = common_fun:add_vertex(G),
     digraph:add_edge(G, VLast, VNew, "spawn " ++ S),
-    % {VarArgL, _, _} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
-    % db_manager:add_fun_arg(S, VarArgL#variable.value),
     RetVar = #variable{type = pid, value = S},
     Data#wip_lv{ret_var = RetVar, last_vertex = VNew}.
 
-eval_spawn_three(Name, _SpArgList, Data) ->
+eval_spawn_three(Name, ArgList, Data) ->
     G = Data#wip_lv.graph,
     VLast = Data#wip_lv.last_vertex,
     C = inc_spawn_counter(Name),
     S = atol(Name) ++ "_" ++ integer_to_list(C),
     VNew = common_fun:add_vertex(G),
-    digraph:add_edge(G, VLast, VNew, "spawn " ++ S),
-    % {VarArgL, _, _} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
-    % db_manager:add_fun_arg(S, VarArgL#variable.value),
+    E = digraph:add_edge(G, VLast, VNew, "spawn " ++ S),
+    NewData = eval_codeline(ArgList, Data),
+    EM = NewData#wip_lv.edge_map,
+    io:fwrite("sucone ~p ~p~n", [E, NewData#wip_lv.ret_var]),
+    ND = NewData#wip_lv{edge_map = maps:put(E, NewData#wip_lv.ret_var, EM)},
     RetVar = #variable{type = pid, value = S},
-    Data#wip_lv{ret_var = RetVar, last_vertex = VNew}.
+    ND#wip_lv{ret_var = RetVar, last_vertex = VNew}.
 
 inc_spawn_counter(Name) ->
     case ets:lookup(?SPAWNC, ltoa(Name)) of
@@ -213,11 +240,11 @@ eval_register(ArgList, Data) ->
     %%% Approx: ignoring returing value
     Data.
 
-eval_generic_call(Name, Data) ->
-    % {V, _, NewL} = eval_codeline(ArgList, FunName, G, AccData, SetPm),
-    % NewData = eval_codeline(ArgList, Data),
-    % io:fwrite("[LOCAL] V ~p NewL ~p Name ~p~n", [V, NewL, FunName]),
-    case eval_func(Name) of
+eval_generic_call(ArgList, Name, Data) ->
+    % io:fwrite("ARG LIST ~p~n", [ArgList]),
+    NewData = eval_codeline(ArgList, Data),
+    % io:fwrite("RET VAR ~p~n", [NewData#wip_lv.ret_var#variable.value]),
+    case eval_func(Name, NewData#wip_lv.ret_var#variable.value) of
         no_graph ->
             Data;
         NewD ->
@@ -230,7 +257,7 @@ eval_generic_call(Name, Data) ->
     end.
 
 %%% TODO: eval argument list
-eval_call_by_var(VarName, _ArgList, Data) ->
+eval_call_by_var(VarName, ArgList, Data) ->
     G = Data#wip_lv.graph,
     VLast = Data#wip_lv.last_vertex,
     LocalVarL = Data#wip_lv.local_vars,
@@ -240,7 +267,8 @@ eval_call_by_var(VarName, _ArgList, Data) ->
             warning("variable not found in eval_call_by_var with name", VarName, Data);
         _ ->
             Id = VarFound#variable.value,
-            NewData = create_localview(ltoa(Id)),
+            ND = eval_codeline(ArgList, Data),
+            NewData = create_localview(ltoa(Id), ND#wip_lv.ret_var#variable.value),
             NewG = NewData#wip_lv.graph,
             NewRet = NewData#wip_lv.ret_var,
             NewLastV = merge_graph(G, NewG, VLast),
@@ -421,11 +449,11 @@ merge_graph(MainG, GToAdd, VLast) ->
     % return last added vertex, which is the max number in the key list
     maps:get(lists:max(maps:keys(VEquiMap)), VEquiMap).
 
-eval_func(FuncName) ->
+eval_func(FuncName, LV) ->
     FunAst = common_fun:get_fun_ast(FuncName),
     case FunAst of
         not_found -> no_graph;
-        _ -> create_localview(FuncName)
+        _ -> create_localview(FuncName, LV)
     end.
 
 %%% Evaluate Pattern Matching's list of clauses: evaluate every branch alone, then
@@ -460,7 +488,7 @@ explore_pm(PMList, Base, Data) ->
                             false ->
                                 V
                         end,
-                    VDataRet = eval_pm_clause(Content, Data#wip_lv{last_vertex = VL}),
+                    VDataRet = eval_pm_clause(Content, [], Data#wip_lv{last_vertex = VL}),
                     AddedVertexList ++ [VDataRet#wip_lv.last_vertex];
                 _ ->
                     AddedVertexList

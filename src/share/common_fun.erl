@@ -13,6 +13,8 @@
     is_lowercase/1,
     get_fun_ast/1,
     get_localview/1,
+    get_graph/1,
+    get_edgedata/1,
     atol/1,
     ltoa/1
 ]).
@@ -81,6 +83,20 @@ get_localview(FunName) ->
     case Ast of
         [] -> not_found;
         [{_, A}] -> A
+    end.
+
+get_graph(FunName) ->
+    Ast = ets:lookup(?LOCALVIEW, FunName),
+    case Ast of
+        [] -> not_found;
+        [{_, A}] -> A#wip_lv.graph
+    end.
+
+get_edgedata(FunName) ->
+    Ast = ets:lookup(?LOCALVIEW, FunName),
+    case Ast of
+        [] -> not_found;
+        [{_, A}] -> A#wip_lv.edge_map
     end.
 
 %%%===================================================================

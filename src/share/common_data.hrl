@@ -42,6 +42,8 @@
     local_vars = [],
     ret_var = #variable{},
     node_map = #{},
+    edge_map = #{},
+    input_vars = [],
     settings = #setting{}
 }).
 
@@ -79,6 +81,7 @@
     current_state = 1,
     first_marked_edges = [],
     second_marked_edges = [],
+    spawn_vars = sets:new(),
     local_vars = sets:new(),
     message_queue = []
 }).

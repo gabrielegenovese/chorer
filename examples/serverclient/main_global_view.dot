@@ -1,15 +1,15 @@
 digraph global {
 	rankdir="LR";
 	n_0 [label="global", shape="plaintext"];
-	n_1 [id="5", shape=circle, label="4"];
+	n_1 [id="5", shape=circle, label="5"];
 	n_2 [id="1", shape=circle, label="1"];
 	n_0 -> n_2 [arrowhead=none];
 	n_3 [id="2", shape=circle, label="2"];
-	n_4 [id="4", shape=circle, label="5"];
+	n_4 [id="4", shape=circle, label="4"];
 	n_5 [id="3", shape=circle, label="3"];
 
-	n_1 -> n_4 [id="[$e|2]", label="server_0Δhandle_req_0"];
-	n_2 -> n_3 [id="[$e|0]", label="mainΔserver_0"];
+	n_4 -> n_1 [id="[$e|3]", label="server_0Δhandle_req_0"];
 	n_3 -> n_5 [id="[$e|1]", label="mainΔclient_0"];
-	n_5 -> n_1 [id="[$e|3]", label="client_0→server_0:{req,pid}"];
+	n_2 -> n_3 [id="[$e|0]", label="mainΔserver_0"];
+	n_5 -> n_4 [id="[$e|2]", label="client_0→server_0:{req,pid}"];
 }

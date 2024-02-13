@@ -7,7 +7,7 @@ digraph main {
 	n_3 [id="4", shape=doublecircle, label="4"];
 	n_4 [id="3", shape=circle, label="3"];
 
-	n_1 -> n_2 [id="[$e|1]", label="spawn a_0"];
-	n_4 -> n_3 [id="[$e|0]", label="spawn c_0"];
 	n_2 -> n_4 [id="[$e|2]", label="spawn b_0"];
+	n_4 -> n_3 [id="[$e|0]", label="spawn c_0"];
+	n_1 -> n_2 [id="[$e|1]", label="spawn a_0"];
 }

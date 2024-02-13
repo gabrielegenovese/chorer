@@ -11,7 +11,7 @@
 %%% Generate the glabal view from an entrypoint and save it in a specified folder
 generate(Settings, EntryPoint) ->
     OutputDir = Settings#setting.output_dir,
-    MainGraph =  common_fun:get_localview(EntryPoint),
+    MainGraph = common_fun:get_localview(EntryPoint),
     case MainGraph of
         not_found ->
             no_entry_point_found;
@@ -40,7 +40,6 @@ create_globalview(Name) ->
     % initialize first branch
     progress_procs(RetG, [new_branch(RetG, VNew, ProcPidMap)]).
 
-%%% Create a new branch object
 new_branch(G, V, P) ->
     #branch{
         graph = G,
@@ -48,7 +47,6 @@ new_branch(G, V, P) ->
         proc_pid_m = P
     }.
 
-%%% Create a new message object
 new_message(F, D, E) ->
     #message{
         from = F, data = D, edge = E
@@ -239,7 +237,7 @@ is_lists_edgerecv(ProcPid, EL) ->
 %%% Evaluate a transition from an actor
 eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     {Edge, _, _, PLabel} = EdgeInfo,
-    %io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
+    io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
     SLabel = atol(PLabel),
     IsArg = is_substring(SLabel, "arg"),
     IsSpawn = is_substring(SLabel, "spawn"),
@@ -249,7 +247,7 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             actor_emul:use_proc_transition(ProcPid, Edge),
             {BData, true};
         IsSpawn ->
-            {VNew, NewM} = add_spawn_to_global(SLabel, ProcName, BData),
+            {VNew, NewM} = add_spawn_to_global(Edge, SLabel, ProcName, BData),
             NewBData = BData#branch{last_vertex = VNew, proc_pid_m = NewM},
             actor_emul:use_proc_transition(ProcPid, Edge),
             {NewBData, true};
@@ -262,11 +260,32 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
 is_substring(S, SubS) -> is_list(string:find(S, SubS)).
 
 %%% Add a spanw transition to the global view
-add_spawn_to_global(SLabel, ProcName, Data) ->
+add_spawn_to_global(Edge, SLabel, ProcName, Data) ->
+    % get proc name
     ProcId = string:prefix(SLabel, "spawn "),
     FuncName = remove_last(remove_last(ProcId)),
+    % spawn the actor emulator
     FuncPid = spawn(actor_emul, proc_loop, [#actor_info{proc_id = ltoa(FuncName)}]),
     NewMap = maps:put(ltoa(ProcId), FuncPid, Data#branch.proc_pid_m),
+    LV = common_fun:get_localview(ProcName),
+    EM = common_fun:get_edgedata(ProcName),
+    % add input data to local vars
+    InputData = maps:get(Edge, EM),
+    Input = LV#wip_lv.input_vars,
+    io:fwrite("~p ~p~n", [Input, InputData]),
+    {LL, _} = lists:foldl(
+        fun({var, _, Name}, {A, In}) ->
+            case In of
+                [] -> {A ++ [#variable{name = Name}], []};
+                [H | T] -> {A ++ [H#variable{name = Name}], T}
+            end
+        end,
+        {[], Input},
+        InputData#variable.value
+    ),
+
+    lists:foreach(fun(I) -> actor_emul:add_proc_spawnvars(FuncPid, I) end, LL),
+    % create the edge on the global graph
     VNew = common_fun:add_vertex(Data#branch.graph),
     %%% Δ means spawned
     NewLabel = atol(ProcName) ++ "Δ" ++ ProcId,
@@ -360,7 +379,8 @@ check_vars(ProcName, ProcPid, VarName) ->
                     SpInfoP#spawned_proc.args_called, SpInfoP#spawned_proc.args_local
                 )
         end,
-    SeachList = ArgsVars ++ GlobalViewLocalVars, %++ LocalViewLocalVars,
+    %++ LocalViewLocalVars,
+    SeachList = ArgsVars ++ GlobalViewLocalVars,
     %io:fwrite("Find var ~p in ~p from ~p~n", [VarName, SeachList, ProcName]),
     VarValue = find_var(SeachList, VarName),
     case VarValue of
@@ -382,7 +402,9 @@ remove_pid_part(Data) ->
     ltoa(lists:flatten(string:replace(atol(Data), "pid_", ""))).
 
 %%% Get the spawn info given an actor id
-find_spawn_info(_PId) ->
+find_spawn_info(PId) ->
+    common_fun:get_edgedata(PId),
+
     % SpInfoAll = db_manager:get_spawn_info(),
     % common_fun:first(lists:filter(fun(S) -> S#spawned_proc.name =:= PId end, SpInfoAll)),
     [].

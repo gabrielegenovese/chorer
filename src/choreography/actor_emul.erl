@@ -9,6 +9,7 @@
     get_proc_out_degree/1,
     get_proc_edge_info/2,
     get_proc_localvars/1,
+    add_proc_spawnvars/2,
     add_proc_localvars/2,
     get_proc_data/1,
     set_proc_data/2,
@@ -26,6 +27,7 @@ get_proc_edges(P) -> send_recv(P, {self(), get_edges}).
 get_proc_out_degree(P) -> send_recv(P, {self(), get_out_degree}).
 get_proc_edge_info(P, E) -> send_recv(P, {self(), get_edge_info, E}).
 get_proc_localvars(P) -> send_recv(P, {self(), get_local_vars}).
+add_proc_spawnvars(P, V) -> P ! {add_spawn_var, V}.
 add_proc_localvars(P, V) -> P ! {add_local_var, V}.
 get_proc_data(P) -> send_recv(P, {self(), get_data}).
 set_proc_data(P, Data) -> P ! {set_data, Data}.
@@ -41,13 +43,15 @@ send_recv(P, Data) ->
 
 proc_loop(Data) ->
     ProcName = Data#actor_info.proc_id,
-    G = common_fun:get_localview(ProcName),
+    LV = common_fun:get_localview(ProcName),
+    G = LV#wip_lv.graph,
     % timer:sleep(200),
     VCurr = Data#actor_info.current_state,
     FirstMarkedE = Data#actor_info.first_marked_edges,
     SecondMarkedE = Data#actor_info.second_marked_edges,
     MessageQueue = Data#actor_info.message_queue,
-    LocalVars = Data#actor_info.local_vars,
+    SpawnVars = Data#actor_info.spawn_vars,
+    LocalVars = sets:union(Data#actor_info.local_vars, SpawnVars),
     receive
         {use_transition, E} ->
             IsAlreadyMarkedOnce = lists:member(E, FirstMarkedE),
@@ -107,6 +111,8 @@ proc_loop(Data) ->
         {P, get_local_vars} ->
             P ! {sets:to_list(LocalVars)},
             proc_loop(Data);
+        {add_spawn_var, V} ->
+            proc_loop(Data#actor_info{spawn_vars = sets:add_element(V, SpawnVars)});
         {add_local_var, V} ->
             proc_loop(Data#actor_info{local_vars = sets:add_element(V, LocalVars)});
         {P, get_mess_queue} ->
