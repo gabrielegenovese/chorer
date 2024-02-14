@@ -25,7 +25,7 @@ create_save_localview(ActorName, Settings) ->
         not_found ->
             io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]);
         _ ->
-            % io:fwrite("[LV] ~p~n", [ActorName]),
+            % io:fwrite("[LV] Creating a localview for ~p~n", [ActorName]),
             LocalViewData = check_and_get_lv(ActorName, ActorAst, [], Settings),
             G = LocalViewData#wip_lv.graph,
             set_final(G),
@@ -73,7 +73,7 @@ eval_codeline(CodeLine, Data) ->
     if
         is_tuple(CodeLine) ->
             Line = element(2, CodeLine),
-            % io:fwrite("evaluating ~p on line ~p~n", [element(1, CodeLine), Line]),
+            % io:fwrite("Evaluating ~p on line ~p~n", [element(1, CodeLine), Line]),
             ets:insert(?CLINE, {line, Line});
         true ->
             done
@@ -110,11 +110,10 @@ eval_pm_clause(Code, Vars, Data) ->
     LocalV = Data#wip_lv.local_vars,
     FunName = ltoa(Data#wip_lv.fun_name),
     Exist = ets:lookup(?ARGUMENTS, FunName),
-    % io:fwrite("Per ~p salvo ~p esiste ~p~n", [FunName, Vars, Exist]),
+    % io:fwrite("Per ~ps salvo ~p esiste ~p~n", [FunName, Vars, Exist]),
     case Exist of
         [] -> ets:insert(?ARGUMENTS, {FunName, Vars});
         [{_, []}] -> ets:insert(?ARGUMENTS, {FunName, Vars});
-        %io:fwrite("Esiste già~n")
         [{_, [_]}] -> done
     end,
     ND =
@@ -143,27 +142,56 @@ eval_pm_clause(Code, Vars, Data) ->
 
 eval_match(RightContent, LeftContent, Data) ->
     case RightContent of
-        {var, _, VarName} ->
-            NewData = eval_codeline(LeftContent, Data),
-            Var = NewData#wip_lv.ret_var,
-            L = NewData#wip_lv.local_vars,
-            NewVarEntry = Var#variable{name = VarName},
-            NewData#wip_lv{ret_var = NewVarEntry, local_vars = L ++ [NewVarEntry]};
-        %%% TODO: eval pattern matching
-        R ->
-            warning("couldn't understand line", R, Data)
+        {var, _, VarName} -> eval_match_with_var(VarName, LeftContent, Data);
+        {tuple, _, VarList} -> eval_match_with_tuple(VarList, LeftContent, Data);
+        {cons, _, List} -> eval_match_with_list(List, Data);
+        R -> warning("[MATCH] couldn't understand line", R, Data)
     end.
+
+eval_match_with_var(VarName, LeftContent, Data) ->
+    NewData = eval_codeline(LeftContent, Data),
+    Var = NewData#wip_lv.ret_var,
+    L = NewData#wip_lv.local_vars,
+    NewVarEntry = Var#variable{name = VarName},
+    NewData#wip_lv{ret_var = NewVarEntry, local_vars = L ++ [NewVarEntry]}.
+
+eval_match_with_tuple(VarList, LeftContent, Data) ->
+    NewData = eval_codeline(LeftContent, Data),
+    Var = NewData#wip_lv.ret_var,
+    % not sure to use newdata
+    L = NewData#wip_lv.local_vars,
+    case Var#variable.type of
+        tuple ->
+            {TupleListWithNames, _} =
+                lists:foldl(
+                    fun(Item, {AccL, [H | T]}) ->
+                        {var, _, VarName} = H,
+                        {AccL ++ [Item#variable{name = VarName}], T}
+                    end,
+                    {L, VarList},
+                    Var#variable.value
+                ),
+            NewData#wip_lv{
+                ret_var = #variable{type = tuple, value = TupleListWithNames},
+                local_vars = L ++ TupleListWithNames
+            };
+        _ ->
+            RetVar = lists:foldl(fun(I, A) -> A ++ [#variable{name = I}] end, [], VarList),
+            ND = NewData#wip_lv{
+                ret_var = #variable{type = tuple, value = RetVar},
+                local_vars = L ++ RetVar
+            },
+            warning("right content is a tuple but left content is", Var, ND)
+    end.
+
+eval_match_with_list(List, Data) -> warning("[MATCH] working in progress", List, Data).
 
 eval_call(Function, ArgList, Data) ->
     case Function of
-        {atom, _, Name} ->
-            eval_call_by_atom(Name, ArgList, Data);
-        {var, _, VarName} ->
-            eval_call_by_var(VarName, ArgList, Data);
-        {remote, _, {atom, _, Package}, {atom, _, FunName}} ->
-            eval_call_by_package(Package, FunName, ArgList, Data);
-        F ->
-            warning("couldn't call function pattern", F, Data)
+        {atom, _, Name} -> eval_call_by_atom(Name, ArgList, Data);
+        {var, _, VarName} -> eval_call_by_var(VarName, ArgList, Data);
+        {remote, _, Package, FunName} -> eval_call_by_package(Package, FunName, ArgList, Data);
+        F -> warning("couldn't call function pattern", F, Data)
     end.
 
 eval_call_by_atom(Name, ArgList, Data) ->
@@ -171,9 +199,10 @@ eval_call_by_atom(Name, ArgList, Data) ->
     case Name of
         FunName -> eval_recursive(ArgList, Data);
         spawn -> eval_spawn(ArgList, Data);
+        spawn_monitor -> eval_spawn_monitor(ArgList, Data);
         self -> eval_self(Data);
         register -> eval_register(ArgList, Data);
-        Name -> eval_generic_call(ArgList, Name, Data)
+        _ -> eval_generic_call(Name, ArgList, Data)
     end.
 
 %%% Dubbio: In questo caso bisogna ritornare i Data così come sono o bisogna impostare il last_vertex all'1?
@@ -220,6 +249,8 @@ eval_spawn_three(Name, ArgList, Data) ->
     RetVar = #variable{type = pid, value = S},
     ND#wip_lv{ret_var = RetVar, last_vertex = VNew}.
 
+eval_spawn_monitor(ArgList, Data) -> warning("spawn_monitor not yet implemted. Arguments =", ArgList, Data).
+
 inc_spawn_counter(Name) ->
     case ets:lookup(?SPAWNC, ltoa(Name)) of
         [] ->
@@ -249,13 +280,13 @@ eval_register(ArgList, Data) ->
     %%% Approx: ignoring returing value
     Data.
 
-eval_generic_call(ArgList, Name, Data) ->
+eval_generic_call(Name, ArgList, Data) ->
     % io:fwrite("ARG LIST ~p~n", [ArgList]),
     NewData = eval_codeline(ArgList, Data),
     % io:fwrite("RET VAR ~p~n", [NewData#wip_lv.ret_var#variable.value]),
     case eval_func(Name, NewData#wip_lv.ret_var#variable.value) of
         no_graph ->
-            Data;
+            warning("couldn't parse function", Name, Data#wip_lv{ret_var = #variable{}});
         NewD ->
             G = Data#wip_lv.graph,
             LastV = Data#wip_lv.last_vertex,
@@ -285,10 +316,12 @@ eval_call_by_var(VarName, ArgList, Data) ->
     end.
 
 eval_call_by_package(Package, FunName, _ArgList, Data) ->
-    case Package of
-        rand -> eval_rand_package(FunName, Data);
+    {atom, _, Pack} = Package,
+    {atom, _, Name} = FunName,
+    case Pack of
+        rand -> eval_rand_package(Name, Data);
         %%% TODO: find the package and the function, create the local view of it, attach it to the current lv
-        _ -> warning("package not yet implemented:", Package, Data)
+        _ -> warning("package not yet implemented:", Pack, Data)
     end.
 
 eval_rand_package(FunName, Data) ->
