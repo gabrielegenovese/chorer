@@ -30,7 +30,7 @@ create_save_localview(ActorName, Settings) ->
             G = LocalViewData#wip_lv.graph,
             set_final(G),
             MinGraph = fsa:minimize(G),
-            ets:insert(?LOCALVIEW, {ActorName, LocalViewData}),
+            ets:insert(?LOCALVIEW, {ActorName, LocalViewData#wip_lv{graph = MinGraph}}),
             OutputDir = Settings#setting.output_dir,
             common_fun:save_graph_to_file(MinGraph, OutputDir, atol(ActorName), local)
     end.
@@ -103,11 +103,20 @@ eval_codeline(CodeLine, Data) ->
 
 warning(String, Content, Data) ->
     [{_, Line}] = ets:lookup(?CLINE, line),
-    io:fwrite("WARNING on line ~p: " ++ String ++ " ~p~n", [Line, Content]),
+    io:fwrite("[LV] WARNING on line ~p: " ++ String ++ " ~p~n", [Line, Content]),
     Data.
 
 eval_pm_clause(Code, Vars, Data) ->
     LocalV = Data#wip_lv.local_vars,
+    FunName = ltoa(Data#wip_lv.fun_name),
+    Exist = ets:lookup(?ARGUMENTS, FunName),
+    % io:fwrite("Per ~p salvo ~p esiste ~p~n", [FunName, Vars, Exist]),
+    case Exist of
+        [] -> ets:insert(?ARGUMENTS, {FunName, Vars});
+        [{_, []}] -> ets:insert(?ARGUMENTS, {FunName, Vars});
+        %io:fwrite("Esiste già~n")
+        [{_, [_]}] -> done
+    end,
     ND =
         case Vars =:= [] of
             true ->
@@ -203,11 +212,11 @@ eval_spawn_three(Name, ArgList, Data) ->
     C = inc_spawn_counter(Name),
     S = atol(Name) ++ "_" ++ integer_to_list(C),
     VNew = common_fun:add_vertex(G),
-    E = digraph:add_edge(G, VLast, VNew, "spawn " ++ S),
+    Label = "spawn " ++ S,
+    digraph:add_edge(G, VLast, VNew, Label),
     NewData = eval_codeline(ArgList, Data),
     EM = NewData#wip_lv.edge_map,
-    io:fwrite("sucone ~p ~p~n", [E, NewData#wip_lv.ret_var]),
-    ND = NewData#wip_lv{edge_map = maps:put(E, NewData#wip_lv.ret_var, EM)},
+    ND = NewData#wip_lv{edge_map = maps:put(Label, NewData#wip_lv.ret_var, EM)},
     RetVar = #variable{type = pid, value = S},
     ND#wip_lv{ret_var = RetVar, last_vertex = VNew}.
 
@@ -222,7 +231,7 @@ inc_spawn_counter(Name) ->
     end.
 
 eval_self(Data) ->
-    RetVar = #variable{type = pid, value = atol(Data#wip_lv.fun_name)},
+    RetVar = #variable{type = pid_self, value = atol(Data#wip_lv.fun_name)},
     Data#wip_lv{ret_var = RetVar}.
 
 eval_register(ArgList, Data) ->
@@ -391,8 +400,8 @@ recordvar_to_string(Var) ->
                         "string" -> "[" ++ Val ++ "]";
                         "atom" -> atol(Val);
                         "tuple" -> format_tuple(Val, fun recordvar_to_string/1);
-                        "pid" -> "pid";
-                        _ -> SType
+                        "pid" -> "pid" ++ "_" ++ atol(Var#variable.value);
+                        S -> S
                     end
             end
     end.

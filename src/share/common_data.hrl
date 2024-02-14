@@ -11,6 +11,7 @@
 -define(INPUTAST, input_ast).
 -define(ACTORLIST, actor_list).
 -define(FUNAST, fun_ast).
+-define(ARGUMENTS, args).
 -define(LOCALVIEW, lv).
 -define(REGISTERDB, reg).
 -define(SPAWNC, spc).

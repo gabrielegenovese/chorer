@@ -237,7 +237,7 @@ is_lists_edgerecv(ProcPid, EL) ->
 %%% Evaluate a transition from an actor
 eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     {Edge, _, _, PLabel} = EdgeInfo,
-    io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
+    %io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
     SLabel = atol(PLabel),
     IsArg = is_substring(SLabel, "arg"),
     IsSpawn = is_substring(SLabel, "spawn"),
@@ -247,7 +247,7 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             actor_emul:use_proc_transition(ProcPid, Edge),
             {BData, true};
         IsSpawn ->
-            {VNew, NewM} = add_spawn_to_global(Edge, SLabel, ProcName, BData),
+            {VNew, NewM} = add_spawn_to_global(SLabel, ProcName, BData),
             NewBData = BData#branch{last_vertex = VNew, proc_pid_m = NewM},
             actor_emul:use_proc_transition(ProcPid, Edge),
             {NewBData, true};
@@ -260,37 +260,45 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
 is_substring(S, SubS) -> is_list(string:find(S, SubS)).
 
 %%% Add a spanw transition to the global view
-add_spawn_to_global(Edge, SLabel, ProcName, Data) ->
+add_spawn_to_global(SLabel, ProcName, Data) ->
     % get proc name
-    ProcId = string:prefix(SLabel, "spawn "),
-    FuncName = remove_last(remove_last(ProcId)),
+    ProcIdS = string:prefix(SLabel, "spawn "),
+    FuncNameS = remove_last(remove_last(ProcIdS)),
     % spawn the actor emulator
-    FuncPid = spawn(actor_emul, proc_loop, [#actor_info{proc_id = ltoa(FuncName)}]),
-    NewMap = maps:put(ltoa(ProcId), FuncPid, Data#branch.proc_pid_m),
-    LV = common_fun:get_localview(ProcName),
-    EM = common_fun:get_edgedata(ProcName),
-    % add input data to local vars
-    InputData = maps:get(Edge, EM),
-    Input = LV#wip_lv.input_vars,
-    io:fwrite("~p ~p~n", [Input, InputData]),
-    {LL, _} = lists:foldl(
-        fun({var, _, Name}, {A, In}) ->
-            case In of
-                [] -> {A ++ [#variable{name = Name}], []};
-                [H | T] -> {A ++ [H#variable{name = Name}], T}
-            end
-        end,
-        {[], Input},
-        InputData#variable.value
-    ),
-
-    lists:foreach(fun(I) -> actor_emul:add_proc_spawnvars(FuncPid, I) end, LL),
+    FuncPid = spawn(actor_emul, proc_loop, [#actor_info{proc_id = ltoa(FuncNameS)}]),
+    NewMap = maps:put(ltoa(ProcIdS), FuncPid, Data#branch.proc_pid_m),
+    % get spawn arguemnt and add them to the local variables of the actor
+    LocalList = get_local_vars(ProcName, SLabel, FuncNameS),
+    lists:foreach(fun(Var) -> actor_emul:add_proc_spawnvars(FuncPid, Var) end, LocalList),
     % create the edge on the global graph
     VNew = common_fun:add_vertex(Data#branch.graph),
     %%% Δ means spawned
-    NewLabel = atol(ProcName) ++ "Δ" ++ ProcId,
+    NewLabel = atol(ProcName) ++ "Δ" ++ ProcIdS,
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
+
+get_local_vars(ProcName, Label, FuncName) ->
+    EM = common_fun:get_edgedata(ProcName),
+    % add input data to local vars
+    InputData = maps:get(Label, EM, []),
+    % io:fwrite("ProcName ~p Label ~p Input ~p~n", [ProcName, Label, InputData]),
+    case InputData of
+        [] ->
+            [];
+        _ ->
+            [{_, Input}] = ets:lookup(?ARGUMENTS, ltoa(FuncName)),
+            {LL, _} = lists:foldl(
+                fun({var, _, Name}, {A, In}) ->
+                    case In of
+                        [] -> {A ++ [#variable{name = Name}], []};
+                        [H | T] -> {A ++ [H#variable{name = Name}], T}
+                    end
+                end,
+                {[], InputData#variable.value},
+                Input
+            ),
+            LL
+    end.
 
 %%% Remove the last element froom a list
 remove_last(List) when is_list(List) ->
@@ -305,7 +313,7 @@ manage_send(SLabel, Data, ProcName, ProcPid, Edge) ->
     IsVar = common_fun:is_erlvar(ProcSentTemp),
     ProcSentName =
         case IsVar of
-            true -> check_vars(ProcName, ProcPid, ProcSentTemp);
+            true -> check_vars(ProcPid, ProcSentTemp);
             false -> ProcSentTemp
         end,
     ProcSentPid = maps:get(ProcSentName, ProcPidMap, no_pid),
@@ -365,34 +373,18 @@ manage_recv(ProcPid, Message) ->
     end.
 
 %%% Find the actor id from a variable's list, given the variable name
-check_vars(ProcName, ProcPid, VarName) ->
-    % Name = remove_id_from_proc(ProcName),
-    GlobalViewLocalVars = actor_emul:get_proc_localvars(ProcPid),
-    % LocalViewLocalVars = db_manager:get_fun_local_vars(Name),
-    SpInfoP = find_spawn_info(ProcName),
-    ArgsVars =
-        case SpInfoP =:= [] of
-            true ->
-                [];
-            false ->
-                convertL_in_variable(
-                    SpInfoP#spawned_proc.args_called, SpInfoP#spawned_proc.args_local
-                )
-        end,
-    %++ LocalViewLocalVars,
-    SeachList = ArgsVars ++ GlobalViewLocalVars,
-    %io:fwrite("Find var ~p in ~p from ~p~n", [VarName, SeachList, ProcName]),
-    VarValue = find_var(SeachList, VarName),
+check_vars(ProcPid, VarName) ->
+    ProcLocalVars = actor_emul:get_proc_localvars(ProcPid),
+    % io:fwrite("Find var ~p in ~p from ~p~n", [VarName, ProcLocalVars, ProcName]),
+    VarValue = find_var(ProcLocalVars, VarName),
     case VarValue of
         nomatch ->
             VarName;
         V ->
             case V#variable.type of
                 ?UNDEFINED -> VarName;
-                "self" -> SpInfoP#spawned_proc.called_where;
-                self -> SpInfoP#spawned_proc.called_where;
-                "pid_self" -> SpInfoP#spawned_proc.called_where;
-                pid_self -> SpInfoP#spawned_proc.called_where;
+                "pid_self" -> ltoa(V#variable.value);
+                pid_self -> ltoa(V#variable.value);
                 _ -> remove_pid_part(V#variable.type)
             end
     end.
@@ -400,63 +392,6 @@ check_vars(ProcName, ProcPid, VarName) ->
 %%% Remove the "pid_" part from a variable's type
 remove_pid_part(Data) ->
     ltoa(lists:flatten(string:replace(atol(Data), "pid_", ""))).
-
-%%% Get the spawn info given an actor id
-find_spawn_info(PId) ->
-    common_fun:get_edgedata(PId),
-
-    % SpInfoAll = db_manager:get_spawn_info(),
-    % common_fun:first(lists:filter(fun(S) -> S#spawned_proc.name =:= PId end, SpInfoAll)),
-    [].
-
-%%% Convert a list AST in a variable's list
-convertL_in_variable(A, B) ->
-    convertL_in_variable(A, B, []).
-convertL_in_variable({nil, _}, [], L) ->
-    L;
-convertL_in_variable({cons, _, HeadList, TailList}, [H | T], L) ->
-    {var, _, Name} = H,
-    Var = convert_in_variable(HeadList, Name),
-    AL = convertL_in_variable(TailList, T, L),
-    [Var] ++ AL;
-convertL_in_variable(_, _, _) ->
-    [].
-
-%%% Evaluate an AST entry and converts it to a variable
-convert_in_variable(Eval, Name) ->
-    TempV = #variable{name = Name},
-    case Eval of
-        {cons, _, HeadList, TailList} ->
-            Var = convert_in_variable(HeadList, ?UNDEFINED),
-            VarT = convert_in_variable(TailList, ?UNDEFINED),
-            NewVal = [Var] ++ VarT#variable.value,
-            TempV#variable{value = NewVal};
-        %%% Evaluate Types
-        {call, _, {atom, _, self}, _} ->
-            TempV#variable{type = ltoa("pid_self")};
-        {integer, _, Val} ->
-            TempV#variable{type = integer, value = Val};
-        {float, _, Val} ->
-            TempV#variable{type = float, value = Val};
-        {string, _, Val} ->
-            TempV#variable{type = string, value = Val};
-        {atom, _, Val} ->
-            TempV#variable{type = atom, value = Val};
-        {tuple, _, TupleVal} ->
-            L = lists:foldl(
-                fun(I, A) ->
-                    V = convert_in_variable(I, ?UNDEFINED),
-                    A ++ [V]
-                end,
-                [],
-                TupleVal
-            ),
-            TempV#variable{type = tuple, value = L};
-        {nil, _} ->
-            TempV#variable{type = list, value = []};
-        _ ->
-            TempV
-    end.
 
 %%% Find a variable in a list, given the name
 find_var([], _) ->

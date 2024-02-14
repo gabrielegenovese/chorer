@@ -95,7 +95,7 @@ get_graph(FunName) ->
 get_edgedata(FunName) ->
     Ast = ets:lookup(?LOCALVIEW, FunName),
     case Ast of
-        [] -> not_found;
+        [] -> #{};
         [{_, A}] -> A#wip_lv.edge_map
     end.
 

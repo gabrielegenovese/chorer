@@ -38,4 +38,5 @@ init_db() ->
     ets:new(?FUNAST, [set, named_table]),
     ets:new(?LOCALVIEW, [set, named_table]),
     ets:new(?REGISTERDB, [set, named_table]),
+    ets:new(?ARGUMENTS, [set, named_table]),
     ets:new(?SPAWNC, [set, named_table]).
