@@ -7,8 +7,8 @@ digraph main {
 	n_3 [id="4", shape=circle, label="4"];
 	n_4 [id="3", shape=circle, label="2"];
 
+	n_1 -> n_4 [id="[$e|2]", label="spawn agent_0"];
 	n_3 -> n_2 [id="[$e|1]", label="send {booked,3} to Pid1"];
 	n_2 -> n_3 [id="[$e|4]", label="receive {sell,Pid1}"];
-	n_1 -> n_4 [id="[$e|2]", label="spawn agent_0"];
 	n_4 -> n_2 [id="[$e|5]", label="spawn agent_1"];
 }

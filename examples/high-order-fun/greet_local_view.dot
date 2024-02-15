@@ -11,5 +11,5 @@ digraph greet {
 	n_4 -> n_1 [id="[$e|3]", label="receive hello"];
 	n_2 -> n_3 [id="[$e|1]", label="spawn anonfun_line15_0"];
 	n_3 -> n_5 [id="[$e|0]", label="send hello to anonfun_line15_0"];
-	n_5 -> n_4 [id="[$e|2]", label="send hello to greet"];
+	n_5 -> n_4 [id="[$e|2]", label="send hello to none"];
 }

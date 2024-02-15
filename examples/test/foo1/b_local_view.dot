@@ -1,9 +1,9 @@
 digraph b {
 	rankdir="LR";
 	n_0 [label="b", shape="plaintext"];
-	n_1 [id="2", shape=circle, label="2"];
-	n_2 [id="1", shape=circle, label="1"];
-	n_0 -> n_2 [arrowhead=none];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="2", shape=doublecircle, label="2"];
 
-	n_2 -> n_1 [id="[$e|0]", label="receive X"];
+	n_1 -> n_2 [id="[$e|0]", label="receive X"];
 }

@@ -114,7 +114,7 @@ eval_pm_clause(Code, Vars, Data) ->
     case Exist of
         [] -> ets:insert(?ARGUMENTS, {FunName, Vars});
         [{_, []}] -> ets:insert(?ARGUMENTS, {FunName, Vars});
-        [{_, [_]}] -> done
+        _ -> done
     end,
     ND =
         case Vars =:= [] of
@@ -419,12 +419,12 @@ eval_variable(VarName, Data) ->
 
 recordvar_to_string(Var) ->
     case Var#variable.type of
-        ?UNDEFINED ->
+        ?ANYDATA ->
             atol(Var#variable.name);
         Type ->
             SType = atol(Type),
             case Var#variable.value of
-                ?UNDEFINED ->
+                ?ANYDATA ->
                     SType;
                 Val ->
                     case SType of

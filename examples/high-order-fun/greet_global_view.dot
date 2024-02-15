@@ -6,6 +6,6 @@ digraph global {
 	n_2 [id="2", shape=circle, label="2"];
 	n_3 [id="3", shape=circle, label="3"];
 
-	n_2 -> n_3 [id="[$e|1]", label="greet→Fun_0:hello"];
-	n_1 -> n_2 [id="[$e|0]", label="greetΔFun_0"];
+	n_2 -> n_3 [id="[$e|1]", label="greet→anonfun_line15_0:hello"];
+	n_1 -> n_2 [id="[$e|0]", label="greetΔanonfun_line15_0"];
 }
