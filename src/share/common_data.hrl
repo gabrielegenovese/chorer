@@ -21,7 +21,8 @@
 -record(setting, {
     more_info_lv = false,
     debug = false,
-    output_dir = "./"
+    output_dir = "./",
+    save_all = false
 }).
 -type setting() :: #setting{
     more_info_lv :: boolean(),
@@ -56,19 +57,6 @@
 }).
 
 -record(actor, {name, arity}).
-
-%%% Spanwed processes data stracture
-%%% name: process id
-%%% called_where: in which function the spawn() is been called
-%%% args_called: spawn's arguments
-%%% args_local: cluase match of function
-%%% local_vars: local variables
--record(spawned_proc, {
-    name = ?UNDEFINED,
-    called_where = ?UNDEFINED,
-    args_called = ?UNDEFINED,
-    args_local = ?UNDEFINED
-}).
 
 -record(branch, {
     graph = digraph:new(),

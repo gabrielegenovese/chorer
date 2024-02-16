@@ -43,7 +43,8 @@ send_recv(P, Data) ->
 
 proc_loop(Data) ->
     ProcName = Data#actor_info.proc_id,
-    LV = common_fun:get_localview(ProcName),
+    % io:fwrite("[EMUL] ID ~p~n", [ProcName]),
+    LV = share:get_localview(share:atol(ProcName)),
     G = LV#wip_lv.graph,
     % timer:sleep(200),
     VCurr = Data#actor_info.current_state,
@@ -62,7 +63,7 @@ proc_loop(Data) ->
                     NewL =
                         case ToLabel =< FromLabel of
                             true ->
-                                % io:fwrite("[PROC LOOP] RESET LOCALV IN ~p~n", [ProcName]),
+                                % io:fwrite("[EMUL] RESET LOCALV IN ~p~n", [ProcName]),
                                 sets:new();
                             false ->
                                 LocalVars
@@ -78,7 +79,7 @@ proc_loop(Data) ->
                     NewL =
                         case ToLabel =< FromLabel of
                             true ->
-                                % io:fwrite("[PROC LOOP] RESET LOCALV IN ~p~n", [ProcName]),
+                                % io:fwrite("[EMUL] RESET LOCALV IN ~p~n", [ProcName]),
                                 sets:new();
                             false ->
                                 LocalVars
@@ -89,7 +90,7 @@ proc_loop(Data) ->
                         local_vars = NewL
                     });
                 _ ->
-                    io:fwrite("[PROC LOOP] V ~p Edge ~p non trovato in ~p~n", [VCurr, E, ProcName]),
+                    io:fwrite("[EMUL] V ~p Edge ~p non trovato in ~p~n", [VCurr, E, ProcName]),
                     proc_loop(Data)
             end;
         {P, get_edges} ->

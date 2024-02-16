@@ -29,9 +29,10 @@ gen_fun_ast_and_exported() ->
             fun(CodeLine, AccList) ->
                 case CodeLine of
                     {attribute, _, export, AtrList} ->
-                        AccList ++ [#actor{name = N, arity = A} || {N, A} <- AtrList];
-                    {function, _, Name, _, FunAst} ->
-                        ets:insert(?FUNAST, {Name, FunAst}),
+                        AccList ++ [share:merge_fun_ar(N, A) || {N, A} <- AtrList];
+                    {function, Line, Name, Arity, FunAst} ->
+                        % io:fwrite("[MD] Found ~p~n", [share:merge_fun_ar(Name, Arity)]),
+                        ets:insert(?FUNAST, {share:merge_fun_ar(Name, Arity), {function, Line, FunAst}}),
                         AccList;
                     _ ->
                         AccList

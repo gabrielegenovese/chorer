@@ -109,13 +109,13 @@ subset_construction(NFA, StateS, TransS, MarkedS) ->
 %%% Convert a list of DFA state in a given DFA graph:
 %%% a set of NFA states equals to a graph vertex
 convert_statel_to_graph(NFA, DFA, FirstDFAState, DFAStateL) ->
-    RetM = #{FirstDFAState => common_fun:add_vertex(DFA)},
+    RetM = #{FirstDFAState => share:add_vertex(DFA)},
     FoldFun = fun(DFAState, AccM) ->
         case DFAState =:= FirstDFAState of
             true ->
                 AccM;
             false ->
-                DFAVertex = common_fun:add_vertex(DFA),
+                DFAVertex = share:add_vertex(DFA),
                 case is_final_state(NFA, sets:to_list(DFAState)) of
                     true -> set_as_final(DFA, DFAVertex);
                     false -> ?UNDEFINED
@@ -138,7 +138,7 @@ convert_transl_to_graph(DFA, DFAVertexEquivM, DFATransitionsL) ->
 %%% Returns an unmarked state if present, otherwise returns an empty list
 get_not_marked(AllStateS, MarkedStateS) ->
     DiffS = sets:subtract(AllStateS, MarkedStateS),
-    common_fun:first(stol(DiffS)).
+    share:first(stol(DiffS)).
 
 %%% Given a graph G, this function will delete every unreachable vertex, that is
 %%% if the number of incident edges on a vertex is 0, then delete it

@@ -16,9 +16,8 @@ server() ->
 
 client_gen(S,1) -> 
     spawn(foo6,client,[S]);
-client_gen(S,N) when N>1 -> 
-    spawn(foo6,client,[S]), 
-    client_gen(S,N-1).
+client_gen(S,N) -> 
+    spawn(foo6,client,[S]).
 
 client(S) ->
     S ! hello.

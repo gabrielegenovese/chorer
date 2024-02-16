@@ -10,20 +10,14 @@
 
 %%% Generate the glabal view from an entrypoint and save it in a specified folder
 generate(Settings, EntryPoint) ->
-    OutputDir = Settings#setting.output_dir,
-    MainGraph = common_fun:get_localview(EntryPoint),
+    MainGraph = share:get_localview(share:atol(EntryPoint)),
     case MainGraph of
         not_found ->
-            no_entry_point_found;
+            io:fwrite("Error: entrypoint for global view not found ~p~n", [EntryPoint]),
+            error;
         _ ->
             G = create_globalview(EntryPoint),
-            {ok, [In]} = io:fread("Minimize global view? [y/n] ", "~a"),
-            CG =
-                case In of
-                    n -> G;
-                    _ -> fsa:minimize(G)
-                end,
-            common_fun:save_graph_to_file(CG, OutputDir, atol(EntryPoint), global),
+            share:save_graph(G, Settings, EntryPoint, global),
             finished
     end.
 
@@ -34,7 +28,7 @@ generate(Settings, EntryPoint) ->
 %%% Create the glabal view from a function entrypoint name
 create_globalview(Name) ->
     RetG = digraph:new(),
-    VNew = common_fun:add_vertex(RetG),
+    VNew = share:add_vertex(RetG),
     MainProcPid = spawn(actor_emul, proc_loop, [#actor_info{proc_id = Name}]),
     ProcPidMap = #{Name => MainProcPid},
     % initialize first branch
@@ -57,10 +51,10 @@ progress_procs(G, []) ->
     G;
 progress_procs(GlobalGraph, BranchList) when is_list(BranchList) ->
     RealList = lists:flatten(BranchList),
-    %io:fwrite("Branch to eval ~p~n", [length(RealList)]),
+    io:fwrite("Branch to eval ~p~n", [length(RealList)]),
     NewBL = lists:foldl(
         fun(Item, AccL) ->
-            %io:fwrite("Eval branch~n"),
+            io:fwrite("Eval branch~n"),
             NewBreanches = progress_single_branch(Item),
             AccL ++ NewBreanches
         end,
@@ -80,7 +74,7 @@ progress_single_branch(BData) ->
             maps:fold(
                 fun(Name, Pid, AccList) ->
                     MessageQueue = actor_emul:get_proc_mess_queue(Pid),
-                    %io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
+                    io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
                     gen_branch_foreach_mess(TempBranchData, MessageQueue, Name, AccList)
                 end,
                 [],
@@ -110,15 +104,14 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseList) ->
                     AccList;
                 %%% If an edge has been found, duplicate the branch and add the transition to the graph
                 EdgeFound ->
-                    %io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
+                    io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
                     ProcFrom = Message#message.from,
                     MessData = Message#message.data,
                     PidFrom = maps:get(ProcFrom, NewMap),
                     Label = format_send_label(ProcFrom, ProcName, MessData),
-                    %io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
+                    io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
                     EFromInfo = actor_emul:get_proc_edge_info(PidFrom, Message#message.edge),
                     EToInfo = actor_emul:get_proc_edge_info(NewPid, EdgeFound),
-                    %LastVertex =  simple_add_vertex(DupData, Label),
                     {LastVertex, NewStateMap} = complex_add_vertex(
                         ProcFrom, EFromInfo, ProcName, EToInfo, DupData, Label
                     ),
@@ -155,11 +148,11 @@ duplicate_proccess(ProcMap) ->
 
 %%% Remove the number from an actor's identificator
 remove_id_from_proc(ProcId) ->
-    SProcId = atol(ProcId),
-    {Name, N} = lists:split(length(SProcId) - 1, SProcId),
-    case catch list_to_integer(N) of
-        {'EXIT', _} -> ProcId;
-        _ -> ltoa(remove_last(Name))
+    Split = string:split(ProcId, "_"),
+    % io:fwrite("split ~p~n", [Split]),
+    case Split of
+        [Name | _N] -> ltoa(Name);
+        _ -> ProcId
     end.
 
 %%% Evaluate the edges of a local view until it reaches a receive edge foreach actor
@@ -189,7 +182,7 @@ eval_proc_branch(ProcName, ProcPid, Data) ->
         ELLength =:= 0 ->
             {Data, false, []};
         ELLength =:= 1 ->
-            E = common_fun:first(EL),
+            E = share:first(EL),
             EI = actor_emul:get_proc_edge_info(ProcPid, E),
             {D, B} = eval_edge(EI, ProcName, ProcPid, Data),
             {D, B, []};
@@ -237,7 +230,7 @@ is_lists_edgerecv(ProcPid, EL) ->
 %%% Evaluate a transition from an actor
 eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     {Edge, _, _, PLabel} = EdgeInfo,
-    %io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
+    io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
     SLabel = atol(PLabel),
     IsArg = is_substring(SLabel, "arg"),
     IsSpawn = is_substring(SLabel, "spawn"),
@@ -257,13 +250,14 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             {BData, false}
     end.
 
-is_substring(S, SubS) -> is_list(string:find(S, SubS)).
+is_substring(S, SubS) ->
+    is_list(string:find(S, SubS)).
 
 %%% Add a spanw transition to the global view
 add_spawn_to_global(SLabel, ProcName, Data) ->
     % get proc name
     ProcIdS = string:prefix(SLabel, "spawn "),
-    FuncNameS = remove_last(remove_last(ProcIdS)),
+    FuncNameS = share:remove_last(share:remove_last(ProcIdS)),
     % spawn the actor emulator
     FuncPid = spawn(actor_emul, proc_loop, [#actor_info{proc_id = ltoa(FuncNameS)}]),
     NewMap = maps:put(ltoa(ProcIdS), FuncPid, Data#branch.proc_pid_m),
@@ -271,17 +265,17 @@ add_spawn_to_global(SLabel, ProcName, Data) ->
     LocalList = get_local_vars(ProcName, SLabel, FuncNameS),
     lists:foreach(fun(Var) -> actor_emul:add_proc_spawnvars(FuncPid, Var) end, LocalList),
     % create the edge on the global graph
-    VNew = common_fun:add_vertex(Data#branch.graph),
+    VNew = share:add_vertex(Data#branch.graph),
     %%% Δ means spawned
     NewLabel = atol(ProcName) ++ "Δ" ++ ProcIdS,
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
 
 get_local_vars(ProcName, Label, FuncName) ->
-    EM = common_fun:get_edgedata(ProcName),
+    EM = share:get_edgedata(atol(ProcName)),
     % add input data to local vars
     InputData = maps:get(Label, EM, []),
-    % io:fwrite("ProcName ~p Label ~p Input ~p~n", [ProcName, Label, InputData]),
+    io:fwrite("ProcName ~p Label ~p Input ~p~n", [ProcName, Label, EM]),
     case InputData of
         [] ->
             [];
@@ -300,17 +294,12 @@ get_local_vars(ProcName, Label, FuncName) ->
             LL
     end.
 
-%%% Remove the last element froom a list
-remove_last(List) when is_list(List) ->
-    {Rest, _} = lists:split(length(List) - 1, List),
-    Rest.
-
 %%% Evaluate a send transition of an actor
 manage_send(SLabel, Data, ProcName, ProcPid, Edge) ->
     ProcPidMap = Data#branch.proc_pid_m,
     DataSent = get_data_from_label(SLabel),
     ProcSentTemp = ltoa(get_proc_from_label(SLabel)),
-    IsVar = common_fun:is_erlvar(ProcSentTemp),
+    IsVar = share:is_erlvar(ProcSentTemp),
     ProcSentName =
         case IsVar of
             true -> check_vars(ProcPid, ProcSentTemp);
@@ -319,7 +308,7 @@ manage_send(SLabel, Data, ProcName, ProcPid, Edge) ->
     ProcSentPid = maps:get(ProcSentName, ProcPidMap, no_pid),
     case ProcSentPid of
         no_pid ->
-            %io:fwrite("[SEND-ERR] no pid found for: ~p~n", [ProcSentName]),
+            io:fwrite("[SEND-ERR] no pid found for: ~p~n", [ProcSentName]),
             {Data, false};
         P ->
             actor_emul:add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge)),
@@ -331,13 +320,14 @@ manage_send(SLabel, Data, ProcName, ProcPid, Edge) ->
 %%% Evaluate a receive transition of an actor
 manage_recv(ProcPid, Message) ->
     EL = actor_emul:get_proc_edges(ProcPid),
-    %%% TODO: trovare il modo di valutare in ordine i rami del receive (in quanto è molto rilevante nell'esecuzione)
+    %%% IMPORTANT TODO: evaluation of the edge's order not implemented!!
     IsRecv = is_lists_edgerecv(ProcPid, EL),
     %io:fwrite("IsRECV ~p EL ~p~n", [IsRecv, EL]),
     From = Message#message.from,
     case IsRecv of
         false ->
-            % TODO: gestire casistica, il seguente codice è vecchio e quindi da prendere con le pinze
+            % TODO: manage when is not ONLY a receive edge
+            % the following piece of code is old, check before uncommenting
             % {NewL, NOp} = lists:foldl(
             %     fun(E, A) ->
             %         EInfo = get_proc_edge_info(ProcPid, E),
@@ -376,9 +366,9 @@ manage_recv(ProcPid, Message) ->
 check_vars(ProcPid, VarName) ->
     ProcLocalVars = actor_emul:get_proc_localvars(ProcPid),
     % io:fwrite("Find var ~p in ~p from ~p~n", [VarName, ProcLocalVars, ProcName]),
-    VarValue = find_var(ProcLocalVars, VarName),
+    VarValue = share:find_var(ProcLocalVars, VarName),
     case VarValue of
-        nomatch ->
+        not_found ->
             VarName;
         V ->
             case V#variable.type of
@@ -392,16 +382,6 @@ check_vars(ProcPid, VarName) ->
 %%% Remove the "pid_" part from a variable's type
 remove_pid_part(Data) ->
     ltoa(lists:flatten(string:replace(atol(Data), "pid_", ""))).
-
-%%% Find a variable in a list, given the name
-find_var([], _) ->
-    nomatch;
-find_var([H | T], VarName) ->
-    Cond = H#variable.name =:= VarName,
-    case Cond of
-        true -> H;
-        false -> find_var(T, VarName)
-    end.
 
 %%% Check if a pattern metching match a message, then register the new variables
 is_pm_msg_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
@@ -420,12 +400,12 @@ check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
     PatternMS = lists:flatten(string:replace(atol(PatternMatching), "receive ", "")),
     [FirstPChar | RestP] = PatternMS,
     [FirstMChar | RestM] = MessageS,
-    IsFirstCharUpperCase = common_fun:is_erlvar(PatternMS),
+    IsFirstCharUpperCase = share:is_erlvar(PatternMS),
     if
         %%% hierarchy
         ([FirstPChar] =:= "{") and ([FirstMChar] =:= "{") ->
-            ContentP = remove_last(RestP),
-            ContentM = remove_last(RestM),
+            ContentP = share:remove_last(RestP),
+            ContentM = share:remove_last(RestM),
             PL = string:split(ContentP, ",", all),
             A = lists:enumerate(PL),
             ML = string:split(ContentM, ",", all),
@@ -496,7 +476,7 @@ complex_add_vertex(Proc1, EdgeInfo1, Proc2, EdgeInfo2, Data, Label) ->
                                     {VLast, NewM};
                                 %%% Add a new vertex, because no match found in StateM
                                 false ->
-                                    VAdded = common_fun:add_vertex(G),
+                                    VAdded = share:add_vertex(G),
                                     digraph:add_edge(G, VLast, VAdded, Label),
                                     NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
                                     {VAdded, NewM}
@@ -517,13 +497,6 @@ complex_add_vertex(Proc1, EdgeInfo1, Proc2, EdgeInfo2, Data, Label) ->
             {VRet, StateM}
     end.
 
-% simple_add_vertex(Data, Label) ->
-%     VLast = Data#branch.last_vertex,
-%     G = Data#branch.graph,
-%     VAdded = common_fun:add_vertex(G),
-%     digraph:add_edge(G, VLast, VAdded, Label),
-%     VAdded.
-
 %%% Returns the outgoing vertex given a label and a list of transition
 check_same_label(G, EL, Label) ->
     lists:foldl(
@@ -541,7 +514,7 @@ check_same_label(G, EL, Label) ->
 %%% Get the data from a send local view's label
 get_data_from_label(S) ->
     Ret = lists:nth(2, string:split(S, " ", all)),
-    FirstChar = common_fun:first(Ret),
+    FirstChar = share:first(Ret),
     if
         [FirstChar] =:= "[" -> Ret ++ " " ++ lists:nth(3, string:split(S, " ", all));
         true -> Ret

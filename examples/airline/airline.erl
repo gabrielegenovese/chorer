@@ -6,6 +6,8 @@ main() ->
     spawn(?MODULE, agent, [self()]),
     seats(3).
 
+seats(0) ->
+    stop;
 seats(Num) ->
     receive
         {sell, Pid1} ->
