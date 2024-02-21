@@ -15,6 +15,7 @@
 -define(LOCALVIEW, lv).
 -define(REGISTERDB, reg).
 -define(SPAWNC, spc).
+-define(SEPARATOR, "/").
 
 %%% RECORDS
 
@@ -37,15 +38,15 @@
 }).
 
 -record(wip_lv, {
-    fun_name,
-    fun_ast,
+    fun_name = "",
+    fun_ast = {},
     graph = digraph:new(),
     last_vertex = 1,
     local_vars = [],
     ret_var = #variable{},
-    node_map = #{},
+    % node_map = #{},
+    % input_vars = [],
     edge_map = #{},
-    input_vars = [],
     settings = #setting{}
 }).
 
@@ -66,7 +67,8 @@
 }).
 
 -record(actor_info, {
-    proc_id = ?UNDEFINED,
+    fun_name = "",
+    id = ?UNDEFINED,
     current_state = 1,
     first_marked_edges = [],
     second_marked_edges = [],

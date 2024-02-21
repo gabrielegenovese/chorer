@@ -25,16 +25,19 @@
 %%%===================================================================
 
 function_list(ContList, Data) ->
-    lists:foreach(
-        fun(FunctionBody) ->
+    lists:foldl(
+        fun(FunctionBody, AccData) ->
             case FunctionBody of
-                {clause, _, Vars, Guard, Content} -> clause(Content, Vars, Guard, Data, "arg");
-                C -> share:warning("should be a clause but it's", C, ?UNDEFINED)
+                {clause, _, Vars, Guard, Content} ->
+                    ets:insert(?ARGUMENTS, {Data#wip_lv.fun_name, Vars}),
+                    clause(Content, Vars, Guard, AccData#wip_lv{last_vertex = 1}, "arg");
+                C ->
+                    share:warning("should be a clause but it's", C, ?UNDEFINED)
             end
         end,
+        Data,
         ContList
-    ),
-    Data.
+    ).
 
 clause(Code, Vars, Guards, Data, BaseLabel) ->
     % io:fwrite("[CLAUSE] Code ~p~n Vars ~p~n Guards ~p~n", [Code, Vars, Guards]),
@@ -44,7 +47,7 @@ clause(Code, Vars, Guards, Data, BaseLabel) ->
     EvalVarList = TempData#wip_lv.ret_var,
     TempLabel = BaseLabel ++ " " ++ var_to_string(EvalVarList) ++ guards_to_string(Guards),
     FinalLabel = decide_label(BaseLabel, TempLabel, Data),
-    NewData = share:add_vertex_edge(FinalLabel, Data),
+    NewData = add_vertex_edge(FinalLabel, Data),
     lists:foldl(
         fun(Line, AccData) -> lv:eval_codeline(Line, AccData) end,
         NewData#wip_lv{local_vars = LocalV ++ EvalVarList#variable.value},
@@ -89,7 +92,7 @@ anon_fun(Content, Line, Data) ->
     case Content of
         {clauses, A} ->
             Id = "anonfun_" ++ integer_to_list(Line),
-            ets:insert(?FUNAST, {share:ltoa(Id), A}),
+            ets:insert(?FUNAST, {Id, {function, Line, A}}),
             simple_type(function, Id, Data);
         _ ->
             share:warning("not recognized content in anon_fun", Content, Data)
@@ -237,45 +240,38 @@ spawn_one(Content, Data) ->
     NewData = lv:eval_codeline(Content, Data),
     VarFound = NewData#wip_lv.ret_var,
     Id = VarFound#variable.value,
-    lv:create_save_localview(share:ltoa(Id), Data#wip_lv.settings),
-    C = inc_spawn_counter(Id),
-    S = Id ++ "_" ++ integer_to_list(C),
-    RetData = share:add_vertex_edge("spawn " ++ S, NewData),
+    lv:create_localview(Id, Data#wip_lv.settings, true),
+    C = share:inc_spawn_counter(Id),
+    S = Id ++ ?SEPARATOR ++ integer_to_list(C),
+    RetData = add_vertex_edge("spawn " ++ S, NewData),
     RetVar = #variable{type = pid, value = S},
     RetData#wip_lv{ret_var = RetVar}.
 
 spawn_three(Name, ArgList, Data) ->
     NewData = lv:eval_codeline(ArgList, Data),
-    EM = NewData#wip_lv.edge_map,
     NewDataRetVar = NewData#wip_lv.ret_var,
     {Label, ProcId} = format_spawn_label(Name, NewDataRetVar),
-    ND = NewData#wip_lv{edge_map = maps:put(Label, NewDataRetVar, EM)},
-    RetData = share:add_vertex_edge(Label, ND),
+    EM = maps:put(Label, NewDataRetVar, NewData#wip_lv.edge_map),
+    % io:fwrite("label ~p new edge map ~p map ~p~n", [Label, NewData#wip_lv.fun_name, EM]),
+    ND = NewData#wip_lv{edge_map = EM},
+    RetData = add_vertex_edge(Label, ND),
     RetData#wip_lv{ret_var = #variable{type = pid, value = ProcId}}.
 
 format_spawn_label(Name, NewDataRetVar) ->
-    C = inc_spawn_counter(Name),
+    C = share:inc_spawn_counter(Name),
     Arity = integer_to_list(length(NewDataRetVar#variable.value)),
-    ProcId = share:atol(Name) ++ Arity ++ "_" ++ integer_to_list(C),
+    ProcId = share:atol(Name) ++ Arity ++ ?SEPARATOR ++ integer_to_list(C),
     {"spawn " ++ ProcId, ProcId}.
 
 spawn_monitor_call(ArgList, Data) ->
     share:warning("spawn_monitor not yet implemted. Arguments =", ArgList, Data).
 
-inc_spawn_counter(Name) ->
-    case ets:lookup(?SPAWNC, share:ltoa(Name)) of
-        [] ->
-            ets:insert(?SPAWNC, {Name, 1}),
-            0;
-        [{_, N}] ->
-            ets:insert(?SPAWNC, {Name, N + 1}),
-            N
-    end.
-
 self_call(Data) ->
-    RetVar = #variable{type = pid_self, value = share:atol(Data#wip_lv.fun_name)},
+    RetVar = #variable{type = pid, value = "pid_self"},
     Data#wip_lv{ret_var = RetVar}.
 
+%%% TODO: now the register function is implemented with a static behaviour,
+%%% but should be dynamic.
 register_call(ArgList, Data) ->
     [{atom, _, AtomName}, {var, _, VarName}] = ArgList,
     VarFound = share:find_var(Data, VarName),
@@ -283,16 +279,17 @@ register_call(ArgList, Data) ->
         not_found ->
             ?UNDEFINED;
         V ->
-            case V#variable.type == pid of
-                false -> ?UNDEFINED;
-                true -> ets:insert(?REGISTERDB, {AtomName, V#variable.value})
+            case V#variable.type of
+                pid -> ets:insert(?REGISTERDB, {AtomName, V#variable.value});
+                _ -> ?UNDEFINED
             end
     end,
-    %%% Approx: ignoring returing value
+    %%% ignoring returing value
     Data.
 
 generic_call(Name, ArgList, Data) ->
-    NewData = lv:eval_codeline(ArgList, Data),
+    % TODO: how to evaluate argument list?
+    _NewData = lv:eval_codeline(ArgList, Data),
     % io:fwrite("ARG LIST ~p~n", [ArgList]),
     % io:fwrite("RET VAR ~p~n", [NewData#wip_lv.ret_var#variable.value]),
     NameString = share:merge_fun_ar(Name, length(ArgList)),
@@ -320,7 +317,7 @@ call_by_var(VarName, ArgList, Data) ->
         _ ->
             Id = VarFound#variable.value,
             ND = lv:eval_codeline(ArgList, Data),
-            NewData = lv:create_localview(share:ltoa(Id), ND#wip_lv.settings, false),
+            NewData = lv:create_localview(Id, ND#wip_lv.settings, false),
             NewG = NewData#wip_lv.graph,
             NewRet = NewData#wip_lv.ret_var,
             NewLastV = merge_graph(G, NewG, VLast),
@@ -345,16 +342,27 @@ rand_package(FunName, Data) ->
 
 send(Destination, MessageContent, Data) ->
     TempData = lv:eval_codeline(Destination, Data),
-    ProcName = get_pid(TempData#wip_lv.ret_var),
+    VarProcName = TempData#wip_lv.ret_var,
+    ProcName = get_pid(VarProcName),
+    % io:fwrite("Ret Var ~p found ~p~n", [VarProcName, ProcName]),
     NewData = lv:eval_codeline(MessageContent, TempData),
-    DataSent = var_to_string(NewData#wip_lv.ret_var),
-    SLabel = "send " ++ DataSent ++ " to " ++ ProcName,
-    share:add_vertex_edge(SLabel, NewData).
+    VarDataSent = NewData#wip_lv.ret_var,
+    DataSent = var_to_string(VarDataSent),
+    SLabel = "send " ++ share:atol(DataSent) ++ " to " ++ share:atol(ProcName),
+    EM = NewData#wip_lv.edge_map,
+    add_vertex_edge(SLabel, NewData#wip_lv{
+        edge_map = maps:put(SLabel, {VarProcName, VarDataSent}, EM)
+    }).
 
 get_pid(Var) ->
-    case Var#variable.type == pid of
-        true -> Var#variable.value;
-        false -> share:atol(Var#variable.name)
+    case Var#variable.type of
+        pid ->
+            Var#variable.value;
+        _ ->
+            case Var#variable.name of
+                ?UNDEFINED -> Var#variable.type;
+                _ -> share:atol(Var#variable.name)
+            end
     end.
 
 var_to_string(Var) ->
@@ -378,8 +386,8 @@ var_to_string(Var) ->
                                 "atom" -> share:atol(Val);
                                 "list" -> format_list(Val, fun var_to_string/1);
                                 "tuple" -> format_tuple(Val, fun var_to_string/1);
-                                "pid" -> "pid" ++ "_" ++ share:atol(V#variable.value);
-                                S -> S
+                                "pid" -> share:atol(V#variable.value);
+                                S -> share:atol(S)
                             end
                     end
             end
@@ -461,6 +469,13 @@ explore_pm(PMList, Base, Data) ->
         [],
         PMList
     ).
+
+add_vertex_edge(Label, Data) ->
+    G = Data#wip_lv.graph,
+    LastV = Data#wip_lv.last_vertex,
+    V = share:add_vertex(G),
+    digraph:add_edge(G, LastV, V, Label),
+    Data#wip_lv{last_vertex = V}.
 
 %%% Convert the guard (ast format) to a string
 guards_to_string(GlobalToVal) ->

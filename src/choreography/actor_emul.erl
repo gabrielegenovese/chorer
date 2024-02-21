@@ -42,9 +42,9 @@ send_recv(P, Data) ->
     end.
 
 proc_loop(Data) ->
-    ProcName = Data#actor_info.proc_id,
+    ProcName = Data#actor_info.fun_name,
     % io:fwrite("[EMUL] ID ~p~n", [ProcName]),
-    LV = share:get_localview(share:atol(ProcName)),
+    LV = share:get_localview(ProcName),
     G = LV#wip_lv.graph,
     % timer:sleep(200),
     VCurr = Data#actor_info.current_state,
@@ -60,10 +60,14 @@ proc_loop(Data) ->
                 {E, VCurr, VNew, _} when IsAlreadyMarkedOnce ->
                     {_, FromLabel} = digraph:vertex(G, VCurr),
                     {_, ToLabel} = digraph:vertex(G, VNew),
+                    To = share:if_final_get_n(ToLabel),
+                    From = share:if_final_get_n(FromLabel),
                     NewL =
-                        case ToLabel =< FromLabel of
+                        case To =< From of
                             true ->
-                                % io:fwrite("[EMUL] RESET LOCALV IN ~p~n", [ProcName]),
+                                % io:fwrite("[EMUL] RESET LOCALV IN ~p from ~p to ~p~n", [
+                                %     ProcName, FromLabel, ToLabel
+                                % ]),
                                 sets:new();
                             false ->
                                 LocalVars
@@ -76,10 +80,14 @@ proc_loop(Data) ->
                 {E, VCurr, VNew, _} ->
                     {_, FromLabel} = digraph:vertex(G, VCurr),
                     {_, ToLabel} = digraph:vertex(G, VNew),
+                    To = share:if_final_get_n(ToLabel),
+                    From = share:if_final_get_n(FromLabel),
                     NewL =
-                        case ToLabel =< FromLabel of
+                        case To =< From of
                             true ->
-                                % io:fwrite("[EMUL] RESET LOCALV IN ~p~n", [ProcName]),
+                                % io:fwrite("[EMUL] RESET LOCALV IN ~p from ~p to ~p~n", [
+                                %     ProcName, FromLabel, ToLabel
+                                % ]),
                                 sets:new();
                             false ->
                                 LocalVars

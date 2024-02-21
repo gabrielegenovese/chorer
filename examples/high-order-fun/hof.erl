@@ -15,4 +15,7 @@ greet() ->
     A = spawn(fun() -> recv() end),
     A ! hello,
     self() ! hello,
+    B = spawn(Fun),
+    B ! hello,
+    recv(),
     Fun().

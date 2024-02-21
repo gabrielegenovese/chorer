@@ -26,18 +26,27 @@ create_localview(ActorName, Settings, Save) ->
             no_graph;
         ActorAst ->
             io:fwrite("[LV] Creating a localview for ~p~n", [ActorName]),
-            LocalViewData = build_localview(ActorName, ActorAst, Settings),
-            G = LocalViewData#wip_lv.graph,
-            set_final_state(G),
-            MinG = fsa:minimize(G),
-            LV = LocalViewData#wip_lv{graph = MinG},
-            ets:insert(?LOCALVIEW, {ActorName, LV}),
-            case Save or Settings#setting.save_all of
-                true -> share:save_graph(G, Settings, ActorName, local);
-                false -> done
-            end,
-            %% Which should I return? LV (contains the MinGraph) or LocalViewData (not minimized)
-            LocalViewData
+            LV = share:get_localview(ActorName),
+            case LV of
+                not_found ->
+                    BaseData = #wip_lv{
+                        fun_name = ActorName, fun_ast = ActorAst, settings = Settings
+                    },
+                    share:add_vertex(BaseData#wip_lv.graph),
+                    LVData = eval_codeline(BaseData#wip_lv.fun_ast, BaseData),
+                    G = LVData#wip_lv.graph,
+                    set_final_state(G),
+                    MinG = fsa:minimize(G),
+                    NewLV = LVData#wip_lv{graph = MinG},
+                    ets:insert(?LOCALVIEW, {ActorName, NewLV}),
+                    case Save or Settings#setting.save_all of
+                        true -> share:save_graph(G, Settings, ActorName, local);
+                        false -> done
+                    end,
+                    NewLV;
+                L ->
+                    L
+            end
     end.
 
 does_actor_exist(ActorName) ->
@@ -45,17 +54,6 @@ does_actor_exist(ActorName) ->
     case ActorAst of
         not_found -> false;
         A -> A
-    end.
-
-build_localview(ActorName, Ast, Settings) ->
-    LV = share:get_localview(ActorName),
-    case LV of
-        not_found ->
-            BaseData = #wip_lv{fun_name = ActorName, fun_ast = Ast, settings = Settings},
-            share:add_vertex(BaseData#wip_lv.graph),
-            eval_codeline(BaseData#wip_lv.fun_ast, BaseData);
-        L ->
-            L
     end.
 
 eval_codeline(CodeLine, Data) ->

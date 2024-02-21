@@ -6,10 +6,10 @@ greet() ->
     Me ! hello1,
     if
         true ->
-            Me ! hello1,
+            Me ! hello2,
             greet();
         false ->
             receive
-                hello1 -> done
+                _ -> done
             end
     end.

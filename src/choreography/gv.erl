@@ -10,12 +10,13 @@
 
 %%% Generate the glabal view from an entrypoint and save it in a specified folder
 generate(Settings, EntryPoint) ->
-    MainGraph = share:get_localview(share:atol(EntryPoint)),
+    MainGraph = share:get_localview(EntryPoint),
     case MainGraph of
         not_found ->
             io:fwrite("Error: entrypoint for global view not found ~p~n", [EntryPoint]),
             error;
         _ ->
+            % io:fwrite("Creating the globalview starting from ~p~n", [EntryPoint]),
             G = create_globalview(EntryPoint),
             share:save_graph(G, Settings, EntryPoint, global),
             finished
@@ -29,8 +30,10 @@ generate(Settings, EntryPoint) ->
 create_globalview(Name) ->
     RetG = digraph:new(),
     VNew = share:add_vertex(RetG),
-    MainProcPid = spawn(actor_emul, proc_loop, [#actor_info{proc_id = Name}]),
-    ProcPidMap = #{Name => MainProcPid},
+    N = share:inc_spawn_counter(Name),
+    MainProcPid = spawn(actor_emul, proc_loop, [#actor_info{fun_name = Name, id = N}]),
+    PidKey = share:atol(Name) ++ ?SEPARATOR ++ integer_to_list(N),
+    ProcPidMap = #{ltoa(PidKey) => MainProcPid},
     % initialize first branch
     progress_procs(RetG, [new_branch(RetG, VNew, ProcPidMap)]).
 
@@ -51,10 +54,10 @@ progress_procs(G, []) ->
     G;
 progress_procs(GlobalGraph, BranchList) when is_list(BranchList) ->
     RealList = lists:flatten(BranchList),
-    io:fwrite("Branch to eval ~p~n", [length(RealList)]),
+    % io:fwrite("Branch to eval ~p~n", [length(RealList)]),
     NewBL = lists:foldl(
         fun(Item, AccL) ->
-            io:fwrite("Eval branch~n"),
+            % io:fwrite("Eval branch~n"),
             NewBreanches = progress_single_branch(Item),
             AccL ++ NewBreanches
         end,
@@ -74,7 +77,7 @@ progress_single_branch(BData) ->
             maps:fold(
                 fun(Name, Pid, AccList) ->
                     MessageQueue = actor_emul:get_proc_mess_queue(Pid),
-                    io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
+                    % io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
                     gen_branch_foreach_mess(TempBranchData, MessageQueue, Name, AccList)
                 end,
                 [],
@@ -104,12 +107,12 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseList) ->
                     AccList;
                 %%% If an edge has been found, duplicate the branch and add the transition to the graph
                 EdgeFound ->
-                    io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
+                    % io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
                     ProcFrom = Message#message.from,
                     MessData = Message#message.data,
                     PidFrom = maps:get(ProcFrom, NewMap),
                     Label = format_send_label(ProcFrom, ProcName, MessData),
-                    io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
+                    % io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
                     EFromInfo = actor_emul:get_proc_edge_info(PidFrom, Message#message.edge),
                     EToInfo = actor_emul:get_proc_edge_info(NewPid, EdgeFound),
                     {LastVertex, NewStateMap} = complex_add_vertex(
@@ -137,8 +140,8 @@ dup_branch(Data) ->
 duplicate_proccess(ProcMap) ->
     maps:fold(
         fun(K, V, A) ->
-            Name = remove_id_from_proc(K),
-            NewPid = spawn(actor_emul, proc_loop, [#actor_info{proc_id = Name}]),
+            {Name, N} = remove_id_from_proc(K),
+            NewPid = spawn(actor_emul, proc_loop, [#actor_info{fun_name = Name, id = N}]),
             actor_emul:set_proc_data(NewPid, actor_emul:get_proc_data(V)),
             maps:put(K, NewPid, A)
         end,
@@ -148,11 +151,13 @@ duplicate_proccess(ProcMap) ->
 
 %%% Remove the number from an actor's identificator
 remove_id_from_proc(ProcId) ->
-    Split = string:split(ProcId, "_"),
-    % io:fwrite("split ~p~n", [Split]),
+    Split = string:split(share:atol(ProcId), ?SEPARATOR),
     case Split of
-        [Name | _N] -> ltoa(Name);
-        _ -> ProcId
+        [Name | N] ->
+            {share:ltoa(Name), N};
+        _ ->
+            io:fwrite("Error: should have an id ~p", [ProcId]),
+            {ProcId, 0}
     end.
 
 %%% Evaluate the edges of a local view until it reaches a receive edge foreach actor
@@ -230,7 +235,7 @@ is_lists_edgerecv(ProcPid, EL) ->
 %%% Evaluate a transition from an actor
 eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     {Edge, _, _, PLabel} = EdgeInfo,
-    io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
+    % io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
     SLabel = atol(PLabel),
     IsArg = is_substring(SLabel, "arg"),
     IsSpawn = is_substring(SLabel, "spawn"),
@@ -254,43 +259,56 @@ is_substring(S, SubS) ->
     is_list(string:find(S, SubS)).
 
 %%% Add a spanw transition to the global view
-add_spawn_to_global(SLabel, ProcName, Data) ->
+add_spawn_to_global(SLabel, EmulProcName, Data) ->
     % get proc name
-    ProcIdS = string:prefix(SLabel, "spawn "),
-    FuncNameS = share:remove_last(share:remove_last(ProcIdS)),
+    FunSpawned = string:prefix(SLabel, "spawn "),
+    {FunSName, Counter} = remove_id_from_proc(FunSpawned),
     % spawn the actor emulator
-    FuncPid = spawn(actor_emul, proc_loop, [#actor_info{proc_id = ltoa(FuncNameS)}]),
-    NewMap = maps:put(ltoa(ProcIdS), FuncPid, Data#branch.proc_pid_m),
+    FuncPid = spawn(actor_emul, proc_loop, [#actor_info{fun_name = FunSName, id = Counter}]),
+    NewMap = maps:put(share:ltoa(FunSpawned), FuncPid, Data#branch.proc_pid_m),
     % get spawn arguemnt and add them to the local variables of the actor
-    LocalList = get_local_vars(ProcName, SLabel, FuncNameS),
+    LocalList = get_local_vars(EmulProcName, SLabel, FunSName),
     lists:foreach(fun(Var) -> actor_emul:add_proc_spawnvars(FuncPid, Var) end, LocalList),
     % create the edge on the global graph
     VNew = share:add_vertex(Data#branch.graph),
     %%% Δ means spawned
-    NewLabel = atol(ProcName) ++ "Δ" ++ ProcIdS,
+    NewLabel = share:atol(EmulProcName) ++ "Δ" ++ FunSpawned,
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
 
-get_local_vars(ProcName, Label, FuncName) ->
-    EM = share:get_edgedata(atol(ProcName)),
-    % add input data to local vars
+get_local_vars(ProcId, Label, FunSName) ->
+    EM = share:get_edgedata(FunSName),
     InputData = maps:get(Label, EM, []),
-    io:fwrite("ProcName ~p Label ~p Input ~p~n", [ProcName, Label, EM]),
+    % io:fwrite("[GV] EmulProcName ~p Label ~p Input ~p~n", [ProcId, Label, EM]),
+    % add input data to local vars
     case InputData of
         [] ->
             [];
         _ ->
-            [{_, Input}] = ets:lookup(?ARGUMENTS, ltoa(FuncName)),
-            {LL, _} = lists:foldl(
+            [{_, Input}] = ets:lookup(?ARGUMENTS, FunSName),
+            % io:fwrite("[GV] for fun ~p found ~p~n", [atol(FuncName), Input]),
+            {LL, Remain} = lists:foldl(
                 fun({var, _, Name}, {A, In}) ->
                     case In of
-                        [] -> {A ++ [#variable{name = Name}], []};
-                        [H | T] -> {A ++ [H#variable{name = Name}], T}
+                        [] ->
+                            io:fwrite("ERROR: list should NOT be empty but there is ~p~n", Name),
+                            {A ++ [#variable{name = Name}], []};
+                        [H | T] ->
+                            case H#variable.value of
+                                "pid_self" ->
+                                    {A ++ [#variable{type = pid, name = Name, value = ProcId}], T};
+                                _ ->
+                                    {A ++ [H#variable{name = Name}], T}
+                            end
                     end
                 end,
                 {[], InputData#variable.value},
                 Input
             ),
+            case Remain =:= [] of
+                true -> done;
+                false -> io:fwrite("ERROR: list should be empty but there is ~p~n", Remain)
+            end,
             LL
     end.
 
@@ -298,12 +316,12 @@ get_local_vars(ProcName, Label, FuncName) ->
 manage_send(SLabel, Data, ProcName, ProcPid, Edge) ->
     ProcPidMap = Data#branch.proc_pid_m,
     DataSent = get_data_from_label(SLabel),
-    ProcSentTemp = ltoa(get_proc_from_label(SLabel)),
+    ProcSentTemp = share:ltoa(get_proc_from_label(SLabel)),
     IsVar = share:is_erlvar(ProcSentTemp),
     ProcSentName =
         case IsVar of
             true -> check_vars(ProcPid, ProcSentTemp);
-            false -> ProcSentTemp
+            false -> share:ltoa(check_pid_self(ProcSentTemp, ProcName))
         end,
     ProcSentPid = maps:get(ProcSentName, ProcPidMap, no_pid),
     case ProcSentPid of
@@ -365,7 +383,7 @@ manage_recv(ProcPid, Message) ->
 %%% Find the actor id from a variable's list, given the variable name
 check_vars(ProcPid, VarName) ->
     ProcLocalVars = actor_emul:get_proc_localvars(ProcPid),
-    % io:fwrite("Find var ~p in ~p from ~p~n", [VarName, ProcLocalVars, ProcName]),
+    % io:fwrite("Find var ~p in ~p pid ~p~n", [VarName, ProcLocalVars, ProcPid]),
     VarValue = share:find_var(ProcLocalVars, VarName),
     case VarValue of
         not_found ->
@@ -373,21 +391,21 @@ check_vars(ProcPid, VarName) ->
         V ->
             case V#variable.type of
                 ?UNDEFINED -> VarName;
-                "pid_self" -> ltoa(V#variable.value);
-                pid_self -> ltoa(V#variable.value);
-                _ -> remove_pid_part(V#variable.type)
+                "pid" -> V#variable.value;
+                pid -> V#variable.value;
+                _ -> V#variable.type
             end
     end.
 
 %%% Remove the "pid_" part from a variable's type
-remove_pid_part(Data) ->
-    ltoa(lists:flatten(string:replace(atol(Data), "pid_", ""))).
+% remove_pid_part(Data) -> ltoa(lists:flatten(string:replace(atol(Data), "pid_", ""))).
 
 %%% Check if a pattern metching match a message, then register the new variables
 is_pm_msg_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
     {RetBool, RegList} = check_msg_comp(
         ProcPid, CallingProc, PatternMatching, Message#message.data
     ),
+    % io:fwrite("Reg List ~p~n", [RegList]),
     lists:foreach(
         fun(Item) -> register_var(Item) end,
         RegList
@@ -427,15 +445,16 @@ check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
 
 %%% Register a actor's variable
 register_var(Data) ->
-    {ProcPid, Name, Type} = Data,
-    V = #variable{name = ltoa(Name), type = ltoa(Type)},
-    %io:fwrite("Added Var ~p~n", [V]),
+    {ProcPid, Name, Value} = Data,
+    %%% type = pid to change, for now it's ok like this because I only focus on pid exchange
+    V = #variable{name = ltoa(Name), type = pid, value = ltoa(Value)},
+    % io:fwrite("Added Var ~p~n", [V]),
     actor_emul:add_proc_localvars(ProcPid, V).
 
 %%% Substitute pif_self to pid_procId
 check_pid_self(Data, ProcId) ->
-    % %io:fwrite("[C]Data ~p proc id ~p~n", [Data, ProcId]),
-    lists:flatten(string:replace(atol(Data), "pid_self", "pid_" ++ atol(ProcId))).
+    % io:fwrite("[C]Data ~p proc id ~p~n", [Data, ProcId]),
+    lists:flatten(string:replace(atol(Data), "pid_self", atol(ProcId))).
 
 %%% Custom recursive logic and
 and_rec([]) ->

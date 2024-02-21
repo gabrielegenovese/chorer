@@ -1,0 +1,8 @@
+digraph server0 {
+	rankdir="LR";
+	n_0 [label="server0", shape="plaintext"];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+
+	n_1 -> n_1 [id="[$e|3]", label="receive X"];
+}

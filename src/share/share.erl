@@ -20,9 +20,10 @@
     parse_actor_string/1,
     should_minimize/1,
     save_graph/4,
-    add_vertex_edge/2,
     remove_last/1,
     find_var/2,
+    if_final_get_n/1,
+    inc_spawn_counter/1,
     atol/1,
     ltoa/1
 ]).
@@ -72,29 +73,41 @@ is_uppercase(Char) when (is_list(Char)) and (length(Char) =:= 1) ->
 get_fun_ast(FunName) ->
     Ast = ets:lookup(?FUNAST, atol(FunName)),
     case Ast of
-        [] -> not_found;
-        [{_, A}] -> A
+        [] ->
+            % io:fwrite("[S] Not Found in funast ~p~n", [FunName]),
+            not_found;
+        [{_, A}] ->
+            A
     end.
 
 get_localview(FunName) ->
-    Ast = ets:lookup(?LOCALVIEW, FunName),
+    Ast = ets:lookup(?LOCALVIEW, atol(FunName)),
     case Ast of
-        [] -> not_found;
-        [{_, A}] -> A
+        [] ->
+            % io:fwrite("[S] Not Found in localview ~p~n", [FunName]),
+            not_found;
+        [{_, A}] ->
+            A
     end.
 
 get_graph(FunName) ->
-    Ast = ets:lookup(?LOCALVIEW, FunName),
+    Ast = ets:lookup(?LOCALVIEW, atol(FunName)),
     case Ast of
-        [] -> not_found;
-        [{_, A}] -> A#wip_lv.graph
+        [] ->
+            io:fwrite("[S] Not Found in graph ~p~n", [FunName]),
+            not_found;
+        [{_, A}] ->
+            A#wip_lv.graph
     end.
 
 get_edgedata(FunName) ->
-    Ast = ets:lookup(?LOCALVIEW, FunName),
+    Ast = ets:lookup(?LOCALVIEW, atol(FunName)),
     case Ast of
-        [] -> not_found;
-        [{_, A}] -> A#wip_lv.edge_map
+        [] ->
+            io:fwrite("[S] Not Found in edgedata ~p~n", [FunName]),
+            not_found;
+        [{_, A}] ->
+            A#wip_lv.edge_map
     end.
 
 warning(String, Content, RetData) ->
@@ -116,6 +129,12 @@ ltoa(L) when is_list(L) -> list_to_atom(L);
 ltoa(L) when is_atom(L) -> L.
 atol(A) when is_atom(A) -> atom_to_list(A);
 atol(A) when is_list(A) -> A.
+
+if_final_get_n(L) when not is_integer(L) ->
+    NewL = re:replace(L, ?FINALTAG, "", [{return, list}]),
+    list_to_integer(NewL);
+if_final_get_n(L) when is_integer(L) ->
+    L.
 
 merge_fun_ar(Name, Arity) ->
     atol(Name) ++ integer_to_list(Arity).
@@ -142,13 +161,6 @@ save_graph(G, Settings, FunName, Mode) ->
         end,
     save_graph_to_file(ToSaveG, OutputDir, FunName, Mode).
 
-add_vertex_edge(Label, Data) ->
-    G = Data#wip_lv.graph,
-    LastV = Data#wip_lv.last_vertex,
-    V = share:add_vertex(G),
-    digraph:add_edge(G, LastV, V, Label),
-    Data#wip_lv{last_vertex = V}.
-
 %%% Remove the last element from a list
 remove_last(Item) ->
     ItemList = atol(Item),
@@ -166,6 +178,15 @@ find_var([Var | Tail], Name) ->
 find_var(Data, Name) ->
     LL = Data#wip_lv.local_vars,
     find_var(LL, Name).
+
+inc_spawn_counter(Name) ->
+    Ret =
+        case ets:lookup(?SPAWNC, share:ltoa(Name)) of
+            [] -> 0;
+            [{_, N}] -> N
+        end,
+    ets:insert(?SPAWNC, {Name, Ret + 1}),
+    Ret.
 
 %%%===================================================================
 %%% Internal Functions

@@ -1,0 +1,24 @@
+digraph global {
+	rankdir="LR";
+	n_0 [label="global", shape="plaintext"];
+	n_1 [id="5", shape=circle, label="7"];
+	n_2 [id="6", shape=circle, label="9"];
+	n_3 [id="10", shape=circle, label="4"];
+	n_4 [id="1", shape=circle, label="1"];
+	n_0 -> n_4 [arrowhead=none];
+	n_5 [id="9", shape=circle, label="5"];
+	n_6 [id="2", shape=circle, label="2"];
+	n_7 [id="8", shape=circle, label="8"];
+	n_8 [id="4", shape=circle, label="6"];
+	n_9 [id="3", shape=circle, label="3"];
+
+	n_4 -> n_6 [id="[$e|3]", label="main0/0Δa0/0"];
+	n_3 -> n_8 [id="[$e|8]", label="a0/0→b0/0:v2"];
+	n_3 -> n_5 [id="[$e|2]", label="a0/0→c0/0:v1"];
+	n_8 -> n_1 [id="[$e|6]", label="a0/0→c0/0:v1"];
+	n_9 -> n_3 [id="[$e|5]", label="main0/0Δc0/0"];
+	n_1 -> n_2 [id="[$e|9]", label="b0/0→c0/0:v2"];
+	n_6 -> n_9 [id="[$e|1]", label="main0/0Δb0/0"];
+	n_7 -> n_2 [id="[$e|4]", label="b0/0→c0/0:v2"];
+	n_5 -> n_7 [id="[$e|0]", label="a0/0→b0/0:v2"];
+}

@@ -1,0 +1,25 @@
+digraph main0 {
+	rankdir="LR";
+	n_0 [label="main0", shape="plaintext"];
+	n_1 [id="11", shape=circle, label="3"];
+	n_2 [id="6", shape=circle, label="4"];
+	n_3 [id="10", shape=circle, label="5"];
+	n_4 [id="1", shape=circle, label="1"];
+	n_0 -> n_4 [arrowhead=none];
+	n_5 [id="2", shape=circle, label="7"];
+	n_6 [id="8", shape=doublecircle, label="8"];
+	n_7 [id="4", shape=circle, label="2"];
+	n_8 [id="3", shape=circle, label="6"];
+
+	n_8 -> n_5 [id="[$e|16]", label="send "Ciao A" to dummy1/0"];
+	n_8 -> n_5 [id="[$e|0]", label="send "Ciao C" to dummy1/2"];
+	n_8 -> n_6 [id="[$e|9]", label="receive Obj"];
+	n_8 -> n_5 [id="[$e|14]", label="send "Ciao D" to dummy1/3"];
+	n_1 -> n_2 [id="[$e|5]", label="spawn dummy1/2"];
+	n_5 -> n_6 [id="[$e|3]", label="receive Obj"];
+	n_3 -> n_8 [id="[$e|8]", label="receive {Process,_}"];
+	n_2 -> n_3 [id="[$e|6]", label="spawn dummy1/3"];
+	n_7 -> n_1 [id="[$e|11]", label="spawn dummy1/1"];
+	n_8 -> n_5 [id="[$e|15]", label="send "Ciao B" to dummy1/1"];
+	n_4 -> n_7 [id="[$e|4]", label="spawn dummy1/0"];
+}
