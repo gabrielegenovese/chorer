@@ -38,5 +38,4 @@ main() ->
     S = spawn(?MODULE, server, []),
     register(server, S),
     spawn(?MODULE, client, []),
-    spawn(?MODULE, client, []),
     done.

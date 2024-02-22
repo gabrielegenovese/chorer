@@ -1,14 +1,14 @@
 digraph client0 {
 	rankdir="LR";
 	n_0 [label="client0", shape="plaintext"];
-	n_1 [id="5", shape=doublecircle, label="4"];
-	n_2 [id="1", shape=circle, label="1"];
-	n_0 -> n_2 [arrowhead=none];
-	n_3 [id="2", shape=circle, label="2"];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="2", shape=doublecircle, label="4"];
+	n_3 [id="4", shape=circle, label="2"];
 	n_4 [id="3", shape=circle, label="3"];
 
-	n_4 -> n_1 [id="[$e|1]", label="send done to Handle"];
-	n_4 -> n_4 [id="[$e|3]", label="send next to Handle"];
-	n_3 -> n_4 [id="[$e|6]", label="receive {res,Handle}"];
-	n_2 -> n_3 [id="[$e|2]", label="send {req,pid_self} to server0/0"];
+	n_3 -> n_4 [id="[$e|3]", label="receive {res,Handle}"];
+	n_4 -> n_4 [id="[$e|7]", label="send next to Handle"];
+	n_1 -> n_3 [id="[$e|2]", label="send {req,pid_self} to server0/0"];
+	n_4 -> n_2 [id="[$e|5]", label="send done to Handle"];
 }

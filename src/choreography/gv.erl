@@ -18,7 +18,9 @@ generate(Settings, EntryPoint) ->
         _ ->
             % io:fwrite("Creating the globalview starting from ~p~n", [EntryPoint]),
             G = create_globalview(EntryPoint),
-            share:save_graph(G, Settings, EntryPoint, global),
+            MinG = fsa:minimize(G),
+            Data = #wip_lv{graph = G, min_graph = MinG},
+            share:save_graph(Data, Settings, EntryPoint, global),
             finished
     end.
 
@@ -277,16 +279,16 @@ add_spawn_to_global(SLabel, EmulProcName, Data) ->
     {VNew, NewMap}.
 
 get_local_vars(ProcId, Label, FunSName) ->
-    EM = share:get_edgedata(FunSName),
+    EM = share:get_edgedata(element(1, remove_id_from_proc(ProcId))),
     InputData = maps:get(Label, EM, []),
-    % io:fwrite("[GV] EmulProcName ~p Label ~p Input ~p~n", [ProcId, Label, EM]),
+    % io:fwrite("[GV] EmulProcName ~p Label ~p Input ~p~n", [FunSName, Label, EM]),
     % add input data to local vars
     case InputData of
         [] ->
             [];
         _ ->
-            [{_, Input}] = ets:lookup(?ARGUMENTS, FunSName),
-            % io:fwrite("[GV] for fun ~p found ~p~n", [atol(FuncName), Input]),
+            [{_, Input}] = ets:lookup(?ARGUMENTS, atol(FunSName)),
+            % io:fwrite("[GV] for fun ~p found ~p~n", [atol(FunSName), Input]),
             {LL, Remain} = lists:foldl(
                 fun({var, _, Name}, {A, In}) ->
                     case In of

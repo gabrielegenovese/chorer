@@ -12,6 +12,7 @@
 %%% book: Programming Languages, Second edition, McGraw-Hill, 2011
 minimize(NFA) ->
     % Convert a NFA to a DFA
+    remove_unreachable(NFA),
     DFA = subset_construction(NFA),
     % Minimization of the DFA
     remove_unreachable(DFA),
@@ -61,6 +62,7 @@ subset_construction(NFA) ->
     FirstDFAState = eps_clos(NFA, [1]),
     %%% Create a list of DFA states and transitions
     {DFAStateL, DFATransitionsL} = subset_construction(NFA, sfroml([FirstDFAState])),
+    % io:fwrite("LIST OF DFA STATES ~p~n", [stol(DFAStateL)]),
     %%% Convert the list of DFA state in the DFA graph vertex
     VertexEquivalanceM = convert_statel_to_graph(NFA, DFA, FirstDFAState, DFAStateL),
     %%% Convert the list of DFA transition in the DFA graph edges
@@ -108,22 +110,30 @@ subset_construction(NFA, StateS, TransS, MarkedS) ->
 
 %%% Convert a list of DFA state in a given DFA graph:
 %%% a set of NFA states equals to a graph vertex
-convert_statel_to_graph(NFA, DFA, FirstDFAState, DFAStateL) ->
-    RetM = #{FirstDFAState => share:add_vertex(DFA)},
-    FoldFun = fun(DFAState, AccM) ->
-        case DFAState =:= FirstDFAState of
-            true ->
-                AccM;
-            false ->
-                DFAVertex = share:add_vertex(DFA),
-                case is_final_state(NFA, sets:to_list(DFAState)) of
-                    true -> set_as_final(DFA, DFAVertex);
-                    false -> ?UNDEFINED
-                end,
-                maps:put(DFAState, DFAVertex, AccM)
-        end
-    end,
-    sets:fold(FoldFun, RetM, DFAStateL).
+convert_statel_to_graph(NFA, DFA, FirstDFAStateL, DFAStateL) ->
+    FirstDFAVertex = share:add_vertex(DFA),
+    establish_final(NFA, DFA, FirstDFAStateL, FirstDFAVertex),
+    RetM = #{FirstDFAStateL => FirstDFAVertex},
+    sets:fold(
+        fun(DFAState, AccM) ->
+            case DFAState =:= FirstDFAStateL of
+                true ->
+                    AccM;
+                false ->
+                    DFAVertex = share:add_vertex(DFA),
+                    establish_final(NFA, DFA, DFAState, DFAVertex),
+                    maps:put(DFAState, DFAVertex, AccM)
+            end
+        end,
+        RetM,
+        DFAStateL
+    ).
+
+establish_final(NFA, DFA, DFAState, DFAVertex) ->
+    case is_final_state(NFA, stol(DFAState)) of
+        true -> set_as_final(DFA, DFAVertex);
+        false -> ?UNDEFINED
+    end.
 
 %%% Convert a DFA transition list to equivalents graph edges in the DFA graph
 convert_transl_to_graph(DFA, DFAVertexEquivM, DFATransitionsL) ->
@@ -310,7 +320,10 @@ is_final_state(G, L) when is_list(L) ->
 is_final_state(G, V) ->
     {V, L} = digraph:vertex(G, V),
     %%% All label's states are numbers, execept for final states
-    not is_integer(L).
+    case string:find(share:atol(L), ?FINALTAG) of
+        nomatch -> false;
+        _ -> true
+    end.
 
 %%% Set a state as final
 set_as_final(G, V) ->
@@ -337,9 +350,9 @@ bfs_with_raname(G, VL, MarkedV, LastLabel) ->
             Last = lists:foldl(
                 fun(I, AccI) ->
                     LNum = AccI + 1,
-                    C = is_final_state(G, I),
+                    Cond = is_final_state(G, I),
                     FinalL =
-                        case C of
+                        case Cond of
                             true -> ?FINALTAG ++ integer_to_list(LNum);
                             false -> LNum
                         end,

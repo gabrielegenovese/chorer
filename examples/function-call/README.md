@@ -1,11 +1,17 @@
-# Usage
+# Function call example
 
-```erlang
-# erl
-1> c(funny).
-{ok,funny}
-2> funny:main().
-Hello from dummy (1)
-Hello from dummy (2)
-ok
+## Use
+
+```bash
+./_build/default/bin/chorer ./examples/function-call/funny.erl main0 examples/function-call
 ```
+
+## Description
+
+Features:
+
+- due call identiche a recv_dummy
+
+## Results
+
+LV del main sbagliata, perché durante la minimizzazione toglie la seconda receive e quindi la GV è sbagliata

@@ -29,6 +29,7 @@ function_list(ContList, Data) ->
         fun(FunctionBody, AccData) ->
             case FunctionBody of
                 {clause, _, Vars, Guard, Content} ->
+                    % io:fwrite("Clause ~p~n", [Vars]),
                     ets:insert(?ARGUMENTS, {Data#wip_lv.fun_name, Vars}),
                     clause(Content, Vars, Guard, AccData#wip_lv{last_vertex = 1}, "arg");
                 C ->
@@ -301,8 +302,15 @@ generic_call(Name, ArgList, Data) ->
             LastV = Data#wip_lv.last_vertex,
             NewG = NewD#wip_lv.graph,
             NewRet = NewD#wip_lv.ret_var,
+            EM = NewD#wip_lv.edge_map,
             NewLastV = merge_graph(G, NewG, LastV),
-            Data#wip_lv{ret_var = NewRet, last_vertex = NewLastV}
+            % io:fwrite("LastV ~p VarRet ~p~n", [LastV, NewRet]),
+            % io:fwrite("OldEM ~p NewEM ~p~n", [Data#wip_lv.edge_map, EM]),
+            Data#wip_lv{
+                ret_var = NewRet,
+                last_vertex = NewLastV,
+                edge_map = maps:merge(Data#wip_lv.edge_map, EM)
+            }
     end.
 
 %%% TODO: eval argument list
@@ -382,7 +390,7 @@ var_to_string(Var) ->
                             case SType of
                                 "integer" -> integer_to_list(Val);
                                 "float" -> io_lib:format("~.2f", [Val]);
-                                "string" -> "\"" ++ Val ++ "\"";
+                                "string" -> "\'" ++ Val ++ "\'";
                                 "atom" -> share:atol(Val);
                                 "list" -> format_list(Val, fun var_to_string/1);
                                 "tuple" -> format_tuple(Val, fun var_to_string/1);

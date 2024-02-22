@@ -10,6 +10,7 @@ greet() ->
             greet();
         false ->
             receive
-                _ -> done
+                hello1 -> done;
+                hello2 -> done
             end
     end.

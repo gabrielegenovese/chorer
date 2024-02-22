@@ -128,7 +128,8 @@ get_base_label(SetPm, Label) ->
 ltoa(L) when is_list(L) -> list_to_atom(L);
 ltoa(L) when is_atom(L) -> L.
 atol(A) when is_atom(A) -> atom_to_list(A);
-atol(A) when is_list(A) -> A.
+atol(A) when is_list(A) -> A;
+atol(A) when is_number(A) -> integer_to_list(A).
 
 if_final_get_n(L) when not is_integer(L) ->
     NewL = re:replace(L, ?FINALTAG, "", [{return, list}]),
@@ -151,13 +152,13 @@ should_minimize(S) ->
         _ -> true
     end.
 
-save_graph(G, Settings, FunName, Mode) ->
+save_graph(Data, Settings, FunName, Mode) ->
     OutputDir = Settings#setting.output_dir,
     Minimize = should_minimize(atol(FunName) ++ " " ++ atol(Mode)),
     ToSaveG =
         case Minimize of
-            true -> fsa:minimize(G);
-            false -> G
+            true -> Data#wip_lv.min_graph;
+            false -> Data#wip_lv.graph
         end,
     save_graph_to_file(ToSaveG, OutputDir, FunName, Mode).
 

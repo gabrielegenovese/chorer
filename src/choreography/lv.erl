@@ -25,10 +25,10 @@ create_localview(ActorName, Settings, Save) ->
             io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]),
             no_graph;
         ActorAst ->
-            io:fwrite("[LV] Creating a localview for ~p~n", [ActorName]),
             LV = share:get_localview(ActorName),
             case LV of
                 not_found ->
+                    io:fwrite("[LV] Creating a localview for ~p~n", [ActorName]),
                     BaseData = #wip_lv{
                         fun_name = ActorName, fun_ast = ActorAst, settings = Settings
                     },
@@ -37,10 +37,10 @@ create_localview(ActorName, Settings, Save) ->
                     G = LVData#wip_lv.graph,
                     set_final_state(G),
                     MinG = fsa:minimize(G),
-                    NewLV = LVData#wip_lv{graph = MinG},
+                    NewLV = LVData#wip_lv{min_graph = MinG},
                     ets:insert(?LOCALVIEW, {ActorName, NewLV}),
                     case Save or Settings#setting.save_all of
-                        true -> share:save_graph(G, Settings, ActorName, local);
+                        true -> share:save_graph(NewLV, Settings, ActorName, local);
                         false -> done
                     end,
                     NewLV;

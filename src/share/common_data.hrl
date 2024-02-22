@@ -41,6 +41,7 @@
     fun_name = "",
     fun_ast = {},
     graph = digraph:new(),
+    min_graph = digraph:new(),
     last_vertex = 1,
     local_vars = [],
     ret_var = #variable{},
