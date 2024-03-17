@@ -1,3 +1,8 @@
+%%%-------------------------------------------------------------------
+%%% @doc
+%%% Module with some common functions used everywhere in the project.
+%%% @end
+%%%-------------------------------------------------------------------
 -module(share).
 -include("common_data.hrl").
 
@@ -32,6 +37,7 @@
 %%% API
 %%%===================================================================
 
+%%% @doc
 %%% Pick first element from a list
 first([]) -> [];
 first([H | _]) -> H.
@@ -60,12 +66,15 @@ del_vertex(G, V) ->
     [digraph:add_vertex(G, Ver, Ver - 1) || Ver <- digraph:vertices(G), Ver > V],
     digraph:del_vertex(G, V).
 
-%%% Return true if first letter's atom is uppercase (it's a variable in erlang), otherwise false.
+%%% @doc
+%%% Return true if first letter's atom is uppercase (it's a variable in erlang),
+%%% otherwise false.
 is_erlvar(Name) ->
     SName = atol(Name),
     [FirstChar | _] = SName,
     is_uppercase([FirstChar]).
 
+%%% @doc
 %%% If the input character is uppercase return true, otherwise false.
 is_uppercase(Char) when (is_list(Char)) and (length(Char) =:= 1) ->
     (Char >= "A") and (Char =< "Z").
@@ -162,7 +171,8 @@ save_graph(Data, Settings, FunName, Mode) ->
         end,
     save_graph_to_file(ToSaveG, OutputDir, FunName, Mode).
 
-%%% Remove the last element from a list
+%%% @doc
+%%% Remove the last element from a list.
 remove_last(Item) ->
     ItemList = atol(Item),
     {Rest, _} = lists:split(length(ItemList) - 1, ItemList),

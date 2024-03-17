@@ -8,7 +8,6 @@
 -define(ANYDATA, any).
 
 -define(CLINE, curr_line).
--define(INPUTAST, input_ast).
 -define(ACTORLIST, actor_list).
 -define(FUNAST, fun_ast).
 -define(ARGUMENTS, args).

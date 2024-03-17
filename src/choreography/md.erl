@@ -1,3 +1,10 @@
+%%%-------------------------------------------------------------------
+%%% @doc
+%%% The metadata extractor module.
+%%% This module extract all the essential metadata prior to the localviews
+%%% and globalview generation.
+%%% @end
+%%%-------------------------------------------------------------------
 -module(md).
 -include("../share/common_data.hrl").
 
@@ -8,22 +15,24 @@
 %%% API
 %%%===================================================================
 
+%%% @doc
+%%% Extract the metadata: the AST (abstract syntax tree) for each function
+%%% and all the Actor List.
 extract(InputFile) ->
-    gen_ast(InputFile),
-    gen_fun_ast_and_exported().
+    gen_fun_ast_and_exported(parse_file(InputFile)).
 
-parse_file(Path) -> element(2, epp_dodger:quick_parse_file(Path)).
+%%% @doc
+%%% Return the AST of the file localted in Path.
+parse_file(Path) ->
+    element(2, epp_dodger:quick_parse_file(Path)).
 
 %%%===================================================================
 %%% Internal Functions
 %%%===================================================================
 
-gen_ast(InputFile) ->
-    Ast = parse_file(InputFile),
-    ets:insert(?DBMANAGER, {?INPUTAST, Ast}).
-
-gen_fun_ast_and_exported() ->
-    [{_, Ast}] = ets:lookup(?DBMANAGER, ?INPUTAST),
+%%% Parse all the file and save the Ast of each function and also all the possible actors.
+%%% All the exported functions are cosidereted possible actors. 
+gen_fun_ast_and_exported(Ast) ->
     List =
         lists:foldl(
             fun(CodeLine, AccList) ->
@@ -32,7 +41,9 @@ gen_fun_ast_and_exported() ->
                         AccList ++ [share:merge_fun_ar(N, A) || {N, A} <- AtrList];
                     {function, Line, Name, Arity, FunAst} ->
                         % io:fwrite("[MD] Found ~p~n", [share:merge_fun_ar(Name, Arity)]),
-                        ets:insert(?FUNAST, {share:merge_fun_ar(Name, Arity), {function, Line, FunAst}}),
+                        ets:insert(?FUNAST, {
+                            share:merge_fun_ar(Name, Arity), {function, Line, FunAst}
+                        }),
                         AccList;
                     _ ->
                         AccList

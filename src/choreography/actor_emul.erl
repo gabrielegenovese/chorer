@@ -1,3 +1,8 @@
+%%%-------------------------------------------------------------------
+%%% @doc
+%%% This module simulate an actor's localview during a globalview.
+%%% @end
+%%%-------------------------------------------------------------------
 -module(actor_emul).
 -include("../share/common_data.hrl").
 
@@ -22,25 +27,56 @@
 %%% API
 %%%===================================================================
 
+%%% @doc
+%%% Use a transition of the localview.
 use_proc_transition(P, E) -> P ! {use_transition, E}.
+
+%%% @doc
+%%% Get all the localview's current edges.
 get_proc_edges(P) -> send_recv(P, {self(), get_edges}).
+
+%%% @doc
+%%% Get all the number of the localview's current edges.
 get_proc_out_degree(P) -> send_recv(P, {self(), get_out_degree}).
+
+%%% @doc
+%%% Get the informations of a localview's edge.
 get_proc_edge_info(P, E) -> send_recv(P, {self(), get_edge_info, E}).
+
+%%% @doc
+%%% Get the list of the local variables.
 get_proc_localvars(P) -> send_recv(P, {self(), get_local_vars}).
+
+%%% @doc
+%%% Add a variable to the spawn arguments of the localview.
 add_proc_spawnvars(P, V) -> P ! {add_spawn_var, V}.
+
+%%% @doc
+%%% Add a variable to the local variables of the localview.
 add_proc_localvars(P, V) -> P ! {add_local_var, V}.
+
+%%% @doc
+%%% Get the all the data of the process.
 get_proc_data(P) -> send_recv(P, {self(), get_data}).
+
+%%% @doc
+%%% Set the all the data of the process.
 set_proc_data(P, Data) -> P ! {set_data, Data}.
+
+%%% @doc
+%%% Get the message queue of the process.
 get_proc_mess_queue(P) -> send_recv(P, {self(), get_mess_queue}).
+
+%%% @doc
+%%% Add a message to the message queue of the process.
 add_proc_mess_queue(P, M) -> P ! {add_mess_queue, M}.
+
+%%% @doc
+%%% Delete a message from the message queue of the process.
 del_proc_mess_queue(P, M) -> P ! {del_mess_queue, M}.
 
-send_recv(P, Data) ->
-    P ! Data,
-    receive
-        {D} -> D
-    end.
-
+%%% @doc
+%%% Loop function to simulate a process.
 proc_loop(Data) ->
     ProcName = Data#actor_info.fun_name,
     % io:fwrite("[EMUL] ID ~p~n", [ProcName]),
@@ -135,4 +171,14 @@ proc_loop(Data) ->
             ok
     end.
 
+%%%===================================================================
+%%% Internal Functions
+%%%===================================================================
+
 filter_marked_edges(EdgeL, MarkedE) -> [E || E <- EdgeL, not lists:member(E, MarkedE)].
+
+send_recv(P, Data) ->
+    P ! Data,
+    receive
+        {D} -> D
+    end.

@@ -1,3 +1,9 @@
+%%%-------------------------------------------------------------------
+%%% @doc
+%%% This module generetes the localview.
+%%% Must be used after `md:extract' and `lv:generate'.
+%%% @end
+%%%-------------------------------------------------------------------
 -module(gv).
 -include("../share/common_data.hrl").
 
@@ -8,7 +14,8 @@
 %%% API
 %%%===================================================================
 
-%%% Generate the glabal view from an entrypoint and save it in a specified folder
+%%% @doc
+%%% Generate the glabal view from an entrypoint and save it in a specified folder.
 generate(Settings, EntryPoint) ->
     MainGraph = share:get_localview(EntryPoint),
     case MainGraph of
@@ -35,7 +42,7 @@ create_globalview(Name) ->
     N = share:inc_spawn_counter(Name),
     MainProcPid = spawn(actor_emul, proc_loop, [#actor_info{fun_name = Name, id = N}]),
     PidKey = share:atol(Name) ++ ?SEPARATOR ++ integer_to_list(N),
-    ProcPidMap = #{ltoa(PidKey) => MainProcPid},
+    ProcPidMap = #{share:ltoa(PidKey) => MainProcPid},
     % initialize first branch
     progress_procs(RetG, [new_branch(RetG, VNew, ProcPidMap)]).
 
@@ -132,7 +139,7 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseList) ->
 
 %%% Format the send label for the global view
 format_send_label(ProcFrom, ProcTo, Data) ->
-    atol(ProcFrom) ++ "→" ++ atol(ProcTo) ++ ":" ++ atol(Data).
+    share:atol(ProcFrom) ++ "→" ++ share:atol(ProcTo) ++ ":" ++ share:atol(Data).
 
 %%% Create a duplicate for a branch object
 dup_branch(Data) ->
@@ -228,7 +235,7 @@ is_lists_edgerecv(ProcPid, EL) ->
     lists:foldl(
         fun(E, A) ->
             {E, _, _, Label} = actor_emul:get_proc_edge_info(ProcPid, E),
-            A or is_substring(atol(Label), "receive")
+            A or is_substring(share:atol(Label), "receive")
         end,
         false,
         EL
@@ -238,7 +245,7 @@ is_lists_edgerecv(ProcPid, EL) ->
 eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     {Edge, _, _, PLabel} = EdgeInfo,
     % io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
-    SLabel = atol(PLabel),
+    SLabel = share:atol(PLabel),
     IsArg = is_substring(SLabel, "arg"),
     IsSpawn = is_substring(SLabel, "spawn"),
     IsSend = is_substring(SLabel, "send"),
@@ -257,10 +264,11 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             {BData, false}
     end.
 
+%%% If SubS is substring of S return True, otherwise False.
 is_substring(S, SubS) ->
     is_list(string:find(S, SubS)).
 
-%%% Add a spanw transition to the global view
+%%% Add a spawn transition to the global view
 add_spawn_to_global(SLabel, EmulProcName, Data) ->
     % get proc name
     FunSpawned = string:prefix(SLabel, "spawn "),
@@ -273,7 +281,6 @@ add_spawn_to_global(SLabel, EmulProcName, Data) ->
     lists:foreach(fun(Var) -> actor_emul:add_proc_spawnvars(FuncPid, Var) end, LocalList),
     % create the edge on the global graph
     VNew = share:add_vertex(Data#branch.graph),
-    %%% Δ means spawned
     NewLabel = share:atol(EmulProcName) ++ "Δ" ++ FunSpawned,
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
@@ -287,7 +294,7 @@ get_local_vars(ProcId, Label, FunSName) ->
         [] ->
             [];
         _ ->
-            [{_, Input}] = ets:lookup(?ARGUMENTS, atol(FunSName)),
+            [{_, Input}] = ets:lookup(?ARGUMENTS, share:atol(FunSName)),
             % io:fwrite("[GV] for fun ~p found ~p~n", [atol(FunSName), Input]),
             {LL, Remain} = lists:foldl(
                 fun({var, _, Name}, {A, In}) ->
@@ -315,10 +322,10 @@ get_local_vars(ProcId, Label, FunSName) ->
     end.
 
 %%% Evaluate a send transition of an actor
-manage_send(SLabel, Data, ProcName, ProcPid, Edge) ->
+manage_send(SendLabel, Data, ProcName, ProcPid, Edge) ->
     ProcPidMap = Data#branch.proc_pid_m,
-    DataSent = get_data_from_label(SLabel),
-    ProcSentTemp = share:ltoa(get_proc_from_label(SLabel)),
+    DataSent = get_data_from_label(SendLabel),
+    ProcSentTemp = share:ltoa(get_proc_from_label(SendLabel)),
     IsVar = share:is_erlvar(ProcSentTemp),
     ProcSentName =
         case IsVar of
@@ -328,26 +335,31 @@ manage_send(SLabel, Data, ProcName, ProcPid, Edge) ->
     ProcSentPid = maps:get(ProcSentName, ProcPidMap, no_pid),
     case ProcSentPid of
         no_pid ->
-            io:fwrite("[SEND-ERR] no pid found for: ~p~n", [ProcSentName]),
+            io:fwrite("[SEND-ERR] no pid found for: ~p~n", [ProcSentTemp]),
             {Data, false};
         P ->
             actor_emul:add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge)),
-            %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
+            %%% NOTE: the last operation MUST be use_proc_transition, otherwise the final graph might be wrong
             actor_emul:use_proc_transition(ProcPid, Edge),
             {Data, true}
     end.
 
 %%% Evaluate a receive transition of an actor
 manage_recv(ProcPid, Message) ->
-    EL = actor_emul:get_proc_edges(ProcPid),
-    %%% IMPORTANT TODO: evaluation of the edge's order not implemented!!
-    IsRecv = is_lists_edgerecv(ProcPid, EL),
+    EdgeList = actor_emul:get_proc_edges(ProcPid),
+    IsRecvList = is_lists_edgerecv(ProcPid, EdgeList),
     %io:fwrite("IsRECV ~p EL ~p~n", [IsRecv, EL]),
     From = Message#message.from,
-    case IsRecv of
+    case IsRecvList of
         false ->
-            % TODO: manage when is not ONLY a receive edge
-            % the following piece of code is old, check before uncommenting
+            % TODO: manage when is not ONLY a receive edge, like:
+            %         3
+            %        /recv
+            % 1 -> 2
+            %        \send
+            %         4
+            %
+            % The following piece of code is old, check before uncommenting
             % {NewL, NOp} = lists:foldl(
             %     fun(E, A) ->
             %         EInfo = get_proc_edge_info(ProcPid, E),
@@ -362,22 +374,24 @@ manage_recv(ProcPid, Message) ->
             % {H, T, NOp};
             ?UNDEFINED;
         true ->
+            %%% IMPORTANT TODO: evaluation of the edge's order not implemented!!
+            %%% Evaluate edges in order as in the code
             {_, EdgeChoosen} = lists:foldl(
-                fun(E, {B, Ret}) ->
-                    case B of
+                fun(Edge, {AlreadyFound, RetEdge}) ->
+                    case AlreadyFound of
                         true ->
-                            {B, Ret};
+                            {AlreadyFound, RetEdge};
                         false ->
-                            {E, _, _, ELabel} = actor_emul:get_proc_edge_info(ProcPid, E),
-                            IsIt = is_pm_msg_compatible(ProcPid, From, ELabel, Message),
-                            case IsIt of
-                                true -> {true, E};
-                                false -> {B, Ret}
+                            {_, _, _, ELabel} = actor_emul:get_proc_edge_info(ProcPid, Edge),
+                            IsCompatible = is_pm_msg_compatible(ProcPid, From, ELabel, Message),
+                            case IsCompatible of
+                                true -> {true, Edge};
+                                false -> {AlreadyFound, RetEdge}
                             end
                     end
                 end,
                 {false, ?UNDEFINED},
-                EL
+                EdgeList
             ),
             EdgeChoosen
     end.
@@ -404,61 +418,66 @@ check_vars(ProcPid, VarName) ->
 
 %%% Check if a pattern metching match a message, then register the new variables
 is_pm_msg_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
-    {RetBool, RegList} = check_msg_comp(
+    {IsCompatible, ToRegisterList} = check_msg_comp(
         ProcPid, CallingProc, PatternMatching, Message#message.data
     ),
     % io:fwrite("Reg List ~p~n", [RegList]),
     lists:foreach(
         fun(Item) -> register_var(Item) end,
-        RegList
+        ToRegisterList
     ),
-    RetBool.
+    IsCompatible.
 
 %%% Check if a pattern metching match a message
 check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
-    MessageS = atol(Message),
-    PatternMS = lists:flatten(string:replace(atol(PatternMatching), "receive ", "")),
-    [FirstPChar | RestP] = PatternMS,
-    [FirstMChar | RestM] = MessageS,
+    MessageS = share:atol(Message),
+    PatternMS = lists:flatten(string:replace(share:atol(PatternMatching), "receive ", "")),
+    [FirstPtmtChar | RestPtmt] = PatternMS,
+    [FirstMessChar | RestMess] = MessageS,
     IsFirstCharUpperCase = share:is_erlvar(PatternMS),
     if
-        %%% hierarchy
-        ([FirstPChar] =:= "{") and ([FirstMChar] =:= "{") ->
-            ContentP = share:remove_last(RestP),
-            ContentM = share:remove_last(RestM),
-            PL = string:split(ContentP, ",", all),
-            A = lists:enumerate(PL),
-            ML = string:split(ContentM, ",", all),
-            B = lists:enumerate(ML),
-            BoolList = [
-                check_msg_comp(ProcPid, CallingProc, IA, IB)
-             || {BA, IA} <- A, {BB, IB} <- B, BA =:= BB
-            ],
-            and_rec(BoolList);
+        ([FirstPtmtChar] =:= "{") and ([FirstMessChar] =:= "{") ->
+            check_tuple(ProcPid, CallingProc, RestPtmt, RestMess);
         PatternMS =:= MessageS ->
             {true, []};
         IsFirstCharUpperCase ->
-            {true, [{ProcPid, ltoa(PatternMS), check_pid_self(Message, CallingProc)}]};
-        [FirstPChar] =:= "_" ->
+            {true, [{ProcPid, share:ltoa(PatternMS), check_pid_self(Message, CallingProc)}]};
+        [FirstPtmtChar] =:= "_" ->
             {true, []};
         true ->
             {false, []}
     end.
 
+%%% Check if the rest of the tuple is compatible
+check_tuple(ProcPid, CallingProc, RestPtmt, RestMess) ->
+    ContentPtmt = share:remove_last(RestPtmt),
+    ContentMess = share:remove_last(RestMess),
+    ContentPtmtList = string:split(ContentPtmt, ",", all),
+    EnumPtmt = lists:enumerate(ContentPtmtList),
+    ContentMessList = string:split(ContentMess, ",", all),
+    EnumMess = lists:enumerate(ContentMessList),
+    BoolList = [
+        check_msg_comp(ProcPid, CallingProc, DataPtmt, DataMess)
+     || {IndexPtmt, DataPtmt} <- EnumPtmt,
+        {IndexMess, DataMess} <- EnumMess,
+        IndexPtmt =:= IndexMess
+    ],
+    and_rec(BoolList).
+
 %%% Register a actor's variable
 register_var(Data) ->
     {ProcPid, Name, Value} = Data,
     %%% type = pid to change, for now it's ok like this because I only focus on pid exchange
-    V = #variable{name = ltoa(Name), type = pid, value = ltoa(Value)},
+    V = #variable{name = share:ltoa(Name), type = pid, value = share:ltoa(Value)},
     % io:fwrite("Added Var ~p~n", [V]),
     actor_emul:add_proc_localvars(ProcPid, V).
 
-%%% Substitute pif_self to pid_procId
+%%% Substitute pif_self to pid_ProcId
 check_pid_self(Data, ProcId) ->
     % io:fwrite("[C]Data ~p proc id ~p~n", [Data, ProcId]),
-    lists:flatten(string:replace(atol(Data), "pid_self", atol(ProcId))).
+    lists:flatten(string:replace(share:atol(Data), "pid_self", share:atol(ProcId))).
 
-%%% Custom recursive logic and
+%%% Custom recursive and operation
 and_rec([]) ->
     {true, []};
 and_rec([{B, L} | T]) ->
@@ -470,7 +489,7 @@ and_rec([{B, L} | T]) ->
             {B, []}
     end.
 
-%%% Add a send/recv vertex to the global view, with some checks for recusive edges
+%%% Add a vertex to the global view, with some checks for recusive edges
 complex_add_vertex(Proc1, EdgeInfo1, Proc2, EdgeInfo2, Data, Label) ->
     StateM = Data#branch.states_m,
     VLast = Data#branch.last_vertex,
@@ -510,7 +529,6 @@ complex_add_vertex(Proc1, EdgeInfo1, Proc2, EdgeInfo2, Data, Label) ->
                     end;
                 _ ->
                     %%% Match First vertex
-                    %io:fwrite("[ADD]First defined!!~n"),
                     digraph:add_edge(G, VLast, Vfirst, Label),
                     {Vfirst, StateM}
             end;
@@ -556,8 +574,3 @@ stop_processes(DataL) when is_list(DataL) ->
     );
 stop_processes(ProcMap) ->
     maps:foreach(fun(_K, V) -> V ! stop end, ProcMap).
-
-atol(A) when is_list(A) -> A;
-atol(A) when is_atom(A) -> atom_to_list(A).
-ltoa(L) when is_atom(L) -> L;
-ltoa(L) when is_list(L) -> list_to_atom(L).

@@ -1,3 +1,9 @@
+%%%-------------------------------------------------------------------
+%%% @doc
+%%% This module evaluate the AST of the expressions in the Erlang language.
+%%% This module is usable only in the `lv' module.
+%%% @end
+%%%-------------------------------------------------------------------
 -module(eval).
 -include("../share/common_data.hrl").
 
@@ -24,6 +30,8 @@
 %%% API
 %%%===================================================================
 
+%%% @doc
+%%% Evaluate the clauses of a function.
 function_list(ContList, Data) ->
     lists:foldl(
         fun(FunctionBody, AccData) ->
@@ -40,6 +48,8 @@ function_list(ContList, Data) ->
         ContList
     ).
 
+%%% @doc
+%%% Evaluate a single clause (might be from `case', `receive' or `if').
 clause(Code, Vars, Guards, Data, BaseLabel) ->
     % io:fwrite("[CLAUSE] Code ~p~n Vars ~p~n Guards ~p~n", [Code, Vars, Guards]),
     LocalV = Data#wip_lv.local_vars,
@@ -55,6 +65,8 @@ clause(Code, Vars, Guards, Data, BaseLabel) ->
         Code
     ).
 
+%%% @doc
+%%% Evaluate a variable declaration.
 match(RightContent, LeftContent, Data) ->
     case RightContent of
         {var, _, VarName} -> match_with_var(VarName, LeftContent, Data);
@@ -63,17 +75,25 @@ match(RightContent, LeftContent, Data) ->
         R -> share:warning("[MATCH] couldn't understand line", R, Data)
     end.
 
+%%% @doc
+%%% Evaluate a `case' expression.
 case_pm(Content, PMList, Data) ->
     NewData = lv:eval_codeline(Content, Data),
     %% TODO: save the returning variable?
     pattern_matching(PMList, "match", NewData).
 
+%%% @doc
+%%% Evaluate a `if' expression.
 if_pm(PMList, Data) ->
     pattern_matching(PMList, "if", Data).
 
+%%% @doc
+%%% Evaluate a `receive' expression.
 receive_pm(PMList, Data) ->
     pattern_matching(PMList, "receive", Data).
 
+%%% @doc
+%%% Evaluate an operation.
 operation(Symbol, LeftContent, RightContent, Data) ->
     case Symbol of
         '!' -> send(LeftContent, RightContent, Data);
@@ -81,6 +101,8 @@ operation(Symbol, LeftContent, RightContent, Data) ->
         _ -> share:warning("operation not yet implemented", Symbol, Data)
     end.
 
+%%% @doc
+%%% Evaluate the call of a function.
 function_call(Function, ArgList, Data) ->
     case Function of
         {atom, _, Name} -> call_by_atom(Name, ArgList, Data);
@@ -89,6 +111,8 @@ function_call(Function, ArgList, Data) ->
         F -> share:warning("couldn't call function pattern", F, Data)
     end.
 
+%%% @doc
+%%% Evaluate the definition of an anonymous function.
 anon_fun(Content, Line, Data) ->
     case Content of
         {clauses, A} ->
@@ -99,10 +123,14 @@ anon_fun(Content, Line, Data) ->
             share:warning("not recognized content in anon_fun", Content, Data)
     end.
 
+%%% @doc
+%%% Evaluate a basic type.
 simple_type(Type, Val, Data) ->
     VarRet = #variable{type = Type, value = Val},
     Data#wip_lv{ret_var = VarRet}.
 
+%%% @doc
+%%% Evaluate an atom.
 atom(Val, Data) ->
     %%% check if is a registerd atom, return the pid
     case ets:lookup(?REGISTERDB, Val) of
@@ -110,6 +138,8 @@ atom(Val, Data) ->
         [{_, Pid}] -> simple_type(pid, Pid, Data)
     end.
 
+%%% @doc
+%%% Evaluate a list.
 list(HeadList, TailList, Data) ->
     NDH = lv:eval_codeline(HeadList, Data),
     NDT = lv:eval_codeline(TailList, NDH),
@@ -118,9 +148,13 @@ list(HeadList, TailList, Data) ->
     NewVal = [Var] ++ VarList#variable.value,
     simple_type(list, NewVal, NDT).
 
+%%% @doc
+%%% Evaluate a map. TODO
 map(Val, Data) ->
     share:warning("TODO map evaluation", Val, Data).
 
+%%% @doc
+%%% Evaluate a tuple.
 tuple(Val, Data) ->
     {NewVal, NewData} = lists:foldl(
         fun(I, {A, D}) ->
@@ -132,6 +166,8 @@ tuple(Val, Data) ->
     ),
     simple_type(tuple, NewVal, NewData).
 
+%%% @doc
+%%% Evaluate a variable.
 variable(VarName, Data) ->
     Var = share:find_var(Data#wip_lv.local_vars, VarName),
     RetV =

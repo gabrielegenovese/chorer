@@ -1,3 +1,9 @@
+%%%-------------------------------------------------------------------
+%%% @doc
+%%% This module generate a localview for each possible actor.
+%%% Must be used after `md:extract'.
+%%% @end
+%%%-------------------------------------------------------------------
 -module(lv).
 -include("../share/common_data.hrl").
 
@@ -8,6 +14,9 @@
 %%% API
 %%%===================================================================
 
+%%% @doc
+%%% A localview is generated for each possible actor.
+%%% `md:extract' must be used before this function.
 generate(Settings) ->
     [{_, ActorList}] = ets:lookup(?DBMANAGER, ?ACTORLIST),
     lists:foreach(

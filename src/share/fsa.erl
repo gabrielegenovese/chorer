@@ -1,3 +1,10 @@
+%%%===================================================================
+%%% @doc
+%%% This module manage an FSA.
+%%% A choreography is basically an FSA (finite state automaton). This module
+%%% implements the basics automata's operations needed for the project.
+%%% @end
+%%%===================================================================
 -module(fsa).
 -include("common_data.hrl").
 
@@ -8,8 +15,11 @@
 %%% API
 %%%===================================================================
 
+%%% @doc
 %%% Minimize an FSA, using algorithms from Simone Martini and Maurizio Gabbrielli's
 %%% book: Programming Languages, Second edition, McGraw-Hill, 2011
+-spec minimize(NFA) -> digraph:graph() when
+    NFA :: digraph:graph().
 minimize(NFA) ->
     % Convert a NFA to a DFA
     remove_unreachable(NFA),

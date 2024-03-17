@@ -1,3 +1,9 @@
+%%%------------------------------------------------------------------------------
+%%% @doc
+%%% The main module of the program.
+%%% It initialize the ets tables and generetes the localviews and the globalview.
+%%% @end
+%%%------------------------------------------------------------------------------
 -module(chorer).
 -include("share/common_data.hrl").
 
@@ -8,14 +14,21 @@
 %%% API
 %%%===================================================================
 
+%%% @doc
+%%% Function called when the tool is used from the CLI (Command Line Interface).
 main([InputFile, EntryPoint, OutputDir] = _Args) ->
-    generate(InputFile, list_to_atom(EntryPoint), OutputDir).
+    generate(InputFile, share:ltoa(EntryPoint), OutputDir).
 
+%%% @doc
+%%% Generate the localviews and the globalview with base settings.
 -spec generate(InputFile, EntryPoint) -> atom() when
     InputFile :: string(),
     EntryPoint :: atom().
 generate(InputFile, EntryPoint) -> generate(InputFile, EntryPoint, #setting{}).
 
+%%% @doc
+%%% Generate the localviews and the globalview specifing the output directory.
+%%% It initialize the ets tables and generates the localviews and globalview.
 -spec generate(InputFile, EntryPoint, OutDir) -> atom() when
     InputFile :: string(),
     EntryPoint :: atom(),

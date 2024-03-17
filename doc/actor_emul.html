@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Module actor_emul</title>
+<link rel="stylesheet" type="text/css" href="edoc-extensions.css" title="EDoc">
+</head>
+<body class="markdown-body language-erlang"><script src="prism.js"></script>
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module actor_emul</h1>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+   This module simulate an actor's localview during a globalview.
+
+
+<h2><a name="description">Description</a></h2>
+   This module simulate an actor's localview during a globalview.
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_proc_localvars-2">add_proc_localvars/2</a></td><td>
+   Add a variable to the local variables of the localview.</td></tr>
+<tr><td valign="top"><a href="#add_proc_mess_queue-2">add_proc_mess_queue/2</a></td><td>
+   Add a message to the message queue of the process.</td></tr>
+<tr><td valign="top"><a href="#add_proc_spawnvars-2">add_proc_spawnvars/2</a></td><td>
+   Add a variable to the spawn arguments of the localview.</td></tr>
+<tr><td valign="top"><a href="#del_proc_mess_queue-2">del_proc_mess_queue/2</a></td><td>
+   Delete a message from the message queue of the process.</td></tr>
+<tr><td valign="top"><a href="#get_proc_data-1">get_proc_data/1</a></td><td>
+   Get the all the data of the process.</td></tr>
+<tr><td valign="top"><a href="#get_proc_edge_info-2">get_proc_edge_info/2</a></td><td>
+   Get the informations of a localview's edge.</td></tr>
+<tr><td valign="top"><a href="#get_proc_edges-1">get_proc_edges/1</a></td><td>
+   Get all the localview's current edges.</td></tr>
+<tr><td valign="top"><a href="#get_proc_localvars-1">get_proc_localvars/1</a></td><td>
+   Get the list of the local variables.</td></tr>
+<tr><td valign="top"><a href="#get_proc_mess_queue-1">get_proc_mess_queue/1</a></td><td>
+   Get the message queue of the process.</td></tr>
+<tr><td valign="top"><a href="#get_proc_out_degree-1">get_proc_out_degree/1</a></td><td>
+   Get all the number of the localview's current edges.</td></tr>
+<tr><td valign="top"><a href="#proc_loop-1">proc_loop/1</a></td><td>
+   Loop function to simulate a process.</td></tr>
+<tr><td valign="top"><a href="#set_proc_data-2">set_proc_data/2</a></td><td>
+   Set the all the data of the process.</td></tr>
+<tr><td valign="top"><a href="#use_proc_transition-2">use_proc_transition/2</a></td><td>
+   Use a transition of the localview.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="add_proc_localvars-2">add_proc_localvars/2</a></h3>
+<div class="spec">
+<p><code>add_proc_localvars(P, V) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Add a variable to the local variables of the localview.</p>
+
+<h3 class="function"><a name="add_proc_mess_queue-2">add_proc_mess_queue/2</a></h3>
+<div class="spec">
+<p><code>add_proc_mess_queue(P, M) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Add a message to the message queue of the process.</p>
+
+<h3 class="function"><a name="add_proc_spawnvars-2">add_proc_spawnvars/2</a></h3>
+<div class="spec">
+<p><code>add_proc_spawnvars(P, V) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Add a variable to the spawn arguments of the localview.</p>
+
+<h3 class="function"><a name="del_proc_mess_queue-2">del_proc_mess_queue/2</a></h3>
+<div class="spec">
+<p><code>del_proc_mess_queue(P, M) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Delete a message from the message queue of the process.</p>
+
+<h3 class="function"><a name="get_proc_data-1">get_proc_data/1</a></h3>
+<div class="spec">
+<p><code>get_proc_data(P) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Get the all the data of the process.</p>
+
+<h3 class="function"><a name="get_proc_edge_info-2">get_proc_edge_info/2</a></h3>
+<div class="spec">
+<p><code>get_proc_edge_info(P, E) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Get the informations of a localview's edge.</p>
+
+<h3 class="function"><a name="get_proc_edges-1">get_proc_edges/1</a></h3>
+<div class="spec">
+<p><code>get_proc_edges(P) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Get all the localview's current edges.</p>
+
+<h3 class="function"><a name="get_proc_localvars-1">get_proc_localvars/1</a></h3>
+<div class="spec">
+<p><code>get_proc_localvars(P) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Get the list of the local variables.</p>
+
+<h3 class="function"><a name="get_proc_mess_queue-1">get_proc_mess_queue/1</a></h3>
+<div class="spec">
+<p><code>get_proc_mess_queue(P) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Get the message queue of the process.</p>
+
+<h3 class="function"><a name="get_proc_out_degree-1">get_proc_out_degree/1</a></h3>
+<div class="spec">
+<p><code>get_proc_out_degree(P) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Get all the number of the localview's current edges.</p>
+
+<h3 class="function"><a name="proc_loop-1">proc_loop/1</a></h3>
+<div class="spec">
+<p><code>proc_loop(Data) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Loop function to simulate a process.</p>
+
+<h3 class="function"><a name="set_proc_data-2">set_proc_data/2</a></h3>
+<div class="spec">
+<p><code>set_proc_data(P, Data) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Set the all the data of the process.</p>
+
+<h3 class="function"><a name="use_proc_transition-2">use_proc_transition/2</a></h3>
+<div class="spec">
+<p><code>use_proc_transition(P, E) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Use a transition of the localview.</p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc</i></p>
+</body>
+</html>
