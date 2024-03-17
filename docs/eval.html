@@ -1,164 +1,683 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Module eval</title>
-<link rel="stylesheet" type="text/css" href="edoc-extensions.css" title="EDoc">
-</head>
-<body class="markdown-body language-erlang"><script src="prism.js"></script>
-<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<hr>
-
-<h1>Module eval</h1>
-<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
-   This module evaluate the AST of the expressions in the Erlang language.
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.31.2">
+    <meta name="project" content="chorer v0.1.0">
 
 
-<h2><a name="description">Description</a></h2>
-   This module evaluate the AST of the expressions in the Erlang language.
-   This module is usable only in the <code>lv</code> module.
-<h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#anon_fun-3">anon_fun/3</a></td><td>
-   Evaluate the definition of an anonymous function.</td></tr>
-<tr><td valign="top"><a href="#atom-2">atom/2</a></td><td>
-   Evaluate an atom.</td></tr>
-<tr><td valign="top"><a href="#case_pm-3">case_pm/3</a></td><td>
-   Evaluate a <code>case</code> expression.</td></tr>
-<tr><td valign="top"><a href="#clause-5">clause/5</a></td><td>
-   Evaluate a single clause (might be from <code>case</code>, <code>receive</code> or <code>if</code>).</td></tr>
-<tr><td valign="top"><a href="#function_call-3">function_call/3</a></td><td>
-   Evaluate the call of a function.</td></tr>
-<tr><td valign="top"><a href="#function_list-2">function_list/2</a></td><td>
-   Evaluate the clauses of a function.</td></tr>
-<tr><td valign="top"><a href="#if_pm-2">if_pm/2</a></td><td>
-   Evaluate a <code>if</code> expression.</td></tr>
-<tr><td valign="top"><a href="#list-3">list/3</a></td><td>
-   Evaluate a list.</td></tr>
-<tr><td valign="top"><a href="#map-2">map/2</a></td><td>
-   Evaluate a map.</td></tr>
-<tr><td valign="top"><a href="#match-3">match/3</a></td><td>
-   Evaluate a variable declaration.</td></tr>
-<tr><td valign="top"><a href="#operation-4">operation/4</a></td><td>
-   Evaluate an operation.</td></tr>
-<tr><td valign="top"><a href="#receive_pm-2">receive_pm/2</a></td><td>
-   Evaluate a <code>receive</code> expression.</td></tr>
-<tr><td valign="top"><a href="#simple_type-3">simple_type/3</a></td><td>
-   Evaluate a basic type.</td></tr>
-<tr><td valign="top"><a href="#tuple-2">tuple/2</a></td><td>
-   Evaluate a tuple.</td></tr>
-<tr><td valign="top"><a href="#variable-2">variable/2</a></td><td>
-   Evaluate a variable.</td></tr>
-</table>
+    <title>eval — chorer v0.1.0</title>
+    <link rel="stylesheet" href="dist/html-erlang-DUKXLSAT.css" />
 
-<h2><a name="functions">Function Details</a></h2>
 
-<h3 class="function"><a name="anon_fun-3">anon_fun/3</a></h3>
-<div class="spec">
-<p><code>anon_fun(Content, Line, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate the definition of an anonymous function.</p>
+    <script src="dist/handlebars.runtime-NWIB6V2M.js"></script>
+    <script src="dist/handlebars.templates-A7S2WMC7.js"></script>
+    <script src="dist/sidebar_items-59155BE0.js"></script>
 
-<h3 class="function"><a name="atom-2">atom/2</a></h3>
-<div class="spec">
-<p><code>atom(Val, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate an atom.</p>
+      <script src="docs_config.js"></script>
 
-<h3 class="function"><a name="case_pm-3">case_pm/3</a></h3>
-<div class="spec">
-<p><code>case_pm(Content, PMList, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate a <code>case</code> expression.</p>
+    <script async src="dist/html-JRPQ5PR6.js"></script>
 
-<h3 class="function"><a name="clause-5">clause/5</a></h3>
-<div class="spec">
-<p><code>clause(Code, Vars, Guards, Data, BaseLabel) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate a single clause (might be from <code>case</code>, <code>receive</code> or <code>if</code>).</p>
 
-<h3 class="function"><a name="function_call-3">function_call/3</a></h3>
-<div class="spec">
-<p><code>function_call(Function, ArgList, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate the call of a function.</p>
+  </head>
+  <body data-type="modules" class="page-module">
+    <script>
 
-<h3 class="function"><a name="function_list-2">function_list/2</a></h3>
-<div class="spec">
-<p><code>function_list(ContList, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate the clauses of a function.</p>
+      try {
+        var settings = JSON.parse(localStorage.getItem('ex_doc:settings') || '{}');
 
-<h3 class="function"><a name="if_pm-2">if_pm/2</a></h3>
-<div class="spec">
-<p><code>if_pm(PMList, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate a <code>if</code> expression.</p>
+        if (settings.theme === 'dark' ||
+           ((settings.theme === 'system' || settings.theme == null) &&
+             window.matchMedia('(prefers-color-scheme: dark)').matches)
+           ) {
+          document.body.classList.add('dark')
+        }
+      } catch (error) { }
+    </script>
 
-<h3 class="function"><a name="list-3">list/3</a></h3>
-<div class="spec">
-<p><code>list(HeadList, TailList, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate a list.</p>
+<div class="main">
 
-<h3 class="function"><a name="map-2">map/2</a></h3>
-<div class="spec">
-<p><code>map(Val, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate a map. TODO</p>
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
 
-<h3 class="function"><a name="match-3">match/3</a></h3>
-<div class="spec">
-<p><code>match(RightContent, LeftContent, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate a variable declaration.</p>
+<div class="background-layer"></div>
 
-<h3 class="function"><a name="operation-4">operation/4</a></h3>
-<div class="spec">
-<p><code>operation(Symbol, LeftContent, RightContent, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate an operation.</p>
+<nav id="sidebar" class="sidebar">
 
-<h3 class="function"><a name="receive_pm-2">receive_pm/2</a></h3>
-<div class="spec">
-<p><code>receive_pm(PMList, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate a <code>receive</code> expression.</p>
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
 
-<h3 class="function"><a name="simple_type-3">simple_type/3</a></h3>
-<div class="spec">
-<p><code>simple_type(Type, Val, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate a basic type.</p>
+      <div>
+        <a href="readme.html" class="sidebar-projectName" translate="no">
+chorer
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v0.1.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-listNav" class="sidebar-listNav" role="tablist">
+      <li>
+        <button id="extras-list-tab-button" role="tab" data-type="extras" aria-controls="extras-tab-panel" aria-selected="true" tabindex="0">
+Pages
+        </button>
+      </li>
 
-<h3 class="function"><a name="tuple-2">tuple/2</a></h3>
-<div class="spec">
-<p><code>tuple(Val, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate a tuple.</p>
+        <li>
+          <button id="modules-list-tab-button" role="tab" data-type="modules" aria-controls="modules-tab-panel" aria-selected="false" tabindex="-1">
+            Modules
+          </button>
+        </li>
 
-<h3 class="function"><a name="variable-2">variable/2</a></h3>
-<div class="spec">
-<p><code>variable(VarName, Data) -&gt; any()</code></p>
-<p></p>
-</div><p>
-   Evaluate a variable.</p>
-<hr>
 
-<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc</i></p>
-</body>
+    </ul>
+  </div>
+
+  <div id="extras-tab-panel" class="sidebar-tabpanel" role="tabpanel" aria-labelledby="extras-list-tab-button">
+    <ul id="extras-full-list" class="full-list"></ul>
+  </div>
+
+    <div id="modules-tab-panel" class="sidebar-tabpanel" role="tabpanel" aria-labelledby="modules-list-tab-button" hidden>
+      <ul id="modules-full-list" class="full-list"></ul>
+    </div>
+
+
+</nav>
+
+<main class="content">
+  <output role="status" id="toast"></output>
+  <div class="content-outer">
+    <div id="content" class="content-inner">
+      <div class="top-search">
+        <div class="search-settings">
+          <form class="search-bar" action="search.html">
+            <label class="search-label">
+              <span class="sr-only">Search documentation of chorer</span>
+              <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            </label>
+            <button type="submit" class="search-button" aria-label="Submit Search">
+              <i class="ri-search-2-line ri-lg" aria-hidden="true" title="Submit search"></i>
+            </button>
+            <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+              <i class="ri-close-line ri-lg" title="Cancel search"></i>
+            </button>
+          </form>
+          <div class="autocomplete">
+          </div>
+          <button class="icon-settings display-settings">
+            <i class="ri-settings-3-line"></i>
+            <span class="sr-only">Settings</span>
+          </button>
+        </div>
+
+      </div>
+
+<h1>
+
+    <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L7" title="View Source" class="icon-action" rel="help">
+      <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+      <span class="sr-only">View Source</span>
+    </a>
+
+  <span translate="no">eval</span> 
+  <small class="app-vsn" translate="no">(chorer v0.1.0)</small>
+
+</h1>
+
+
+  <section id="moduledoc">
+This module evaluate the AST of the expressions in the Erlang language. This module is usable only in the <code>lv</code> module.
+  </section>
+
+
+  <section id="summary" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h1>
+<div class="summary-functions summary">
+  <h2>
+    <a href="#functions">Functions</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#anon_fun/3" translate="no">anon_fun(Content, Line, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate the definition of an anonymous function.</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#atom/2" translate="no">atom(Val, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate an atom.</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#case_pm/3" translate="no">case_pm(Content, PMList, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate a <code>case</code> expression.</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#clause/5" translate="no">clause(Code, Vars, Guards, Data, BaseLabel)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate a single clause (might be from <code>case</code>, <code>receive</code> or <code>if</code>).</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#function_call/3" translate="no">function_call(Function, ArgList, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate the call of a function.</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#function_list/2" translate="no">function_list(ContList, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate the clauses of a function.</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#if_pm/2" translate="no">if_pm(PMList, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate a <code>if</code> expression.</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#list/3" translate="no">list(HeadList, TailList, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate a list.</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#map/2" translate="no">map(Val, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate a map. TODO</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#match/3" translate="no">match(RightContent, LeftContent, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate a variable declaration.</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#operation/4" translate="no">operation(Symbol, LeftContent, RightContent, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate an operation.</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#receive_pm/2" translate="no">receive_pm(PMList, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate a <code>receive</code> expression.</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#simple_type/3" translate="no">simple_type(Type, Val, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate a basic type.</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#tuple/2" translate="no">tuple(Val, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate a tuple.</div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#variable/2" translate="no">variable(VarName, Data)</a>
+
+      </div>
+
+        <div class="summary-synopsis">Evaluate a variable.</div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="functions" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#functions">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Functions</span>
+    </h1>
+    <div class="functions-list">
+<section class="detail" id="anon_fun/3">
+
+  <div class="detail-header">
+    <a href="#anon_fun/3" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">anon_fun(Content, Line, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L116" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate the definition of an anonymous function.
+  </section>
+</section>
+<section class="detail" id="atom/2">
+
+  <div class="detail-header">
+    <a href="#atom/2" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">atom(Val, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L134" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate an atom.
+  </section>
+</section>
+<section class="detail" id="case_pm/3">
+
+  <div class="detail-header">
+    <a href="#case_pm/3" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">case_pm(Content, PMList, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L80" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate a <code>case</code> expression.
+  </section>
+</section>
+<section class="detail" id="clause/5">
+
+  <div class="detail-header">
+    <a href="#clause/5" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">clause(Code, Vars, Guards, Data, BaseLabel)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L53" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate a single clause (might be from <code>case</code>, <code>receive</code> or <code>if</code>).
+  </section>
+</section>
+<section class="detail" id="function_call/3">
+
+  <div class="detail-header">
+    <a href="#function_call/3" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">function_call(Function, ArgList, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L106" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate the call of a function.
+  </section>
+</section>
+<section class="detail" id="function_list/2">
+
+  <div class="detail-header">
+    <a href="#function_list/2" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">function_list(ContList, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L35" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate the clauses of a function.
+  </section>
+</section>
+<section class="detail" id="if_pm/2">
+
+  <div class="detail-header">
+    <a href="#if_pm/2" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">if_pm(PMList, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L87" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate a <code>if</code> expression.
+  </section>
+</section>
+<section class="detail" id="list/3">
+
+  <div class="detail-header">
+    <a href="#list/3" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">list(HeadList, TailList, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L143" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate a list.
+  </section>
+</section>
+<section class="detail" id="map/2">
+
+  <div class="detail-header">
+    <a href="#map/2" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">map(Val, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L153" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate a map. TODO
+  </section>
+</section>
+<section class="detail" id="match/3">
+
+  <div class="detail-header">
+    <a href="#match/3" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">match(RightContent, LeftContent, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L70" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate a variable declaration.
+  </section>
+</section>
+<section class="detail" id="operation/4">
+
+  <div class="detail-header">
+    <a href="#operation/4" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">operation(Symbol, LeftContent, RightContent, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L97" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate an operation.
+  </section>
+</section>
+<section class="detail" id="receive_pm/2">
+
+  <div class="detail-header">
+    <a href="#receive_pm/2" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">receive_pm(PMList, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L92" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate a <code>receive</code> expression.
+  </section>
+</section>
+<section class="detail" id="simple_type/3">
+
+  <div class="detail-header">
+    <a href="#simple_type/3" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">simple_type(Type, Val, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L128" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate a basic type.
+  </section>
+</section>
+<section class="detail" id="tuple/2">
+
+  <div class="detail-header">
+    <a href="#tuple/2" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">tuple(Val, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L158" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate a tuple.
+  </section>
+</section>
+<section class="detail" id="variable/2">
+
+  <div class="detail-header">
+    <a href="#variable/2" class="detail-link" title="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature" translate="no">variable(VarName, Data)</h1>
+
+      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/choreography/eval.erl#L171" class="icon-action" rel="help" title="View Source">
+       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+Evaluate a variable.
+  </section>
+</section>
+
+    </div>
+  </section>
+
+      <footer class="footer">
+        <p>
+
+            <span class="line">
+              <a href="https://hex.pm/packages/chorer/0.1.0" class="footer-hex-package">Hex Package</a>
+
+              <a href="https://preview.hex.pm/preview/chorer/0.1.0">Hex Preview</a>
+
+            </span>
+
+          <span class="line">
+            <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+              Search HexDocs
+            </button>
+
+              <a href="chorer.epub" title="ePub version">
+                Download ePub version
+              </a>
+
+          </span>
+        </p>
+
+        <p class="built-using">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.31.2) for the
+
+            <a href="https://erlang.org" title="Erlang" target="_blank" translate="no">Erlang programming language</a>
+
+        </p>
+
+      </footer>
+    </div>
+  </div>
+</main>
+</div>
+
+
+  </body>
 </html>

@@ -1,3 +1,0 @@
-%% encoding: UTF-8
-{application,chorer}.
-{modules,[actor_emul,chorer,digraph_to_dot,eval,fsa,gv,lv,md,share]}.

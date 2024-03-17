@@ -8,7 +8,7 @@
     <meta name="project" content="chorer v0.1.0">
 
 
-    <title>fsa — chorer v0.1.0</title>
+    <title>API Reference — chorer v0.1.0</title>
     <link rel="stylesheet" href="dist/html-erlang-DUKXLSAT.css" />
 
 
@@ -22,7 +22,7 @@
 
 
   </head>
-  <body data-type="modules" class="page-module">
+  <body data-type="extras" class="page-extra">
     <script>
 
       try {
@@ -117,89 +117,128 @@ Pages
 
 <h1>
 
-    <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/share/fsa.erl#L8" title="View Source" class="icon-action" rel="help">
+    <a href="https://github.com/gabrielegenovese/chorer" title="View Source" class="icon-action" rel="help">
       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
       <span class="sr-only">View Source</span>
     </a>
 
-  <span translate="no">fsa</span> 
-  <small class="app-vsn" translate="no">(chorer v0.1.0)</small>
 
+  <span>API Reference <small class="app-vsn">chorer v0.1.0</small></span>
 </h1>
 
 
-  <section id="moduledoc">
-This module manage an FSA. A choreography is basically an FSA (finite state automaton). This module implements the basics automata's operations needed for the project.
-  </section>
+  <section class="details-list">
+    <h2 id="modules" class="section-heading">
+  <a href="#modules" class="hover-link">
+    <i class="ri-link-m" aria-hidden="true"></i>
+  </a>
+  <span class="text">Modules</span>
+</h2>
 
-
-  <section id="summary" class="details-list">
-    <h1 class="section-heading">
-      <a class="hover-link" href="#summary">
-        <i class="ri-link-m" aria-hidden="true"></i>
-      </a>
-      <span class="text">Summary</span>
-    </h1>
-<div class="summary-functions summary">
-  <h2>
-    <a href="#functions">Functions</a>
-  </h2>
-
-    <div class="summary-row">
-      <div class="summary-signature">
-        <a href="#minimize/1" translate="no">minimize(NFA)</a>
-
-      </div>
-
-        <div class="summary-synopsis">Minimize an FSA, using algorithms from Simone Martini and Maurizio Gabbrielli's book: Programming Languages, Second edition, McGraw-Hill, 2011</div>
-
-    </div>
-
-</div>
-
-  </section>
-
-
-  <section id="functions" class="details-list">
-    <h1 class="section-heading">
-      <a class="hover-link" href="#functions">
-        <i class="ri-link-m" aria-hidden="true"></i>
-      </a>
-      <span class="text">Functions</span>
-    </h1>
-    <div class="functions-list">
-<section class="detail" id="minimize/1">
-
-  <div class="detail-header">
-    <a href="#minimize/1" class="detail-link" title="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-      <span class="sr-only">Link to this function</span>
-    </a>
-    <h1 class="signature" translate="no">minimize(NFA)</h1>
-
-      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/share/fsa.erl#L23" class="icon-action" rel="help" title="View Source">
-       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-       <span class="sr-only">View Source</span>
-     </a>
-
+    <div class="summary">
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="actor_emul.html" translate="no">actor_emul</a>
 
   </div>
 
-  <section class="docstring">
+    <div class="summary-synopsis">This module simulate an actor's localview during a globalview.</div>
 
-      <div class="specs">
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="chorer.html" translate="no">chorer</a>
 
-          <pre translate="no"><span class="attribute">-spec</span> minimize(NFA) -> <a href="https://www.erlang.org/doc/man/digraph.html#type-graph">digraph:graph</a>() when NFA :: <a href="https://www.erlang.org/doc/man/digraph.html#type-graph">digraph:graph</a>().</pre>
+  </div>
 
-      </div>
+    <div class="summary-synopsis">The main module of the program. It initialize the ets tables and generetes the localviews and the globalview.</div>
 
-Minimize an FSA, using algorithms from Simone Martini and Maurizio Gabbrielli's book: Programming Languages, Second edition, McGraw-Hill, 2011
-  </section>
-</section>
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="digraph_to_dot.html" translate="no">digraph_to_dot</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Module based from <a href="https://github.com/jkrukoff/digraph_export/blob/master/src/digraph_export_dot.erl">jkrukoff</a>.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="eval.html" translate="no">eval</a>
+
+  </div>
+
+    <div class="summary-synopsis">This module evaluate the AST of the expressions in the Erlang language. This module is usable only in the <code>lv</code> module.</div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="fsa.html" translate="no">fsa</a>
+
+  </div>
+
+    <div class="summary-synopsis">This module manage an FSA. A choreography is basically an FSA (finite state automaton). This module implements the basics automata's operations needed for the project.</div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="gv.html" translate="no">gv</a>
+
+  </div>
+
+    <div class="summary-synopsis">This module generetes the localview. Must be used after <code>md:extract</code> and <code>lv:generate</code>.</div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="lv.html" translate="no">lv</a>
+
+  </div>
+
+    <div class="summary-synopsis">This module generate a localview for each possible actor. Must be used after <code>md:extract</code>.</div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="md.html" translate="no">md</a>
+
+  </div>
+
+    <div class="summary-synopsis">The metadata extractor module. This module extract all the essential metadata prior to the localviews and globalview generation.</div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="share.html" translate="no">share</a>
+
+  </div>
+
+    <div class="summary-synopsis">Module with some common functions used everywhere in the project.</div>
+
+</div>
 
     </div>
   </section>
 
+
+<div class="bottom-actions">
+  <div class="bottom-actions-item">
+
+  </div>
+  <div class="bottom-actions-item">
+
+      <a href="readme.html" class="bottom-actions-button" rel="next">
+        <span class="subheader">
+          Next Page →
+        </span>
+        <span class="title">
+ChorEr
+        </span>
+      </a>
+
+  </div>
+</div>
       <footer class="footer">
         <p>
 

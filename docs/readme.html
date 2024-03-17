@@ -8,7 +8,7 @@
     <meta name="project" content="chorer v0.1.0">
 
 
-    <title>fsa — chorer v0.1.0</title>
+    <title>ChorEr — chorer v0.1.0</title>
     <link rel="stylesheet" href="dist/html-erlang-DUKXLSAT.css" />
 
 
@@ -22,7 +22,7 @@
 
 
   </head>
-  <body data-type="modules" class="page-module">
+  <body data-type="extras" class="page-extra">
     <script>
 
       try {
@@ -117,89 +117,76 @@ Pages
 
 <h1>
 
-    <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/share/fsa.erl#L8" title="View Source" class="icon-action" rel="help">
+    <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/README.md#L1" title="View Source" class="icon-action" rel="help">
       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
       <span class="sr-only">View Source</span>
     </a>
 
-  <span translate="no">fsa</span> 
-  <small class="app-vsn" translate="no">(chorer v0.1.0)</small>
 
+  <span>ChorEr</span>
 </h1>
 
+<p>ChorEr is a static analyzer to generate Choreography Automata from Erlang source code.</p><h2 id="requirements" class="section-heading">
+  <a href="#requirements" class="hover-link">
+    <i class="ri-link-m" aria-hidden="true"></i>
+  </a>
+  <span class="text">Requirements</span>
+</h2>
+<p>The project requires <code class="inline">erlang</code> and <code class="inline">rebar3</code> to run.</p><h2 id="usage" class="section-heading">
+  <a href="#usage" class="hover-link">
+    <i class="ri-link-m" aria-hidden="true"></i>
+  </a>
+  <span class="text">Usage</span>
+</h2>
+<p>Use <code class="inline">rebar3</code> to run the program from the command line or to compile it.</p><pre><code class="makeup erlang" translate="no"><span class="p">#</span><span class="w"> </span><span class="ss">rebar3</span><span class="w"> </span><span class="ss">escript</span><span class="w">
+</span><span class="p">#</span><span class="w"> </span><span class="p">.</span><span class="o">/</span><span class="p">_</span><span class="ss">build</span><span class="o">/</span><span class="ss">default</span><span class="o">/</span><span class="ss">bin</span><span class="o">/</span><span class="ss">chorer</span><span class="w"> </span><span class="p">.</span><span class="o">/</span><span class="ss">path</span><span class="o">/</span><span class="ss">to</span><span class="o">/</span><span class="ss">your</span><span class="o">/</span><span class="ss">program</span><span class="p">.</span><span class="ss">erl</span><span class="w"> </span><span class="ss">main</span><span class="w"> </span><span class="ss">path</span><span class="o">/</span><span class="ss">to</span><span class="o">/</span><span class="ss">folder</span></code></pre><p>or</p><pre><code class="makeup erlang" translate="no"><span class="p">#</span><span class="w"> </span><span class="ss">rebar3</span><span class="w"> </span><span class="ss">shell</span><span class="gp unselectable">
+1&gt; </span><span class="nc">chorer</span><span class="p">:</span><span class="nf">generate</span><span class="p" data-group-id="2396425827-1">(</span><span class="s">&quot;./examples/ticktack/tictacstop.erl&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">start</span><span class="p" data-group-id="2396425827-1">)</span><span class="p">.</span><span class="w">
+</span><span class="ss">finished</span></code></pre><h3 id="output" class="section-heading">
+  <a href="#output" class="hover-link">
+    <i class="ri-link-m" aria-hidden="true"></i>
+  </a>
+  <span class="text">Output</span>
+</h3>
+<p>The tool will create a DOT file for each actor's local view and a DOT file for the global view in the specified folder. To visualize the Choreography Automatas copy and paste the <code class="inline">.dot</code> files' content in a <a href="https://dreampuf.github.io/GraphvizOnline">DOT viewer</a>.</p><h2 id="documentation" class="section-heading">
+  <a href="#documentation" class="hover-link">
+    <i class="ri-link-m" aria-hidden="true"></i>
+  </a>
+  <span class="text">Documentation</span>
+</h2>
+<p>The documentation of the project is aviable at this (link)[<a href="https://gabrielegenovese.github.io/chorer/]">https://gabrielegenovese.github.io/chorer/]</a>. You can also generete it with</p><pre><code class="makeup erlang" translate="no"><span class="p">#</span><span class="w"> </span><span class="ss">rebar3</span><span class="w"> </span><span class="ss">edoc</span></code></pre><h2 id="credits" class="section-heading">
+  <a href="#credits" class="hover-link">
+    <i class="ri-link-m" aria-hidden="true"></i>
+  </a>
+  <span class="text">Credits</span>
+</h2>
+<p>This project was made for the Bachelor's degree Thesis of the Computer Science course at Alma Mater Studiorum - University of Bologna.
+I am grateful to the professor <a href="http://www.cs.unibo.it/~lanese/">Ivan Lanese</a>, who supervised the development of this project.</p>
+<div class="bottom-actions">
+  <div class="bottom-actions-item">
 
-  <section id="moduledoc">
-This module manage an FSA. A choreography is basically an FSA (finite state automaton). This module implements the basics automata's operations needed for the project.
-  </section>
-
-
-  <section id="summary" class="details-list">
-    <h1 class="section-heading">
-      <a class="hover-link" href="#summary">
-        <i class="ri-link-m" aria-hidden="true"></i>
+      <a href="api-reference.html" class="bottom-actions-button" rel="prev">
+        <span class="subheader">
+          ← Previous Page
+        </span>
+        <span class="title">
+API Reference
+        </span>
       </a>
-      <span class="text">Summary</span>
-    </h1>
-<div class="summary-functions summary">
-  <h2>
-    <a href="#functions">Functions</a>
-  </h2>
-
-    <div class="summary-row">
-      <div class="summary-signature">
-        <a href="#minimize/1" translate="no">minimize(NFA)</a>
-
-      </div>
-
-        <div class="summary-synopsis">Minimize an FSA, using algorithms from Simone Martini and Maurizio Gabbrielli's book: Programming Languages, Second edition, McGraw-Hill, 2011</div>
-
-    </div>
-
-</div>
-
-  </section>
-
-
-  <section id="functions" class="details-list">
-    <h1 class="section-heading">
-      <a class="hover-link" href="#functions">
-        <i class="ri-link-m" aria-hidden="true"></i>
-      </a>
-      <span class="text">Functions</span>
-    </h1>
-    <div class="functions-list">
-<section class="detail" id="minimize/1">
-
-  <div class="detail-header">
-    <a href="#minimize/1" class="detail-link" title="Link to this function">
-      <i class="ri-link-m" aria-hidden="true"></i>
-      <span class="sr-only">Link to this function</span>
-    </a>
-    <h1 class="signature" translate="no">minimize(NFA)</h1>
-
-      <a href="https://github.com/gabrielegenovese/chorer/blob/v0.1.0/src/share/fsa.erl#L23" class="icon-action" rel="help" title="View Source">
-       <i class="ri-code-s-slash-line" aria-hidden="true"></i>
-       <span class="sr-only">View Source</span>
-     </a>
-
 
   </div>
+  <div class="bottom-actions-item">
 
-  <section class="docstring">
+      <a href="license.html" class="bottom-actions-button" rel="next">
+        <span class="subheader">
+          Next Page →
+        </span>
+        <span class="title">
+LICENSE
+        </span>
+      </a>
 
-      <div class="specs">
-
-          <pre translate="no"><span class="attribute">-spec</span> minimize(NFA) -> <a href="https://www.erlang.org/doc/man/digraph.html#type-graph">digraph:graph</a>() when NFA :: <a href="https://www.erlang.org/doc/man/digraph.html#type-graph">digraph:graph</a>().</pre>
-
-      </div>
-
-Minimize an FSA, using algorithms from Simone Martini and Maurizio Gabbrielli's book: Programming Languages, Second edition, McGraw-Hill, 2011
-  </section>
-</section>
-
-    </div>
-  </section>
-
+  </div>
+</div>
       <footer class="footer">
         <p>
 
@@ -207,6 +194,8 @@ Minimize an FSA, using algorithms from Simone Martini and Maurizio Gabbrielli's 
               <a href="https://hex.pm/packages/chorer/0.1.0" class="footer-hex-package">Hex Package</a>
 
               <a href="https://preview.hex.pm/preview/chorer/0.1.0">Hex Preview</a>
+
+                (<a href="https://preview.hex.pm/preview/chorer/0.1.0/show/README.md">current file</a>)
 
             </span>
 
