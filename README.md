@@ -29,7 +29,7 @@ The tool will create a DOT file for each actor's local view and a DOT file for t
 
 ## Documentation
 
-The documentation of the project is aviable at this (link)[https://gabrielegenovese.github.io/chorer/]. You can also generete it with
+The documentation of the project is aviable at this [link](https://gabrielegenovese.github.io/chorer/). You can also generete it with
 
 ```erlang
 # rebar3 ex_doc --output docs
