@@ -15,7 +15,7 @@ Use `rebar3` to run the program from the command line or to compile it.
 # ./_build/default/bin/chorer ./path/to/your/program.erl main
 ```
 
-otherwise
+or
 
 ```erlang
 # rebar3 shell
@@ -25,9 +25,9 @@ finished
 
 ### Output
 
-The tool will create a DOT file for each actor's local view and a DOT file for the global view in the specified folder. To visualize the Choreography Automatas, copy paste the content's files in a [DOT viewer](https://dreampuf.github.io/GraphvizOnline).
+The tool will create a DOT file for each actor's local view and a DOT file for the global view in the specified folder. To visualize the Choreography Automatas copy and paste the `.dot` files' content in a [DOT viewer](https://dreampuf.github.io/GraphvizOnline).
 
 ## Credits
 
 This project was made for the Bachelor's degree Thesis of the Computer Science course at Alma Mater Studiorum - University of Bologna.
-I am grateful to the professor [Ivan Lanese](https://github.com/lanese), who supervised the development of this project.
+I am grateful to the professor [Ivan Lanese](http://www.cs.unibo.it/~lanese/), who supervised the development of this project.

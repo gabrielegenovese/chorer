@@ -1,3 +1,8 @@
+%%%-------------------------------------------------------------------
+%%% @doc
+%%% This module simulate an actor's localview during a globalview.
+%%% @end
+%%%-------------------------------------------------------------------
 -module(actor_emul).
 -include("../share/common_data.hrl").
 
@@ -9,6 +14,7 @@
     get_proc_out_degree/1,
     get_proc_edge_info/2,
     get_proc_localvars/1,
+    add_proc_spawnvars/2,
     add_proc_localvars/2,
     get_proc_data/1,
     set_proc_data/2,
@@ -21,34 +27,68 @@
 %%% API
 %%%===================================================================
 
+%%% @doc
+%%% Use a transition of the localview.
 use_proc_transition(P, E) -> P ! {use_transition, E}.
+
+%%% @doc
+%%% Get all the localview's current edges.
 get_proc_edges(P) -> send_recv(P, {self(), get_edges}).
+
+%%% @doc
+%%% Get all the number of the localview's current edges.
 get_proc_out_degree(P) -> send_recv(P, {self(), get_out_degree}).
+
+%%% @doc
+%%% Get the informations of a localview's edge.
 get_proc_edge_info(P, E) -> send_recv(P, {self(), get_edge_info, E}).
+
+%%% @doc
+%%% Get the list of the local variables.
 get_proc_localvars(P) -> send_recv(P, {self(), get_local_vars}).
+
+%%% @doc
+%%% Add a variable to the spawn arguments of the localview.
+add_proc_spawnvars(P, V) -> P ! {add_spawn_var, V}.
+
+%%% @doc
+%%% Add a variable to the local variables of the localview.
 add_proc_localvars(P, V) -> P ! {add_local_var, V}.
+
+%%% @doc
+%%% Get the all the data of the process.
 get_proc_data(P) -> send_recv(P, {self(), get_data}).
+
+%%% @doc
+%%% Set the all the data of the process.
 set_proc_data(P, Data) -> P ! {set_data, Data}.
+
+%%% @doc
+%%% Get the message queue of the process.
 get_proc_mess_queue(P) -> send_recv(P, {self(), get_mess_queue}).
+
+%%% @doc
+%%% Add a message to the message queue of the process.
 add_proc_mess_queue(P, M) -> P ! {add_mess_queue, M}.
+
+%%% @doc
+%%% Delete a message from the message queue of the process.
 del_proc_mess_queue(P, M) -> P ! {del_mess_queue, M}.
 
-send_recv(P, Data) ->
-    P ! Data,
-    receive
-        {D} -> D
-    end.
-
-%%% Actor simulator main function
+%%% @doc
+%%% Loop function to simulate a process.
 proc_loop(Data) ->
-    ProcName = Data#proc_info.proc_id,
-    G = db_manager:get_fun_graph(ProcName),
+    ProcName = Data#actor_info.fun_name,
+    % io:fwrite("[EMUL] ID ~p~n", [ProcName]),
+    LV = share:get_localview(ProcName),
+    G = LV#wip_lv.min_graph,
     % timer:sleep(200),
-    VCurr = Data#proc_info.current_vertex,
-    FirstMarkedE = Data#proc_info.first_marked_edges,
-    SecondMarkedE = Data#proc_info.second_marked_edges,
-    MessageQueue = Data#proc_info.message_queue,
-    LocalVars = Data#proc_info.local_vars,
+    VCurr = Data#actor_info.current_state,
+    FirstMarkedE = Data#actor_info.first_marked_edges,
+    SecondMarkedE = Data#actor_info.second_marked_edges,
+    MessageQueue = Data#actor_info.message_queue,
+    SpawnVars = Data#actor_info.spawn_vars,
+    LocalVars = sets:union(Data#actor_info.local_vars, SpawnVars),
     receive
         {use_transition, E} ->
             IsAlreadyMarkedOnce = lists:member(E, FirstMarkedE),
@@ -56,37 +96,45 @@ proc_loop(Data) ->
                 {E, VCurr, VNew, _} when IsAlreadyMarkedOnce ->
                     {_, FromLabel} = digraph:vertex(G, VCurr),
                     {_, ToLabel} = digraph:vertex(G, VNew),
+                    To = share:if_final_get_n(ToLabel),
+                    From = share:if_final_get_n(FromLabel),
                     NewL =
-                        case ToLabel =< FromLabel of
+                        case To =< From of
                             true ->
-                                io:fwrite("[PROC LOOP] RESET LOCALV IN ~p~n", [ProcName]),
+                                % io:fwrite("[EMUL] RESET LOCALV IN ~p from ~p to ~p~n", [
+                                %     ProcName, FromLabel, ToLabel
+                                % ]),
                                 sets:new();
                             false ->
                                 LocalVars
                         end,
-                    proc_loop(Data#proc_info{
-                        current_vertex = VNew,
+                    proc_loop(Data#actor_info{
+                        current_state = VNew,
                         second_marked_edges = SecondMarkedE ++ [E],
                         local_vars = NewL
                     });
                 {E, VCurr, VNew, _} ->
                     {_, FromLabel} = digraph:vertex(G, VCurr),
                     {_, ToLabel} = digraph:vertex(G, VNew),
+                    To = share:if_final_get_n(ToLabel),
+                    From = share:if_final_get_n(FromLabel),
                     NewL =
-                        case ToLabel =< FromLabel of
+                        case To =< From of
                             true ->
-                                io:fwrite("[PROC LOOP] RESET LOCALV IN ~p~n", [ProcName]),
+                                % io:fwrite("[EMUL] RESET LOCALV IN ~p from ~p to ~p~n", [
+                                %     ProcName, FromLabel, ToLabel
+                                % ]),
                                 sets:new();
                             false ->
                                 LocalVars
                         end,
-                    proc_loop(Data#proc_info{
-                        current_vertex = VNew,
+                    proc_loop(Data#actor_info{
+                        current_state = VNew,
                         first_marked_edges = FirstMarkedE ++ [E],
                         local_vars = NewL
                     });
                 _ ->
-                    io:fwrite("[PROC LOOP] V ~p Edge ~p non trovato in ~p~n", [VCurr, E, ProcName]),
+                    io:fwrite("[EMUL] V ~p Edge ~p non trovato in ~p~n", [VCurr, E, ProcName]),
                     proc_loop(Data)
             end;
         {P, get_edges} ->
@@ -108,18 +156,29 @@ proc_loop(Data) ->
         {P, get_local_vars} ->
             P ! {sets:to_list(LocalVars)},
             proc_loop(Data);
+        {add_spawn_var, V} ->
+            proc_loop(Data#actor_info{spawn_vars = sets:add_element(V, SpawnVars)});
         {add_local_var, V} ->
-            proc_loop(Data#proc_info{local_vars = sets:add_element(V, LocalVars)});
+            proc_loop(Data#actor_info{local_vars = sets:add_element(V, LocalVars)});
         {P, get_mess_queue} ->
             P ! {MessageQueue},
             proc_loop(Data);
         {add_mess_queue, M} ->
-            proc_loop(Data#proc_info{message_queue = MessageQueue ++ [M]});
+            proc_loop(Data#actor_info{message_queue = MessageQueue ++ [M]});
         {del_mess_queue, M} ->
-            proc_loop(Data#proc_info{message_queue = lists:delete(M, MessageQueue)});
+            proc_loop(Data#actor_info{message_queue = lists:delete(M, MessageQueue)});
         stop ->
             ok
     end.
 
-%%% Filter and edge list, given a list of edges
+%%%===================================================================
+%%% Internal Functions
+%%%===================================================================
+
 filter_marked_edges(EdgeL, MarkedE) -> [E || E <- EdgeL, not lists:member(E, MarkedE)].
+
+send_recv(P, Data) ->
+    P ! Data,
+    receive
+        {D} -> D
+    end.

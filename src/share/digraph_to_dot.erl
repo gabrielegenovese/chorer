@@ -1,11 +1,14 @@
-%%%-------------------------------------------------------------------
-%%% Module based from:
-%%%     https://github.com/jkrukoff/digraph_export/blob/master/src/digraph_export_dot.erl
+%%% @doc
+%%% Module based from
+%%% <a href="https://github.com/jkrukoff/digraph_export/blob/master/src/digraph_export_dot.erl">jkrukoff</a>.
 %%%
 %%% Features added:
-%%%     - distinctions between initial and final states
-%%%     - left to right orientation of graphs
-%%%     - enanched format for
+%%% <ul>
+%%%     <li>distinctions between initial and final states</li>
+%%%     <li>changed orientation of graphs from left to right</li>
+%%%     <li>enanched format</li>
+%%% </ul>
+%%% @end
 %%%-------------------------------------------------------------------
 -module(digraph_to_dot).
 -include("common_data.hrl").
@@ -17,6 +20,8 @@
 %%% API
 %%%===================================================================
 
+%%% @doc
+%%% Convert a graph to a dot graph.
 -spec convert(Graph, Name) -> Serialized when
     Graph :: digraph:graph(),
     Name :: unicode:charlist(),

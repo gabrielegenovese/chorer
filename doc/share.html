@@ -1,0 +1,200 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Module share</title>
+<link rel="stylesheet" type="text/css" href="edoc-extensions.css" title="EDoc">
+</head>
+<body class="markdown-body language-erlang"><script src="prism.js"></script>
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module share</h1>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+   Module with some common functions used everywhere in the project.
+
+
+<h2><a name="description">Description</a></h2>
+   Module with some common functions used everywhere in the project.
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_vertex-1">add_vertex/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#atol-1">atol/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#del_vertex-2">del_vertex/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#error-3">error/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#find_var-2">find_var/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#first-1">first/1</a></td><td>
+   Pick first element from a list.</td></tr>
+<tr><td valign="top"><a href="#get_base_label-2">get_base_label/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#get_edgedata-1">get_edgedata/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#get_fun_ast-1">get_fun_ast/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#get_graph-1">get_graph/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#get_localview-1">get_localview/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#if_final_get_n-1">if_final_get_n/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#inc_spawn_counter-1">inc_spawn_counter/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#is_erlvar-1">is_erlvar/1</a></td><td>
+   Return true if first letter's atom is uppercase (it's a variable in erlang),
+   otherwise false.</td></tr>
+<tr><td valign="top"><a href="#is_uppercase-1">is_uppercase/1</a></td><td>
+   If the input character is uppercase return true, otherwise false.</td></tr>
+<tr><td valign="top"><a href="#ltoa-1">ltoa/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#merge_fun_ar-2">merge_fun_ar/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#parse_actor_string-1">parse_actor_string/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#remove_last-1">remove_last/1</a></td><td>
+   Remove the last element from a list.</td></tr>
+<tr><td valign="top"><a href="#save_graph-4">save_graph/4</a></td><td></td></tr>
+<tr><td valign="top"><a href="#save_graph_to_file-4">save_graph_to_file/4</a></td><td></td></tr>
+<tr><td valign="top"><a href="#should_minimize-1">should_minimize/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#warning-3">warning/3</a></td><td></td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="add_vertex-1">add_vertex/1</a></h3>
+<div class="spec">
+<p><code>add_vertex(G) -&gt; <a href="/home/geno/Desktop/stdlib/doc/digraph.html#type-vertex">digraph:vertex()</a></code>
+<ul class="definitions"><li><code>G = <a href="/home/geno/Desktop/stdlib/doc/digraph.html#type-graph">digraph:graph()</a></code></li></ul></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="atol-1">atol/1</a></h3>
+<div class="spec">
+<p><code>atol(A) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="del_vertex-2">del_vertex/2</a></h3>
+<div class="spec">
+<p><code>del_vertex(G, V) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="error-3">error/3</a></h3>
+<div class="spec">
+<p><code>error(String, Content, RetData) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="find_var-2">find_var/2</a></h3>
+<div class="spec">
+<p><code>find_var(Tail, Name) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="first-1">first/1</a></h3>
+<div class="spec">
+<p><code>first(X1) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Pick first element from a list</p>
+
+<h3 class="function"><a name="get_base_label-2">get_base_label/2</a></h3>
+<div class="spec">
+<p><code>get_base_label(SetPm, Label) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="get_edgedata-1">get_edgedata/1</a></h3>
+<div class="spec">
+<p><code>get_edgedata(FunName) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="get_fun_ast-1">get_fun_ast/1</a></h3>
+<div class="spec">
+<p><code>get_fun_ast(FunName) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="get_graph-1">get_graph/1</a></h3>
+<div class="spec">
+<p><code>get_graph(FunName) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="get_localview-1">get_localview/1</a></h3>
+<div class="spec">
+<p><code>get_localview(FunName) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="if_final_get_n-1">if_final_get_n/1</a></h3>
+<div class="spec">
+<p><code>if_final_get_n(L) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="inc_spawn_counter-1">inc_spawn_counter/1</a></h3>
+<div class="spec">
+<p><code>inc_spawn_counter(Name) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="is_erlvar-1">is_erlvar/1</a></h3>
+<div class="spec">
+<p><code>is_erlvar(Name) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Return true if first letter's atom is uppercase (it's a variable in erlang),
+   otherwise false.</p>
+
+<h3 class="function"><a name="is_uppercase-1">is_uppercase/1</a></h3>
+<div class="spec">
+<p><code>is_uppercase(Char) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   If the input character is uppercase return true, otherwise false.</p>
+
+<h3 class="function"><a name="ltoa-1">ltoa/1</a></h3>
+<div class="spec">
+<p><code>ltoa(L) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="merge_fun_ar-2">merge_fun_ar/2</a></h3>
+<div class="spec">
+<p><code>merge_fun_ar(Name, Arity) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="parse_actor_string-1">parse_actor_string/1</a></h3>
+<div class="spec">
+<p><code>parse_actor_string(String) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="remove_last-1">remove_last/1</a></h3>
+<div class="spec">
+<p><code>remove_last(Item) -&gt; any()</code></p>
+<p></p>
+</div><p>
+   Remove the last element from a list.</p>
+
+<h3 class="function"><a name="save_graph-4">save_graph/4</a></h3>
+<div class="spec">
+<p><code>save_graph(Data, Settings, FunName, Mode) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="save_graph_to_file-4">save_graph_to_file/4</a></h3>
+<div class="spec">
+<p><code>save_graph_to_file(Graph, Dir, FileName, Type) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="should_minimize-1">should_minimize/1</a></h3>
+<div class="spec">
+<p><code>should_minimize(S) -&gt; any()</code></p>
+<p></p>
+</div>
+
+<h3 class="function"><a name="warning-3">warning/3</a></h3>
+<div class="spec">
+<p><code>warning(String, Content, RetData) -&gt; any()</code></p>
+<p></p>
+</div>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc</i></p>
+</body>
+</html>

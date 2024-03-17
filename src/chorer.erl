@@ -1,50 +1,55 @@
+%%%------------------------------------------------------------------------------
+%%% @doc
+%%% The main module of the program.
+%%% It initialize the ets tables and generetes the localviews and the globalview.
+%%% @end
+%%%------------------------------------------------------------------------------
 -module(chorer).
 -include("share/common_data.hrl").
 
 %%% API
--export([main/1, generate/2, generate/3, generate/4]).
+-export([main/1, generate/2, generate/3]).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
+%%% @doc
+%%% Function called when the tool is used from the CLI (Command Line Interface).
 main([InputFile, EntryPoint, OutputDir] = _Args) ->
-    generate(InputFile, list_to_atom(EntryPoint), OutputDir).
+    generate(InputFile, share:ltoa(EntryPoint), OutputDir).
 
-%%% Generate the local and global view of an Erlang File source.
-generate(InputFile, EntryPoint) ->
-    OutputDir = "./",
-    generate(InputFile, EntryPoint, OutputDir).
+%%% @doc
+%%% Generate the localviews and the globalview with base settings.
+-spec generate(InputFile, EntryPoint) -> atom() when
+    InputFile :: string(),
+    EntryPoint :: atom().
+generate(InputFile, EntryPoint) -> generate(InputFile, EntryPoint, #setting{}).
 
-generate(InputFile, EntryPoint, OutputDir) ->
-    generate(InputFile, EntryPoint, OutputDir, {false}).
-
--spec generate(InputFile, EntryPoint, OutputDir, Options) -> atom() when
+%%% @doc
+%%% Generate the localviews and the globalview specifing the output directory.
+%%% It initialize the ets tables and generates the localviews and globalview.
+-spec generate(InputFile, EntryPoint, OutDir) -> atom() when
     InputFile :: string(),
     EntryPoint :: atom(),
-    OutputDir :: string(),
-    Options :: [boolean()].
-generate(InputFile, EntryPoint, OutputDir, Options) ->
+    OutDir :: string().
+generate(InputFile, EntryPoint, OutDir) ->
+    io:fwrite("Analysing ~p, entrypoint: ~p~n", [InputFile, EntryPoint]),
     init_db(),
-    %%% Get all the metadata info such as exported functions, spawn done and actors
-    metadata:extract(InputFile, EntryPoint),
-    %%% Generate local and global view and save them int the output directory
-    local_view:generate(OutputDir, Options),
-    global_view:generate(OutputDir, EntryPoint).
+    Settings = #setting{output_dir = OutDir},
+    md:extract(InputFile),
+    lv:generate(Settings),
+    gv:generate(Settings, EntryPoint).
 
 %%%===================================================================
 %%% Internal Functions
 %%%===================================================================
 
-%%% Initialize code manager as a key based database
 init_db() ->
-    Ret = whereis(?DBMANAGER),
-    case Ret of
-        % if the pid of the dbmenager is not defined, initialize it
-        'undefined' ->
-            DBManagerPid = spawn(db_manager, loop, []),
-            register(?DBMANAGER, DBManagerPid);
-        % otherwise do nothing, because is already defined
-        _Pid ->
-            already_exist
-    end.
+    ets:new(?CLINE, [set, named_table]),
+    ets:new(?DBMANAGER, [set, named_table]),
+    ets:new(?FUNAST, [set, named_table]),
+    ets:new(?LOCALVIEW, [set, named_table]),
+    ets:new(?REGISTERDB, [set, named_table]),
+    ets:new(?ARGUMENTS, [set, named_table]),
+    ets:new(?SPAWNC, [set, named_table]).

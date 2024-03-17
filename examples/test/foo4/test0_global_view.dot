@@ -1,0 +1,36 @@
+digraph global {
+	rankdir="LR";
+	n_0 [label="global", shape="plaintext"];
+	n_1 [id="15", shape=circle, label="9"];
+	n_2 [id="12", shape=circle, label="8"];
+	n_3 [id="11", shape=circle, label="7"];
+	n_4 [id="17", shape=circle, label="11"];
+	n_5 [id="18", shape=circle, label="4"];
+	n_6 [id="14", shape=circle, label="10"];
+	n_7 [id="13", shape=circle, label="13"];
+	n_8 [id="10", shape=circle, label="12"];
+	n_9 [id="1", shape=circle, label="1"];
+	n_0 -> n_9 [arrowhead=none];
+	n_10 [id="9", shape=circle, label="6"];
+	n_11 [id="2", shape=circle, label="14"];
+	n_12 [id="7", shape=circle, label="3"];
+	n_13 [id="3", shape=circle, label="2"];
+	n_14 [id="16", shape=circle, label="5"];
+
+	n_5 -> n_14 [id="[$e|1]", label="test0/0→w11/0:w1"];
+	n_9 -> n_13 [id="[$e|13]", label="test0/0Δr0/0"];
+	n_2 -> n_11 [id="[$e|23]", label="test0/0→w21/0:w2"];
+	n_3 -> n_8 [id="[$e|9]", label="test0/0→r0/0:r0"];
+	n_13 -> n_12 [id="[$e|8]", label="test0/0Δw11/0"];
+	n_14 -> n_2 [id="[$e|2]", label="test0/0→r0/0:r0"];
+	n_12 -> n_5 [id="[$e|6]", label="test0/0Δw21/0"];
+	n_5 -> n_10 [id="[$e|0]", label="test0/0→r0/0:r0"];
+	n_10 -> n_6 [id="[$e|4]", label="test0/0→w11/0:w1"];
+	n_5 -> n_3 [id="[$e|16]", label="test0/0→w21/0:w2"];
+	n_8 -> n_11 [id="[$e|5]", label="test0/0→w11/0:w1"];
+	n_10 -> n_7 [id="[$e|14]", label="test0/0→w21/0:w2"];
+	n_6 -> n_11 [id="[$e|22]", label="test0/0→w21/0:w2"];
+	n_14 -> n_1 [id="[$e|12]", label="test0/0→w21/0:w2"];
+	n_1 -> n_11 [id="[$e|19]", label="test0/0→r0/0:r0"];
+	n_3 -> n_4 [id="[$e|10]", label="test0/0→w11/0:w1"];
+}

@@ -1,58 +1,64 @@
 %%%----FILE common_data.hrl----
 
+%%% CONSTANTS
+
 -define(FINALTAG, "final").
 -define(DBMANAGER, dbmanager).
 -define(UNDEFINED, none).
 -define(ANYDATA, any).
 
-%%% fsa_states, a structure to keep track of all the state of a Finite State Automata
-%%% start_state: a singlular starting poin, final_states: list of states
-% -record(fsa_data, {all_states, start_state, final_states, transitions, labels}).
+-define(CLINE, curr_line).
+-define(ACTORLIST, actor_list).
+-define(FUNAST, fun_ast).
+-define(ARGUMENTS, args).
+-define(LOCALVIEW, lv).
+-define(REGISTERDB, reg).
+-define(SPAWNC, spc).
+-define(SEPARATOR, "/").
 
-%%% graph node data, a structure to help the creation of the fsa
-% -record(node_data, {
-%     is_start = false,
-%     is_final = false,
-%     guard = [],
-%     current_operation = none,
-%     label = 'ɛ'
-% }).
+%%% RECORDS
 
-% -record(local_view, {
-%     name,
-%     n_args,
-%     ast,
-%     graph,
-%     current_vartex,
-%     local_vars,
-%     returned_var,
-%     nodes,
-%     transitions,
-%     recv_queue
-% }).
+-record(setting, {
+    more_info_lv = false,
+    debug = false,
+    output_dir = "./",
+    save_all = false
+}).
+-type setting() :: #setting{
+    more_info_lv :: boolean(),
+    debug :: boolean(),
+    output_dir :: string()
+}.
 
-%%% Variable data structure
-%%% type could be integrer, float, etc... or pid_prodId
 -record(variable, {
     type = ?ANYDATA,
     name = ?UNDEFINED,
     value = ?ANYDATA
 }).
 
-%%% Spanwed processes data stracture
-%%% name: process id
-%%% called_where: in which function the spawn() is been called
-%%% args_called: spawn's arguments
-%%% args_local: cluase match of function
-%%% local_vars: local variables
--record(spawned_proc, {
-    name = ?UNDEFINED,
-    called_where = ?UNDEFINED,
-    args_called = ?UNDEFINED,
-    args_local = ?UNDEFINED
+-record(wip_lv, {
+    fun_name = "",
+    fun_ast = {},
+    graph = digraph:new(),
+    min_graph = digraph:new(),
+    last_vertex = 1,
+    local_vars = [],
+    ret_var = #variable{},
+    % node_map = #{},
+    % input_vars = [],
+    edge_map = #{},
+    settings = #setting{}
 }).
 
-%%%
+-record(node, {
+    id,
+    label,
+    op,
+    out_trans
+}).
+
+-record(actor, {name, arity}).
+
 -record(branch, {
     graph = digraph:new(),
     last_vertex = 1,
@@ -60,11 +66,13 @@
     states_m = #{}
 }).
 
--record(proc_info, {
-    proc_id,
-    current_vertex = 1,
+-record(actor_info, {
+    fun_name = "",
+    id = ?UNDEFINED,
+    current_state = 1,
     first_marked_edges = [],
     second_marked_edges = [],
+    spawn_vars = sets:new(),
     local_vars = sets:new(),
     message_queue = []
 }).

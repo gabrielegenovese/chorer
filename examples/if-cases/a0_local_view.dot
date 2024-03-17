@@ -1,0 +1,12 @@
+digraph a0 {
+	rankdir="LR";
+	n_0 [label="a0", shape="plaintext"];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="2", shape=doublecircle, label="3"];
+	n_3 [id="3", shape=circle, label="2"];
+
+	n_1 -> n_3 [id="[$e|2]", label="receive Pid"];
+	n_3 -> n_3 [id="[$e|1]", label="receive Pid"];
+	n_3 -> n_2 [id="[$e|0]", label="send 'Hi, i'm A' to Pid"];
+}
