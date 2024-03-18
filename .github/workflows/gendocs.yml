@@ -24,12 +24,12 @@ jobs:
         with:
           otp-version: ${{matrix.otp}}
           rebar3-version: ${{matrix.rebar3}}
-      - run: rebar3 compile && rebar3 ex_doc --output docs
+      - run: DEBUG=1 rebar3 compile && rebar3 edoc
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'docs/'
+          path: 'doc/'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
