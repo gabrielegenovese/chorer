@@ -3,15 +3,15 @@
 ## Use
 
 ```bash
-./_build/default/bin/chorer ./examples/violation/meViolation.erl main0 examples/violation
+./_build/default/bin/chorer ./examples/violation/meViolation.erl main/0 examples/violation
 ```
 
 ## Description
 
 Features:
 
-- complex program that shows mutual exclusion violation
+- Complex program that shows mutual exclusion violation
 
 ## Results
 
-Hard to know.
+Difficult to determine.

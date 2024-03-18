@@ -43,14 +43,14 @@ first([]) -> [];
 first([H | _]) -> H.
 
 save_graph_to_file(Graph, Dir, FileName, Type) ->
-    StrinName = atol(FileName),
+    StringName = format_name(FileName),
     case Type of
         local ->
-            GraphDotStr = digraph_to_dot:convert(Graph, StrinName),
-            FilePath = filename:join([Dir, format_local_name(StrinName)]);
+            GraphDotStr = digraph_to_dot:convert(Graph, StringName),
+            FilePath = filename:join([Dir, format_local_name(StringName)]);
         global ->
             GraphDotStr = digraph_to_dot:convert(Graph, "global"),
-            FilePath = filename:join([Dir, format_global_name(StrinName)])
+            FilePath = filename:join([Dir, format_global_name(StringName)])
     end,
     ToWriteData = unicode:characters_to_binary(GraphDotStr),
     file:make_dir(Dir),
@@ -147,7 +147,7 @@ if_final_get_n(L) when is_integer(L) ->
     L.
 
 merge_fun_ar(Name, Arity) ->
-    atol(Name) ++ integer_to_list(Arity).
+    atol(Name) ++ ?ARITYSEP ++ integer_to_list(Arity).
 
 parse_actor_string(String) ->
     {N, A} = divide(String, length(String) - 1),
@@ -203,8 +203,10 @@ inc_spawn_counter(Name) ->
 %%% Internal Functions
 %%%===================================================================
 
-format_local_name(Name) -> Name ++ "_local_view.dot".
-format_global_name(Name) -> Name ++ "_global_view.dot".
+format_name(Name) -> string:replace(atol(Name), "/", "_").
+
+format_local_name(Name) -> format_name(Name) ++ "_local_view.dot".
+format_global_name(Name) -> format_name(Name) ++ "_global_view.dot".
 
 %%% Get a new label for a given graph
 new_label(Graph) -> length(digraph:vertices(Graph)) + 1.

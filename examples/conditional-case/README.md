@@ -1,26 +1,27 @@
 # Conditional case example
 
-## Use
+## Usage
 
 ```bash
-./_build/default/bin/chorer ./examples/conditional-case/conditional_case.erl main0 ./examples/conditional-case
+./_build/default/bin/chorer ./examples/conditional-case/conditional_case.erl main/0 ./examples/conditional-case
 ```
 
 ## Description
 
 Features:
 
-- vengono spawnati diversi processi dalla stessa funzione a cui viene passato il pid del main
-- in questo esempio vengono usate le variabili per eseguire del pattern matching a cui poi corrisponde una send precisa
+- Several processes are spawned from the same function, to which the main process's PID is passed.
+- Variables are used in this example to perform pattern matching, followed by a precise send operation.
 
 ## Results
 
-La GV cambia molto a seconda delle recv perché non vengono gestite bene le stringhe e le variabili con il pm
+Strings are not handled correctly. The GV (Global View) changes significantly depending on the receives because strings and variables with pattern matching are not handled well.
 
-provare ad aggiungere alla fine del main
+Try adding the following to the end of the main function:
 
 ```erlang
-D -> D ! "Ciao D";
+...
+        D -> D ! "Ciao D";
         true -> io:fwrite("Boh~n")
     end,
 

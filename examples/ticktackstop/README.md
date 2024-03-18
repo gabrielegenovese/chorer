@@ -3,15 +3,15 @@
 ## Use
 
 ```bash
-./_build/default/bin/chorer ./examples/ticktackloop/tictacloop.erl start0 examples/ticktackloop
+./_build/default/bin/chorer ./examples/ticktackstop/tictacstop.erl start/0 examples/ticktackstop
 ```
 
 ## Description
 
 Features:
 
-- aggiunta di un processo che ferma randomicamente il loop di messaggi
+- Addition of a process that randomly stops the message loop.
 
 ## Results
 
-LV corrette, nella GV dovrebbe riapparire il loop ma così non avviene.
+Correct LV; in the GV, the loop should reappear, but it does not.

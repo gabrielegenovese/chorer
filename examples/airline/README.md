@@ -1,20 +1,20 @@
 # Airline example
 
-## Use
+## Usage
 
 ```bash
-./_build/default/bin/chorer ./examples/airline/airline.erl main0 ./examples/airline
+./_build/default/bin/chorer ./examples/airline/airline.erl main/0 ./examples/airline
 ```
 
 ## Description
 
 Features:
 
-- `seat` è una funzione con due definizioni e grazie alla funzione `eval:function_list` viene gestito correttamente questo caso ricominciando la costruzione del grafo dal primo vertice
-- nel main viene chiamata la funzione `seat` che viene correttamente attaccata al main grazie alla funzione merge_graph (non viene valutato il passaggio di variabili)
-- durante la costruzione della gv, vengono correttamente valutati i passaggi di variabili delle spawn e delle send/recv
+- `seat` is a function with two definitions, and thanks to the `eval:function_list` function, this case is handled correctly by restarting the graph construction from the first vertex.
+- In the main function, the `seat` function is called and correctly attached to the main function using the `merge_graph` function (variable passing is not evaluated).
+- During the construction of the GV (Global View), variable passing of spawn and send/recv is correctly evaluated.
 
 ## Results
 
-La GV non sembra corretta, il problema sembra essere che torni in stati precedenti quando non dovrebbe essere così.
-La LV del main è molto generica, potrebbe essere più precisa se si esegue la valuzione della variabile 2 (viene allegata una LV corretta nella cartella).
+The GV does not seem correct; the issue appears to be that it returns to previous states when it should not.
+The LV (Local View) of the main function is very generic; it could be more precise if the evaluation of variable 2 is performed (a correct LV is attached in the folder).

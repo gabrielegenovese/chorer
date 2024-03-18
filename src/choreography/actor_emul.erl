@@ -11,7 +11,6 @@
     proc_loop/1,
     use_proc_transition/2,
     get_proc_edges/1,
-    get_proc_out_degree/1,
     get_proc_edge_info/2,
     get_proc_localvars/1,
     add_proc_spawnvars/2,
@@ -34,10 +33,6 @@ use_proc_transition(P, E) -> P ! {use_transition, E}.
 %%% @doc
 %%% Get all the localview's current edges.
 get_proc_edges(P) -> send_recv(P, {self(), get_edges}).
-
-%%% @doc
-%%% Get all the number of the localview's current edges.
-get_proc_out_degree(P) -> send_recv(P, {self(), get_out_degree}).
 
 %%% @doc
 %%% Get the informations of a localview's edge.
@@ -84,66 +79,18 @@ proc_loop(Data) ->
     G = LV#wip_lv.min_graph,
     % timer:sleep(200),
     VCurr = Data#actor_info.current_state,
-    FirstMarkedE = Data#actor_info.first_marked_edges,
     SecondMarkedE = Data#actor_info.second_marked_edges,
     MessageQueue = Data#actor_info.message_queue,
     SpawnVars = Data#actor_info.spawn_vars,
     LocalVars = sets:union(Data#actor_info.local_vars, SpawnVars),
     receive
         {use_transition, E} ->
-            IsAlreadyMarkedOnce = lists:member(E, FirstMarkedE),
-            case digraph:edge(G, E) of
-                {E, VCurr, VNew, _} when IsAlreadyMarkedOnce ->
-                    {_, FromLabel} = digraph:vertex(G, VCurr),
-                    {_, ToLabel} = digraph:vertex(G, VNew),
-                    To = share:if_final_get_n(ToLabel),
-                    From = share:if_final_get_n(FromLabel),
-                    NewL =
-                        case To =< From of
-                            true ->
-                                % io:fwrite("[EMUL] RESET LOCALV IN ~p from ~p to ~p~n", [
-                                %     ProcName, FromLabel, ToLabel
-                                % ]),
-                                sets:new();
-                            false ->
-                                LocalVars
-                        end,
-                    proc_loop(Data#actor_info{
-                        current_state = VNew,
-                        second_marked_edges = SecondMarkedE ++ [E],
-                        local_vars = NewL
-                    });
-                {E, VCurr, VNew, _} ->
-                    {_, FromLabel} = digraph:vertex(G, VCurr),
-                    {_, ToLabel} = digraph:vertex(G, VNew),
-                    To = share:if_final_get_n(ToLabel),
-                    From = share:if_final_get_n(FromLabel),
-                    NewL =
-                        case To =< From of
-                            true ->
-                                % io:fwrite("[EMUL] RESET LOCALV IN ~p from ~p to ~p~n", [
-                                %     ProcName, FromLabel, ToLabel
-                                % ]),
-                                sets:new();
-                            false ->
-                                LocalVars
-                        end,
-                    proc_loop(Data#actor_info{
-                        current_state = VNew,
-                        first_marked_edges = FirstMarkedE ++ [E],
-                        local_vars = NewL
-                    });
-                _ ->
-                    io:fwrite("[EMUL] V ~p Edge ~p non trovato in ~p~n", [VCurr, E, ProcName]),
-                    proc_loop(Data)
-            end;
+            manage_use_transition(Data, G, E);
         {P, get_edges} ->
             EL = digraph:out_edges(G, VCurr),
+            %% APPROX: filter out edges used two times
             ERet = filter_marked_edges(EL, SecondMarkedE),
             P ! {ERet},
-            proc_loop(Data);
-        {P, get_out_degree} ->
-            P ! {digraph:out_degree(G, VCurr)},
             proc_loop(Data);
         {P, get_edge_info, E} ->
             P ! {digraph:edge(G, E)},
@@ -174,6 +121,48 @@ proc_loop(Data) ->
 %%%===================================================================
 %%% Internal Functions
 %%%===================================================================
+
+manage_use_transition(Data, G, E) ->
+    VCurr = Data#actor_info.current_state,
+    FirstMarkedE = Data#actor_info.first_marked_edges,
+    SecondMarkedE = Data#actor_info.second_marked_edges,
+    SpawnVars = Data#actor_info.spawn_vars,
+    LocalVars = sets:union(Data#actor_info.local_vars, SpawnVars),
+    IsAlreadyMarkedOnce = lists:member(E, FirstMarkedE),
+    case digraph:edge(G, E) of
+        {E, VCurr, VNew, _} when IsAlreadyMarkedOnce ->
+            NewL = check_recursion(G, VCurr, VNew, LocalVars),
+            proc_loop(Data#actor_info{
+                current_state = VNew,
+                second_marked_edges = SecondMarkedE ++ [E],
+                local_vars = NewL
+            });
+        {E, VCurr, VNew, _} ->
+            NewL = check_recursion(G, VCurr, VNew, LocalVars),
+            proc_loop(Data#actor_info{
+                current_state = VNew,
+                first_marked_edges = FirstMarkedE ++ [E],
+                local_vars = NewL
+            });
+        _ ->
+            io:fwrite("[EMUL] From vetex ~p Edge ~p not found~n", [VCurr, E]),
+            proc_loop(Data)
+    end.
+
+check_recursion(G, VCurr, VNew, LocalVars) ->
+    {_, FromLabel} = digraph:vertex(G, VCurr),
+    {_, ToLabel} = digraph:vertex(G, VNew),
+    To = share:if_final_get_n(ToLabel),
+    From = share:if_final_get_n(FromLabel),
+    case To =< From of
+        true ->
+            % io:fwrite("[EMUL] RESET LOCALV IN ~p from ~p to ~p~n", [
+            %     ProcName, FromLabel, ToLabel
+            % ]),
+            sets:new();
+        false ->
+            LocalVars
+    end.
 
 filter_marked_edges(EdgeL, MarkedE) -> [E || E <- EdgeL, not lists:member(E, MarkedE)].
 

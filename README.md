@@ -12,14 +12,14 @@ Use `rebar3` to run the program from the command line or to compile it.
 
 ```erlang
 # rebar3 escript
-# ./_build/default/bin/chorer ./path/to/your/program.erl main path/to/folder
+# ./_build/default/bin/chorer ./path/to/your/program.erl main/0 path/to/folder
 ```
 
 or
 
 ```erlang
 # rebar3 shell
-1> chorer:generate("./examples/ticktack/tictacstop.erl", start).
+1> chorer:generate("./examples/ticktack/tictacstop.erl", start/0).
 finished
 ```
 

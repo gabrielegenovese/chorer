@@ -1,20 +1,45 @@
 # Customer example
 
-## Use
+## Usage
 
 ```bash
-./_build/default/bin/chorer ./examples/customer/customer.erl main0 ./examples/customer
+./_build/default/bin/chorer ./examples/customer/customer.erl main/0 ./examples/customer
 ```
 
 ## Description
 
 Features:
 
-- uso di register
-- solo scambio di atom
-- ricorsione
-- la GV ha dei loop
+- Usage of register
+- Only exchange of atoms
+- Recursion
+- The GV contains loops.
 
 ## Results
 
-LV e GV sono corrette.
+LV and GV are correct. Loops in the GV is correctly shown.
+
+<img src='https://g.gravizo.com/svg?
+    digraph global {
+        rankdir="LR";
+        n_0 [label="global", shape="plaintext"];
+        n_1 [id="5", shape=circle, label="5"];
+        n_2 [id="6", shape=circle, label="6"];
+        n_3 [id="1", shape=circle, label="1"];
+        n_0 -> n_3 [arrowhead=none];
+        n_4 [id="2", shape=circle, label="2"];
+        n_5 [id="8", shape=circle, label="8"];
+        n_6 [id="4", shape=circle, label="4"];
+        n_7 [id="7", shape=circle, label="7"];
+        n_8 [id="3", shape=circle, label="3"];
+        n_3 -> n_4 [id="[$e|0]", label="main/0.0Δcustomer/0.0"];
+        n_1 -> n_7 [id="[$e|5]", label="customer/0.0→store/0.0:payment"];
+        n_6 -> n_1 [id="[$e|3]", label="customer/0.0→store/0.0:buy"];
+        n_7 -> n_1 [id="[$e|8]", label="store/0.0→customer/0.0:reject"];
+        n_2 -> n_6 [id="[$e|6]", label="customer/0.0→store/0.0:item"];
+        n_8 -> n_6 [id="[$e|2]", label="customer/0.0→store/0.0:item"];
+        n_7 -> n_5 [id="[$e|7]", label="store/0.0→customer/0.0:accepted"];
+        n_6 -> n_2 [id="[$e|4]", label="customer/0.0→store/0.0:more"];
+        n_4 -> n_8 [id="[$e|1]", label="main/0.0Δstore/0.0"];
+    }
+'/>

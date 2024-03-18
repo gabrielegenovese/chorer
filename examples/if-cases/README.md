@@ -3,16 +3,16 @@
 ## Use
 
 ```bash
-./_build/default/bin/chorer ./examples/if-cases/ifcases.erl main0 examples/if-cases
+./_build/default/bin/chorer ./examples/if-cases/ifcases.erl main/0 examples/if-cases
 ```
 
 ## Description
 
 Features:
 
-- uso di if per diversificare la computazione
-- passaggio di pid tra più processi
+- Usage of `if` to diversify computation
+- Passing PID between multiple processes
 
 ## Results
 
-LV corrette, GV non produce trasizioni dove passa la stringa probabilmente perché la variabile non viene valutata per bene
+Correct LV, GV does not produce transitions where the string is passed, probably because the variable is not evaluated properly.

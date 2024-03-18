@@ -3,21 +3,22 @@
 ## Use
 
 ```bash
-./_build/default/bin/chorer ./examples/trick/trick.erl main0 examples/trick
+./_build/default/bin/chorer ./examples/trick/trick.erl main/0 examples/trick
+./_build/default/bin/chorer ./examples/trick/trick2.erl main/0 examples/trick
 ```
 
 ## Description
 
 Features:
 
-- numerose register
-- scambi di messaggi asincroni
-- match funzionante, rende alcuni messaggi dangling
+- Numerous registers
+- Asynchronous message exchanges
+- Functional matching, causing some messages to become dangling.
 
 ## Results
 
-LV e GV corrette.
+Correct LV and GV.
 
 ## Other
 
-In trick2, si può vedere come mettendo _ alle linee 15 e 18 aggiunge transizioni nella GV.
+In `trick2`, adding `_` on lines 15 and 18 can be seen to add transitions in the GV.

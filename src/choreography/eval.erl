@@ -248,7 +248,7 @@ match_with_list(List, Data) ->
 
 call_by_atom(Name, ArgList, Data) ->
     FunName = Data#wip_lv.fun_name,
-    RealName = share:ltoa(share:remove_last(FunName)),
+    RealName = share:ltoa(share:remove_last(share:remove_last(FunName))),
     case Name of
         RealName -> recursive(ArgList, Data);
         spawn -> spawn_call(ArgList, Data);
@@ -297,7 +297,7 @@ spawn_three(Name, ArgList, Data) ->
 format_spawn_label(Name, NewDataRetVar) ->
     C = share:inc_spawn_counter(Name),
     Arity = integer_to_list(length(NewDataRetVar#variable.value)),
-    ProcId = share:atol(Name) ++ Arity ++ ?SEPARATOR ++ integer_to_list(C),
+    ProcId = share:atol(Name) ++ ?ARITYSEP ++ Arity ++ ?SEPARATOR ++ integer_to_list(C),
     {"spawn " ++ ProcId, ProcId}.
 
 spawn_monitor_call(ArgList, Data) ->

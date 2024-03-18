@@ -3,17 +3,16 @@
 ## Use
 
 ```bash
-./_build/default/bin/chorer ./examples/hello/hello.erl greet0 examples/hello
+./_build/default/bin/chorer ./examples/hello/hello.erl greet/0 examples/hello
 ```
 
 ## Description
 
 Features:
 
-- uso di self per autoinviarsi messaggi
-- simulaizione dell'if nondeterministico dove in un ramo concludo e nell'altro vado in ricorsione
+- Usage of `self` to send messages to itself
+- Simulation of nondeterministic `if` where in one branch it concludes and in the other, it goes into recursion.
 
 ## Results
 
-LV giusta, GV sbagliata perché nello stato 2 non esegue la seconda send e va direttaente alla recv.
-Non è stato implementata la biforcazione quando in uno stato c'è contemporaneamente una recv o un altra transizione.
+Correct LV, incorrect GV because in state 2, it does not execute the second send and directly goes to the recv. There is no implementation for the branching when there is both a recv and another transition in one state simultaneously.

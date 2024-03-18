@@ -1,0 +1,10 @@
+digraph agent_1 {
+	rankdir="LR";
+	n_0 [label="agent_1", shape="plaintext"];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="2", shape=circle, label="2"];
+
+	n_2 -> n_1 [id="[$e|3]", label="receive {booked,_}"];
+	n_1 -> n_2 [id="[$e|0]", label="send {sell,pid_self} to Pid2"];
+}

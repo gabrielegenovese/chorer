@@ -1,0 +1,19 @@
+digraph greet_0 {
+	rankdir="LR";
+	n_0 [label="greet_0", shape="plaintext"];
+	n_1 [id="5", shape=circle, label="4"];
+	n_2 [id="1", shape=circle, label="1"];
+	n_0 -> n_2 [arrowhead=none];
+	n_3 [id="2", shape=doublecircle, label="7"];
+	n_4 [id="8", shape=circle, label="3"];
+	n_5 [id="4", shape=circle, label="6"];
+	n_6 [id="7", shape=circle, label="5"];
+	n_7 [id="3", shape=circle, label="2"];
+
+	n_6 -> n_5 [id="[$e|7]", label="send hello to anonfun_10.0"];
+	n_7 -> n_4 [id="[$e|3]", label="send hello to anonfun_15.0"];
+	n_1 -> n_6 [id="[$e|6]", label="spawn anonfun_10.0"];
+	n_5 -> n_3 [id="[$e|5]", label="receive hello"];
+	n_2 -> n_7 [id="[$e|1]", label="spawn anonfun_15.0"];
+	n_4 -> n_1 [id="[$e|4]", label="send hello to pid_self"];
+}

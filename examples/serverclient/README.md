@@ -3,22 +3,22 @@
 ## Use
 
 ```bash
-./_build/default/bin/chorer ./examples/serverclient/serverclient.erl main0 examples/serverclient
+./_build/default/bin/chorer ./examples/serverclient/serverclient.erl main/0 examples/serverclient
 ```
 
 ## Description
 
 Features:
 
-- spawn in un ciclo
-- passaggio di pid e messaggi
+- Spawning in a loop
+- Passing PIDs and messages
 
 ## Results
 
-LV e GV corrette con un solo client.
+Correct LV and GV with only one client.
 
 ## Other
 
-Se si aggiunge nel main un client, il risulato della GV è interessante ma sbagliato.
+If another client is added in the main function, the result of the GV becomes interesting but incorrect.
 
-Questo è un buon esempio per capire il problema di generalizzare le spawn, come viene affrontato nel paper di riferimento. Cosa dovrei scrivere nella local view se eseguo due volte la spawn di client? nella local view del client quando faccio self() dovrei ritornare client0/N invece che di 0 così nella global view metcha esattamente quello corrente.
+This is a good example to understand the problem of generalizing spawns, as addressed in the reference paper. What should be written in the LV if I execute the spawn of the client twice? In the LV of the client, when I do `self()`, I should return `client/0.N` instead of just `0`, so that in the GV, it accurately reflects the current one.

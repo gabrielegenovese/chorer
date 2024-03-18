@@ -3,15 +3,15 @@
 ## Use
 
 ```bash
-./_build/default/bin/chorer ./examples/ticktackloop/tictacloop.erl start0 examples/ticktackloop
+./_build/default/bin/chorer ./examples/ticktackloop/tictacloop.erl start/0 examples/ticktackloop
 ```
 
 ## Description
 
 Features:
 
-- loop di scambi di messaggi nella GV
+- Loop of message exchanges in the GV
 
 ## Results
 
-LV e GV corrette.
+Correct LV and GV.

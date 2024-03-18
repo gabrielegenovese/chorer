@@ -14,7 +14,8 @@
 -define(LOCALVIEW, lv).
 -define(REGISTERDB, reg).
 -define(SPAWNC, spc).
--define(SEPARATOR, "/").
+-define(ARITYSEP, "/").
+-define(SEPARATOR, ".").
 
 %%% RECORDS
 

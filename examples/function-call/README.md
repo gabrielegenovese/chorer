@@ -3,15 +3,15 @@
 ## Use
 
 ```bash
-./_build/default/bin/chorer ./examples/function-call/funny.erl main0 examples/function-call
+./_build/default/bin/chorer ./examples/function-call/funny.erl main/0 examples/function-call
 ```
 
 ## Description
 
 Features:
 
-- due call identiche a recv_dummy
+- Two identical calls to `recv_dummy`.
 
 ## Results
 
-LV del main sbagliata, perché durante la minimizzazione toglie la seconda receive e quindi la GV è sbagliata
+Incorrect LV of the main function because during minimization, it removes the second receive, resulting in an incorrect GV.
