@@ -38,15 +38,16 @@ create_localview(ActorName, Settings, Save) ->
             case LV of
                 not_found ->
                     io:fwrite("[LV] Creating a localview for ~p~n", [ActorName]),
-                    BaseData = #wip_lv{
+                    BaseData = #localview{
                         fun_name = ActorName, fun_ast = ActorAst, settings = Settings
                     },
-                    share:add_vertex(BaseData#wip_lv.graph),
-                    LVData = eval_codeline(BaseData#wip_lv.fun_ast, BaseData),
-                    G = LVData#wip_lv.graph,
+                    share:add_vertex(BaseData#localview.graph),
+                    LVData = eval_codeline(BaseData#localview.fun_ast, BaseData),
+                    G = LVData#localview.graph,
+                    % this operation MUST be before the minimize
                     set_final_state(G),
                     MinG = fsa:minimize(G),
-                    NewLV = LVData#wip_lv{min_graph = MinG},
+                    NewLV = LVData#localview{min_graph = MinG},
                     ets:insert(?LOCALVIEW, {ActorName, NewLV}),
                     case Save or Settings#setting.save_all of
                         true -> share:save_graph(NewLV, Settings, ActorName, local);

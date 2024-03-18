@@ -76,7 +76,7 @@ proc_loop(Data) ->
     ProcName = Data#actor_info.fun_name,
     % io:fwrite("[EMUL] ID ~p~n", [ProcName]),
     LV = share:get_localview(ProcName),
-    G = LV#wip_lv.min_graph,
+    G = LV#localview.min_graph,
     % timer:sleep(200),
     VCurr = Data#actor_info.current_state,
     SecondMarkedE = Data#actor_info.second_marked_edges,

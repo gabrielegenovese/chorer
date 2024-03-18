@@ -26,7 +26,7 @@ generate(Settings, EntryPoint) ->
             % io:fwrite("Creating the globalview starting from ~p~n", [EntryPoint]),
             G = create_globalview(EntryPoint),
             MinG = fsa:minimize(G),
-            Data = #wip_lv{graph = G, min_graph = MinG},
+            Data = #localview{graph = G, min_graph = MinG},
             share:save_graph(Data, Settings, EntryPoint, global),
             finished
     end.

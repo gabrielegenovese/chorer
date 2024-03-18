@@ -106,7 +106,7 @@ get_graph(FunName) ->
             io:fwrite("[S] Not Found in graph ~p~n", [FunName]),
             not_found;
         [{_, A}] ->
-            A#wip_lv.graph
+            A#localview.graph
     end.
 
 get_edgedata(FunName) ->
@@ -116,7 +116,7 @@ get_edgedata(FunName) ->
             io:fwrite("[S] Not Found in edgedata ~p~n", [FunName]),
             not_found;
         [{_, A}] ->
-            A#wip_lv.edge_map
+            A#localview.edge_map
     end.
 
 warning(String, Content, RetData) ->
@@ -166,8 +166,8 @@ save_graph(Data, Settings, FunName, Mode) ->
     Minimize = should_minimize(atol(FunName) ++ " " ++ atol(Mode)),
     ToSaveG =
         case Minimize of
-            true -> Data#wip_lv.min_graph;
-            false -> Data#wip_lv.graph
+            true -> Data#localview.min_graph;
+            false -> Data#localview.graph
         end,
     save_graph_to_file(ToSaveG, OutputDir, FunName, Mode).
 
@@ -187,7 +187,7 @@ find_var([Var | Tail], Name) ->
         false -> find_var(Tail, Name)
     end;
 find_var(Data, Name) ->
-    LL = Data#wip_lv.local_vars,
+    LL = Data#localview.local_vars,
     find_var(LL, Name).
 
 inc_spawn_counter(Name) ->

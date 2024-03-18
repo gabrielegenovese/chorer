@@ -37,7 +37,7 @@
     value = ?ANYDATA
 }).
 
--record(wip_lv, {
+-record(localview, {
     fun_name = "",
     fun_ast = {},
     graph = digraph:new(),
@@ -45,8 +45,6 @@
     last_vertex = 1,
     local_vars = [],
     ret_var = #variable{},
-    % node_map = #{},
-    % input_vars = [],
     edge_map = #{},
     settings = #setting{}
 }).
