@@ -12,19 +12,21 @@ permissions:
 jobs:
   docs:
     runs-on: ubuntu-20.04
-    name: Erlang/OTP ${{matrix.otp}} / rebar3 ${{matrix.rebar3}}
+    name: Generate documentation
     strategy:
       matrix:
         otp: ['26']
         rebar3: ['3.22']
     steps:
-      - name: Generate documentation
+      - name: Checkout
         uses: actions/checkout@v4
-      - uses: erlef/setup-beam@v1
+      - name: Setup
+        uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
           rebar3-version: ${{matrix.rebar3}}
-      - run: rebar3 compile && rebar3 ex_doc --output build && ls -al && cp -r assets build/assets
+      - name: Run script
+        run: rebar3 compile && rebar3 ex_doc --output build && cp -r assets build/assets
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

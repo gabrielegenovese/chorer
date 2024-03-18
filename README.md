@@ -35,6 +35,10 @@ The documentation of the project is aviable at this [link](https://gabrielegenov
 # rebar3 ex_doc --output docs
 ```
 
+## Test
+
+Try out the tool using the `./test.py` script.
+
 ## Credits
 
-This project was made for the Bachelor's degree Thesis of the Computer Science course at Alma Mater Studiorum - University of Bologna. I am grateful to the professor [Ivan Lanese](http://www.cs.unibo.it/~lanese/), who supervised the development of this project.
+This project was made for the Bachelor's degree [Thesis](https://gabrielegenovese.github.io/chorer/assets/thesis.pdf) of the Computer Science course at Alma Mater Studiorum - University of Bologna. I am grateful to the professor [Ivan Lanese](http://www.cs.unibo.it/~lanese/), who supervised the development of this project.
