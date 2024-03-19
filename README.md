@@ -39,6 +39,35 @@ The documentation of the project is aviable at this [link](https://gabrielegenov
 
 Try out the tool using the `./test.py` script.
 
+## Supported expression
+
+| Expression     | Support        |
+| -------------- | -------------- |
+| atom           | ✅ yes         |
+| integer        | ✅ yes         |
+| float          | ✅ yes         |
+| boolean        | ❌ no          |
+| tuple          | ✅ yes         |
+| list           | 🟡 partial     |
+| record         | ❌ no          |
+| map            | ❌ no          |
+| binary         | ❌ no          |
+| if             | ✅ yes         |
+| case           | ✅ yes         |
+| receive        | ✅ yes         |
+| send           | ✅ yes         |
+| spawn          | ✅ yes         |
+| match          | 🟡 partial     |
+| function       | ✅ yes         |
+| guards         | ❌ no          |
+| register       | 🟡 static eval |
+| rand:uniform   | ✅ yes         |
+| self           | ✅ yes         |
+| anon functions | ✅ yes         |
+| try catch      | ❌ no          |
+| after          | ❌ no          |
+| math operation | ❌ no          |
+
 ## Credits
 
 This project was made for the Bachelor's degree [Thesis](https://gabrielegenovese.github.io/chorer/assets/thesis.pdf) of the Computer Science course at Alma Mater Studiorum - University of Bologna. I am grateful to the professor [Ivan Lanese](http://www.cs.unibo.it/~lanese/), who supervised the development of this project.

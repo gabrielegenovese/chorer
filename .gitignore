@@ -19,3 +19,5 @@ _checkouts/
 TODO
 appunti
 .DS_Store
+docs
+build

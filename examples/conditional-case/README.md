@@ -15,7 +15,7 @@ Features:
 
 ## Results
 
-Strings are not handled correctly. The GV (Global View) changes significantly depending on the receives because strings and variables with pattern matching are not handled well.
+Strings are not handled correctly. The GV changes significantly depending on the receives because strings and variables with pattern matching are not handled well.
 
 Try adding the following to the end of the main function:
 
