@@ -108,7 +108,7 @@ function_call(Function, ArgList, Data) ->
         {atom, _, Name} -> call_by_atom(Name, ArgList, Data);
         {var, _, VarName} -> call_by_var(VarName, ArgList, Data);
         {remote, _, Package, FunName} -> call_by_package(Package, FunName, ArgList, Data);
-        F -> share:warning("couldn't call function pattern", F, Data)
+        F -> share:warning("couldn't recognize function call pattern", F, Data)
     end.
 
 %%% @doc
@@ -249,6 +249,7 @@ match_with_list(List, Data) ->
 
 call_by_atom(Name, ArgList, Data) ->
     FunName = Data#localview.fun_name,
+    %%% TODO: change this line to be generic (split with ?ARITYSEP)
     RealName = share:ltoa(share:remove_last(share:remove_last(FunName))),
     case Name of
         RealName -> recursive(ArgList, Data);
@@ -271,7 +272,7 @@ spawn_call(ArgList, Data) ->
         %%% TODO: check and implement package
         [_Package, {atom, _, Name}, SpArgList] -> spawn_three(Name, SpArgList, Data);
         %%% TODO: spawn with 2/4 argument
-        _ -> share:warning("couldn't call function pattern", ArgList, Data)
+        _ -> share:warning("couldn't recognize spawn call pattern", ArgList, Data)
     end.
 
 spawn_one(Content, Data) ->
@@ -280,7 +281,7 @@ spawn_one(Content, Data) ->
     Id = VarFound#variable.value,
     lv:create_localview(Id, Data#localview.settings, true),
     C = share:inc_spawn_counter(Id),
-    S = Id ++ ?SEPARATOR ++ integer_to_list(C),
+    S = Id ++ ?NSEQSEP ++ integer_to_list(C),
     RetData = add_vertex_edge("spawn " ++ S, NewData),
     RetVar = #variable{type = pid, value = S},
     RetData#localview{ret_var = RetVar}.
@@ -298,8 +299,8 @@ spawn_three(Name, ArgList, Data) ->
 %%% Naming convention: Name/Arity.SequentialNumber
 format_spawn_label(Name, NewDataRetVar) ->
     C = share:inc_spawn_counter(Name),
-    Arity = integer_to_list(length(NewDataRetVar#variable.value)),
-    ProcId = share:atol(Name) ++ ?ARITYSEP ++ Arity ++ ?SEPARATOR ++ integer_to_list(C),
+    Arity = length(NewDataRetVar#variable.value),
+    ProcId = share:merge_fun_ar(Name, Arity) ++ ?NSEQSEP ++ integer_to_list(C),
     {"spawn " ++ ProcId, ProcId}.
 
 spawn_monitor_call(ArgList, Data) ->

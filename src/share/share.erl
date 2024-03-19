@@ -22,7 +22,6 @@
     error/3,
     get_base_label/2,
     merge_fun_ar/2,
-    parse_actor_string/1,
     should_minimize/1,
     save_graph/4,
     remove_last/1,
@@ -149,10 +148,6 @@ if_final_get_n(L) when is_integer(L) ->
 merge_fun_ar(Name, Arity) ->
     atol(Name) ++ ?ARITYSEP ++ integer_to_list(Arity).
 
-parse_actor_string(String) ->
-    {N, A} = divide(String, length(String) - 1),
-    #actor{name = N, arity = A}.
-
 should_minimize(S) ->
     io:fwrite("Minimize ~s view? [y/n] ", [S]),
     {ok, [In]} = io:fread("", "~a"),
@@ -210,9 +205,5 @@ format_global_name(Name) -> format_name(Name) ++ "_global_view.dot".
 
 %%% Get a new label for a given graph
 new_label(Graph) -> length(digraph:vertices(Graph)) + 1.
-
-divide(S, N) -> divide(S, N, []).
-divide(T, 0, H) -> {H, T};
-divide([H | T], N, L) -> divide(T, N - 1, L ++ H).
 
 epsilon() -> 'ɛ'.

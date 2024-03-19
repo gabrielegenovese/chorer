@@ -10,6 +10,9 @@
 %%% API
 -export([generate/2]).
 
+%%% Record used in this module
+-record(message, {from, data, edge}).
+
 %%%===================================================================
 %%% API
 %%%===================================================================
@@ -41,7 +44,7 @@ create_globalview(Name) ->
     VNew = share:add_vertex(RetG),
     N = share:inc_spawn_counter(Name),
     MainProcPid = spawn(actor_emul, proc_loop, [#actor_info{fun_name = Name, id = N}]),
-    PidKey = share:atol(Name) ++ ?SEPARATOR ++ integer_to_list(N),
+    PidKey = share:atol(Name) ++ ?NSEQSEP ++ integer_to_list(N),
     ProcPidMap = #{share:ltoa(PidKey) => MainProcPid},
     % initialize first branch
     progress_procs(RetG, [new_branch(RetG, VNew, ProcPidMap)]).
@@ -76,34 +79,43 @@ progress_procs(GlobalGraph, BranchList) when is_list(BranchList) ->
     progress_procs(GlobalGraph, NewBL).
 
 %%% Explore the execution of a single branch
-progress_single_branch(BData) ->
+progress_single_branch(CurrBranchData) ->
     %%% First let's eval each actor until it reaches a recv edges
-    {TempBranchData, OpDone, NBL} = eval_branch_until_recv(BData),
+    {NewBranchData, OpDone, NewBranchList} = eval_branch_until_recv(CurrBranchData),
     %%% Then, let's eval recv edges for each actor, creating a new execution branch foreach message
-    TempProcPidMap = TempBranchData#branch.proc_pid_m,
-    NewBranchList =
-        NBL ++
-            maps:fold(
-                fun(Name, Pid, AccList) ->
-                    MessageQueue = actor_emul:get_proc_mess_queue(Pid),
-                    % io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
-                    gen_branch_foreach_mess(TempBranchData, MessageQueue, Name, AccList)
-                end,
-                [],
-                TempProcPidMap
-            ),
-    case NewBranchList =:= [] of
-        true ->
-            case OpDone of
-                true -> [TempBranchData];
-                false -> []
-            end;
-        false ->
-            NewBranchList
+    RetBranchList = generate_possible_branches(NewBranchData, NewBranchList),
+    %%% Return a list of possible executions or an empty list if there are none
+    decide_return(RetBranchList, OpDone, NewBranchData).
+
+%%% Generate a possible execution evaluating each process
+generate_possible_branches(NewBranchData, BaseBranchList) ->
+    TempProcPidMap = NewBranchData#branch.proc_pid_m,
+    %%% This function means we are evaluating a process that
+    %%% is receiving a message before the other procesess
+    maps:fold(
+        fun(Name, Pid, AccList) ->
+            MessageQueue = actor_emul:get_proc_mess_queue(Pid),
+            % io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
+            gen_branch_foreach_mess(NewBranchData, MessageQueue, Name, AccList)
+        end,
+        BaseBranchList,
+        TempProcPidMap
+    ).
+
+%%% If there are new branch to evaluate, return them. If there're not
+%%% new branch but an operation has been done, return the NewBranchData.
+%%% Otherwise, return an empty list; this branch is no loger evaluated.
+decide_return(NewBranchList, OpDone, NewBranchData) ->
+    case NewBranchList =/= [] of
+        true -> NewBranchList;
+        false when OpDone -> [NewBranchData];
+        _ -> []
     end.
 
 %%% Generate new branches for each message accepted from an actor
-gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseList) ->
+gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
+    %%% This function means we are evaluating a message
+    %%% recv of a process before other messages
     lists:foldl(
         fun(Message, AccList) ->
             %%% Check if there's an edge who accepts the message
@@ -133,7 +145,7 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseList) ->
                     AccList ++ [DupData#branch{last_vertex = LastVertex, states_m = NewStateMap}]
             end
         end,
-        BaseList,
+        BaseBranchList,
         MessageQueue
     ).
 
@@ -160,13 +172,13 @@ duplicate_proccess(ProcMap) ->
 
 %%% Remove the number from an actor's identificator
 remove_id_from_proc(ProcId) ->
-    Split = string:split(share:atol(ProcId), ?SEPARATOR),
+    Split = string:split(share:atol(ProcId), ?NSEQSEP),
     case Split of
-        [Name | N] ->
-            {share:ltoa(Name), N};
-        _ ->
+        [_ | []] ->
             io:fwrite("Error: should have an id ~p", [ProcId]),
-            {ProcId, 0}
+            {ProcId, 0};
+        [Name | N] ->
+            {share:ltoa(Name), N}
     end.
 
 %%% Evaluate the edges of a local view until it reaches a receive edge foreach actor
@@ -201,37 +213,47 @@ eval_proc_branch(ProcName, ProcPid, Data) ->
             {D, B} = eval_edge(EI, ProcName, ProcPid, Data),
             {D, B, []};
         true ->
-            Cond = is_lists_edgerecv(ProcPid, EL),
-            case Cond of
+            manage_more_edges(ProcName, ProcPid, Data)
+    end.
+
+%%% Evaluate edges of a localview, we are probably evaluating a receive
+%%% TODO: refactor this part
+%%% TODO: manage the fact that in a state there could be a recv and some other edges
+manage_more_edges(ProcName, ProcPid, Data) ->
+    EdgeList = actor_emul:get_proc_edges(ProcPid),
+    case is_one_edgerecv(ProcPid, EdgeList) of
+        true ->
+            %%% It's a receive state, block the evaluation (return false)
+            {Data, false, []};
+        false ->
+            NewPossibleBranches = lists:foldl(
+                fun(SingleEdge, AccList) ->
+                    DupData = dup_branch(Data),
+                    NewProcPid = maps:get(ProcName, DupData#branch.proc_pid_m),
+                    EdgeInfo = actor_emul:get_proc_edge_info(NewProcPid, SingleEdge),
+                    {EvalData, EvalDone} = eval_edge(EdgeInfo, ProcName, NewProcPid, DupData),
+                    case EvalDone of
+                        true -> AccList ++ [EvalData];
+                        false -> AccList
+                    end
+                end,
+                [],
+                EdgeList
+            ),
+            case NewPossibleBranches =:= [] of
                 true ->
+                    %%% No evaluation done, return false and old data
                     {Data, false, []};
                 false ->
-                    LL = lists:foldl(
-                        fun(ItemE, L) ->
-                            DD = dup_branch(Data),
-                            PP = maps:get(ProcName, DD#branch.proc_pid_m),
-                            EI = actor_emul:get_proc_edge_info(PP, ItemE),
-                            {D, B} = eval_edge(EI, ProcName, PP, DD),
-                            case B of
-                                true -> L ++ [D];
-                                false -> L
-                            end
-                        end,
-                        [],
-                        EL
-                    ),
-                    case LL =:= [] of
-                        true ->
-                            {Data, false, []};
-                        false ->
-                            [F | H] = LL,
-                            {F, true, H}
-                    end
+                    %%% Some evaluation done, return true and new data
+                    %%% Tail could be empty or a list of possible branches
+                    [First | Tail] = NewPossibleBranches,
+                    {First, true, Tail}
             end
     end.
 
-%%% Given a list of edges, check if one is a receive edge
-is_lists_edgerecv(ProcPid, EL) ->
+%%% Given a list of edges, check if ONE is a receive edge
+is_one_edgerecv(ProcPid, EL) ->
     lists:foldl(
         fun(E, A) ->
             {E, _, _, Label} = actor_emul:get_proc_edge_info(ProcPid, E),
@@ -347,7 +369,8 @@ manage_send(SendLabel, Data, ProcName, ProcPid, Edge) ->
 %%% Evaluate a receive transition of an actor
 manage_recv(ProcPid, Message) ->
     EdgeList = actor_emul:get_proc_edges(ProcPid),
-    IsRecvList = is_lists_edgerecv(ProcPid, EdgeList),
+    %%% TODO: change to all when false branch is ready
+    IsRecvList = is_one_edgerecv(ProcPid, EdgeList),
     %io:fwrite("IsRECV ~p EL ~p~n", [IsRecv, EL]),
     From = Message#message.from,
     case IsRecvList of

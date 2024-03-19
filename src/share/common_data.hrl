@@ -7,6 +7,7 @@
 -define(UNDEFINED, none).
 -define(ANYDATA, any).
 
+%%% DB names
 -define(CLINE, curr_line).
 -define(ACTORLIST, actor_list).
 -define(FUNAST, fun_ast).
@@ -14,8 +15,10 @@
 -define(LOCALVIEW, lv).
 -define(REGISTERDB, reg).
 -define(SPAWNC, spc).
+
+%%% Separators
 -define(ARITYSEP, "/").
--define(SEPARATOR, ".").
+-define(NSEQSEP, ".").
 
 %%% RECORDS
 
@@ -49,15 +52,6 @@
     settings = #setting{}
 }).
 
--record(node, {
-    id,
-    label,
-    op,
-    out_trans
-}).
-
--record(actor, {name, arity}).
-
 -record(branch, {
     graph = digraph:new(),
     last_vertex = 1,
@@ -75,7 +69,5 @@
     local_vars = sets:new(),
     message_queue = []
 }).
-
--record(message, {from, data, edge}).
 
 %%%----END FILE----

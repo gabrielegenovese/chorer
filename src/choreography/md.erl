@@ -31,25 +31,25 @@ parse_file(Path) ->
 %%%===================================================================
 
 %%% Parse all the file and save the Ast of each function and also all the possible actors.
-%%% All the exported functions are cosidereted possible actors. 
+%%% All the exported functions are cosidereted possible actors.
 gen_fun_ast_and_exported(Ast) ->
-    List =
+    ActorList =
         lists:foldl(
-            fun(CodeLine, AccList) ->
+            fun(CodeLine, AccActorList) ->
                 case CodeLine of
                     {attribute, _, export, AtrList} ->
-                        AccList ++ [share:merge_fun_ar(N, A) || {N, A} <- AtrList];
+                        AccActorList ++ [share:merge_fun_ar(N, A) || {N, A} <- AtrList];
                     {function, Line, Name, Arity, FunAst} ->
                         % io:fwrite("[MD] Found ~p~n", [share:merge_fun_ar(Name, Arity)]),
                         ets:insert(?FUNAST, {
                             share:merge_fun_ar(Name, Arity), {function, Line, FunAst}
                         }),
-                        AccList;
+                        AccActorList;
                     _ ->
-                        AccList
+                        AccActorList
                 end
             end,
             [],
             Ast
         ),
-    ets:insert(?DBMANAGER, {?ACTORLIST, List}).
+    ets:insert(?DBMANAGER, {?ACTORLIST, ActorList}).

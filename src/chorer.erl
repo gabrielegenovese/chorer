@@ -24,7 +24,8 @@ main([InputFile, EntryPoint, OutputDir] = _Args) ->
 -spec generate(InputFile, EntryPoint) -> atom() when
     InputFile :: string(),
     EntryPoint :: atom().
-generate(InputFile, EntryPoint) -> generate(InputFile, EntryPoint, #setting{}).
+generate(InputFile, EntryPoint) ->
+    generate(InputFile, EntryPoint, "./").
 
 %%% @doc
 %%% Generate the localviews and the globalview specifing the output directory.
@@ -35,8 +36,8 @@ generate(InputFile, EntryPoint) -> generate(InputFile, EntryPoint, #setting{}).
     OutDir :: string().
 generate(InputFile, EntryPoint, OutDir) ->
     io:fwrite("Analysing ~p, entrypoint: ~p~n", [InputFile, EntryPoint]),
-    init_db(),
     Settings = #setting{output_dir = OutDir},
+    init_db(),
     md:extract(InputFile),
     lv:generate(Settings),
     gv:generate(Settings, EntryPoint).

@@ -18,7 +18,7 @@
 %%% A localview is generated for each possible actor.
 %%% `md:extract' must be used before this function.
 generate(Settings) ->
-    [{_, ActorList}] = ets:lookup(?DBMANAGER, ?ACTORLIST),
+    ActorList = get_actors(),
     lists:foreach(
         fun(Actor) -> create_localview(Actor, Settings, true) end,
         ActorList
@@ -27,6 +27,10 @@ generate(Settings) ->
 %%%===================================================================
 %%% Internal Functions
 %%%===================================================================
+
+get_actors() ->
+    [{_, ActorList}] = ets:lookup(?DBMANAGER, ?ACTORLIST),
+    ActorList.
 
 create_localview(ActorName, Settings, Save) ->
     case does_actor_exist(ActorName) of
@@ -70,14 +74,15 @@ eval_codeline(CodeLine, Data) ->
     debug_print(CodeLine),
     case CodeLine of
         {function, _, DefinitionList} -> eval:function_list(DefinitionList, Data);
-        % {clause, _, Vars, Guard, Content} -> eval:clause(Content, Vars, Guard, Data, ""); this should never match
+        % Do NOT uncomment: this should never match
+        % {clause, _, Vars, Guard, Content} -> eval:clause(Content, Vars, Guard, Data, "");
         {match, _, RightContent, LeftContent} -> eval:match(RightContent, LeftContent, Data);
         {call, _, Function, ArgList} -> eval:function_call(Function, ArgList, Data);
         {'case', _, Content, PMList} -> eval:case_pm(Content, PMList, Data);
         {'if', _, PMList} -> eval:if_pm(PMList, Data);
         {'receive', _, PMList} -> eval:receive_pm(PMList, Data);
         {op, _, Op, LeftC, RightC} -> eval:operation(Op, LeftC, RightC, Data);
-        {'fun', N, Ast} -> eval:anon_fun(Ast, N, Data);
+        {'fun', N, Ast} -> eval:anon_function(Ast, N, Data);
         {integer, _, Val} -> eval:simple_type(integer, Val, Data);
         {float, _, Val} -> eval:simple_type(float, Val, Data);
         {string, _, Val} -> eval:simple_type(string, Val, Data);
