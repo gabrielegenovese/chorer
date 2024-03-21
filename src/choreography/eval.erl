@@ -383,7 +383,6 @@ call_by_package(Package, FunName, _ArgList, Data) ->
 rand_package(FunName, Data) ->
     case FunName of
         uniform -> simple_type(integer, ?ANYDATA, Data);
-        %%% TODO: expand
         _ -> share:warning("rand's function not yet implemented:", FunName, Data)
     end.
 
