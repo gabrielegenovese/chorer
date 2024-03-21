@@ -47,7 +47,7 @@ create_globalview(Name) ->
     PidKey = share:atol(Name) ++ ?NSEQSEP ++ integer_to_list(N),
     ProcPidMap = #{share:ltoa(PidKey) => MainProcPid},
     % initialize first branch
-    progress_procs(RetG, [new_branch(RetG, VNew, ProcPidMap)]).
+    progress(RetG, [new_branch(RetG, VNew, ProcPidMap)]).
 
 new_branch(G, V, P) ->
     #branch{
@@ -62,30 +62,28 @@ new_message(F, D, E) ->
     }.
 
 %%% Explore every possible branch of executions
-progress_procs(G, []) ->
-    G;
-progress_procs(GlobalGraph, BranchList) when is_list(BranchList) ->
-    RealList = lists:flatten(BranchList),
-    % io:fwrite("Branch to eval ~p~n", [length(RealList)]),
-    NewBL = lists:foldl(
-        fun(Item, AccL) ->
+progress(GlobalViewGraph, []) ->
+    GlobalViewGraph;
+progress(GlobalViewGraph, BranchList) when is_list(BranchList) ->
+    % io:fwrite("Branch to eval ~p~n", [length(BranchList)]),
+    NewBranchList = lists:foldl(
+        fun(Item, AccList) ->
             % io:fwrite("Eval branch~n"),
-            NewBreanches = progress_single_branch(Item),
-            AccL ++ NewBreanches
+            AccList ++ progress_branch(Item)
         end,
         [],
-        RealList
+        BranchList
     ),
-    progress_procs(GlobalGraph, NewBL).
+    progress(GlobalViewGraph, lists:flatten(NewBranchList)).
 
 %%% Explore the execution of a single branch
-progress_single_branch(CurrBranchData) ->
+progress_branch(CurrBranchData) ->
     %%% First let's eval each actor until it reaches a recv edges
     {NewBranchData, OpDone, NewBranchList} = eval_branch_until_recv(CurrBranchData),
     %%% Then, let's eval recv edges for each actor, creating a new execution branch foreach message
     RetBranchList = generate_possible_branches(NewBranchData, NewBranchList),
     %%% Return a list of possible executions or an empty list if there are none
-    decide_return(RetBranchList, OpDone, NewBranchData).
+    decide_branch_return(RetBranchList, OpDone, NewBranchData).
 
 %%% Generate a possible execution evaluating each process
 generate_possible_branches(NewBranchData, BaseBranchList) ->
@@ -105,7 +103,7 @@ generate_possible_branches(NewBranchData, BaseBranchList) ->
 %%% If there are new branch to evaluate, return them. If there're not
 %%% new branch but an operation has been done, return the NewBranchData.
 %%% Otherwise, return an empty list; this branch is no loger evaluated.
-decide_return(NewBranchList, OpDone, NewBranchData) ->
+decide_branch_return(NewBranchList, OpDone, NewBranchData) ->
     case NewBranchList =/= [] of
         true -> NewBranchList;
         false when OpDone -> [NewBranchData];
@@ -307,6 +305,7 @@ add_spawn_to_global(SLabel, EmulProcName, Data) ->
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
 
+%%% TODO: refactor
 get_local_vars(ProcId, Label, FunSName) ->
     EM = share:get_edgedata(element(1, remove_id_from_proc(ProcId))),
     InputData = maps:get(Label, EM, []),
@@ -367,6 +366,7 @@ manage_send(SendLabel, Data, ProcName, ProcPid, Edge) ->
     end.
 
 %%% Evaluate a receive transition of an actor
+%%% TODO: refactor
 manage_recv(ProcPid, Message) ->
     EdgeList = actor_emul:get_proc_edges(ProcPid),
     %%% TODO: change to all when false branch is ready
