@@ -1,6 +1,6 @@
-digraph test0 {
+digraph test_0 {
 	rankdir="LR";
-	n_0 [label="test0", shape="plaintext"];
+	n_0 [label="test_0", shape="plaintext"];
 	n_1 [id="5", shape=doublecircle, label="6"];
 	n_2 [id="6", shape=circle, label="3"];
 	n_3 [id="1", shape=circle, label="1"];
@@ -9,9 +9,9 @@ digraph test0 {
 	n_5 [id="4", shape=circle, label="5"];
 	n_6 [id="3", shape=circle, label="4"];
 
-	n_4 -> n_2 [id="[$e|0]", label="spawn b1/0"];
-	n_5 -> n_1 [id="[$e|1]", label="receive Z"];
-	n_2 -> n_6 [id="[$e|2]", label="receive X"];
-	n_6 -> n_5 [id="[$e|3]", label="receive Y"];
-	n_3 -> n_4 [id="[$e|4]", label="spawn a1/0"];
+	n_2 -> n_6 [id="[$e|3]", label="receive X"];
+	n_6 -> n_5 [id="[$e|4]", label="receive Y"];
+	n_5 -> n_1 [id="[$e|0]", label="receive Z"];
+	n_3 -> n_4 [id="[$e|2]", label="spawn a/1.0"];
+	n_4 -> n_2 [id="[$e|1]", label="spawn b/1.0"];
 }

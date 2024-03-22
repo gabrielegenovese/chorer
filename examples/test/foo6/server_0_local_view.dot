@@ -1,6 +1,6 @@
-digraph server0 {
+digraph server_0 {
 	rankdir="LR";
-	n_0 [label="server0", shape="plaintext"];
+	n_0 [label="server_0", shape="plaintext"];
 	n_1 [id="1", shape=circle, label="1"];
 	n_0 -> n_1 [arrowhead=none];
 

@@ -3,19 +3,19 @@
 
 recv() ->
     receive
-        hello -> done
+        _ -> done
     end.
 
 greet() ->
     Fun = fun() ->
         receive
-            hello -> done
+            _ -> done
         end
     end,
     A = spawn(fun() -> recv() end),
-    A ! hello,
-    self() ! hello,
+    A ! hello1,
+    self() ! hello2,
     B = spawn(Fun),
-    B ! hello,
+    B ! hello3,
     recv(),
     Fun().

@@ -10,10 +10,10 @@ digraph global {
 	n_6 [id="7", shape=circle, label="7"];
 	n_7 [id="3", shape=circle, label="3"];
 
-	n_5 -> n_1 [id="[$e|3]", label="test0/0Δclient1/0"];
-	n_4 -> n_5 [id="[$e|2]", label="test0/0Δclient1/1"];
-	n_2 -> n_6 [id="[$e|5]", label="test0/0Δclient1/0"];
-	n_4 -> n_7 [id="[$e|1]", label="test0/0Δclient1/0"];
-	n_5 -> n_2 [id="[$e|4]", label="test0/0Δclient1/1"];
-	n_3 -> n_4 [id="[$e|0]", label="test0/0Δserver0/0"];
+	n_1 -> n_6 [id="[$e|5]", label="test/0.0Δclient/1.0"];
+	n_3 -> n_4 [id="[$e|0]", label="test/0.0Δserver/0.0"];
+	n_7 -> n_1 [id="[$e|3]", label="test/0.0Δclient/1.1"];
+	n_4 -> n_5 [id="[$e|2]", label="test/0.0Δclient/1.0"];
+	n_7 -> n_2 [id="[$e|4]", label="test/0.0Δclient/1.0"];
+	n_4 -> n_7 [id="[$e|1]", label="test/0.0Δclient/1.1"];
 }

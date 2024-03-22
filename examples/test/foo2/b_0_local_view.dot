@@ -1,6 +1,6 @@
-digraph b0 {
+digraph b_0 {
 	rankdir="LR";
-	n_0 [label="b0", shape="plaintext"];
+	n_0 [label="b_0", shape="plaintext"];
 	n_1 [id="1", shape=circle, label="1"];
 	n_0 -> n_1 [arrowhead=none];
 	n_2 [id="2", shape=doublecircle, label="3"];
