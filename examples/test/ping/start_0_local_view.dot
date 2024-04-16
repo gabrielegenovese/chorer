@@ -11,6 +11,6 @@ digraph start_0 {
 	n_3 -> n_4 [id="[$e|1]", label="spawn pong/0.0"];
 	n_4 -> n_5 [id="[$e|7]", label="send 3 to pid_self"];
 	n_5 -> n_2 [id="[$e|0]", label="receive kill"];
-	n_5 -> n_1 [id="[$e|4]", label="receive N"];
-	n_1 -> n_5 [id="[$e|3]", label="send {pid_self,pid_self} to Pong"];
+	n_1 -> n_5 [id="[$e|5]", label="send {pid_self,unknown} to Pong"];
+	n_5 -> n_1 [id="[$e|3]", label="receive N"];
 }

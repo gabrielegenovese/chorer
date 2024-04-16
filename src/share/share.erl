@@ -159,12 +159,12 @@ should_minimize(S) ->
 
 save_graph(Data, Settings, FunName, Mode) ->
     OutputDir = Settings#setting.output_dir,
-    % Minimize =
-    %     case Mode of
-    %         global -> false;
-    %         _ -> true
-    %     end,
-    Minimize = should_minimize(atol(FunName) ++ " " ++ atol(Mode)),
+    Minimize =
+        case Mode of
+            global -> false;
+            _ -> true
+        end,
+    % Minimize = should_minimize(atol(FunName) ++ " " ++ atol(Mode)),
     ToSaveG =
         case Minimize of
             true -> Data#localview.min_graph;

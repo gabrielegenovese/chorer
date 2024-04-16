@@ -49,7 +49,7 @@ create_globalview(Name) ->
     S = sets:new(),
     ets:insert(?DBMANAGER, {global_state, #{1 => sets:add_element({share:ltoa(PidKey), 1}, S)}}),
     % initialize first branch
-    BData = progress(RetG, [new_branch(RetG, VNew, ProcPidMap)]),
+    BData = progress_all(RetG, [new_branch(RetG, VNew, ProcPidMap)]),
     show_global_state(),
     BData.
 
@@ -74,19 +74,19 @@ show_global_state() ->
     ).
 
 %%% Explore every possible branch of executions
-progress(GlobalViewGraph, []) ->
+progress_all(GlobalViewGraph, []) ->
     GlobalViewGraph;
-progress(GlobalViewGraph, BranchList) when is_list(BranchList) ->
-    % io:fwrite("Branch to eval ~p~n", [length(BranchList)]),
+progress_all(GlobalViewGraph, BranchList) when is_list(BranchList) ->
+    io:fwrite("Branch to eval ~p~n", [length(BranchList)]),
     NewBranchList = lists:foldl(
         fun(Item, AccList) ->
-            % io:fwrite("Eval branch~n"),
+            io:fwrite("Eval branch~n"),
             AccList ++ progress_branch(Item)
         end,
         [],
         BranchList
     ),
-    progress(GlobalViewGraph, lists:flatten(NewBranchList)).
+    progress_all(GlobalViewGraph, lists:flatten(NewBranchList)).
 
 %%% Explore the execution of a single branch
 progress_branch(CurrBranchData) ->
@@ -105,7 +105,7 @@ generate_possible_branches(NewBranchData, BaseBranchList) ->
     maps:fold(
         fun(Name, Pid, AccList) ->
             MessageQueue = actor_emul:get_proc_mess_queue(Pid),
-            % io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
+            io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
             gen_branch_foreach_mess(NewBranchData, MessageQueue, Name, AccList)
         end,
         BaseBranchList,
@@ -138,7 +138,7 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
                     AccList;
                 %%% If an edge has been found, use the duplicated branch to add the transition to the gv
                 EdgeFound ->
-                    % io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
+                    io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
                     ProcFrom = Message#message.from,
                     MessData = Message#message.data,
                     PidFrom = maps:get(ProcFrom, NewMap),
@@ -147,19 +147,13 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
                     ProcFromData = actor_emul:get_proc_data(PidFrom),
                     CurrProcFromVertex = ProcFromData#actor_info.current_state,
                     EToInfo = actor_emul:get_proc_edge_info(NewPid, EdgeFound),
-                    {LastVertex, Added} = complex_add_vertex_recv(
+                    LastVertex = complex_add_vertex_recv(
                         ProcFrom, CurrProcFromVertex, ProcName, EToInfo, DupData, Label
                     ),
                     actor_emul:del_proc_mess_queue(NewPid, Message),
                     %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
                     actor_emul:use_proc_transition(NewPid, EdgeFound),
-                    case Added of
-                        true ->
-                            AccList ++
-                                [DupData#branch{last_vertex = LastVertex}];
-                        false ->
-                            AccList
-                    end
+                    AccList ++ [DupData#branch{last_vertex = LastVertex}]
             end
         end,
         BaseBranchList,
@@ -219,13 +213,15 @@ eval_branch_until_recv(BranchData) ->
 
 %%% Evaluate the edges of a local view until it reaches a receive edge
 eval_proc_branch(ProcName, ProcPid, Data) ->
-    EL = actor_emul:get_proc_edges(ProcPid),
-    ELLength = length(EL),
+    {Mode, EdgeList} = actor_emul:get_proc_edges(ProcPid),
+    ELLength = length(EdgeList),
     if
-        ELLength =:= 0 ->
+        (ELLength =:= 0) and (Mode =:= final_state) ->
             {Data, false, []};
+        (ELLength =:= 0) and (Mode =:= filtered) ->
+            {Data#branch{proc_pid_m = #{}}, false, []};
         ELLength =:= 1 ->
-            E = share:first(EL),
+            E = share:first(EdgeList),
             EI = actor_emul:get_proc_edge_info(ProcPid, E),
             {D, B} = eval_edge(EI, ProcName, ProcPid, Data),
             {D, B, []};
@@ -237,7 +233,7 @@ eval_proc_branch(ProcName, ProcPid, Data) ->
 %%% TODO: refactor this part
 %%% TODO: manage the fact that in a state there could be a recv and some other edges
 manage_more_edges(ProcName, ProcPid, Data) ->
-    EdgeList = actor_emul:get_proc_edges(ProcPid),
+    {_, EdgeList} = actor_emul:get_proc_edges(ProcPid),
     case is_one_edgerecv(ProcPid, EdgeList) of
         true ->
             %%% It's a receive state, block the evaluation (return false)
@@ -393,7 +389,7 @@ manage_send(SendLabel, Data, ProcName, ProcPid, Edge) ->
 %%% Evaluate a receive transition of an actor
 %%% TODO: refactor
 manage_recv(ProcPid, Message) ->
-    EdgeList = actor_emul:get_proc_edges(ProcPid),
+    {_, EdgeList} = actor_emul:get_proc_edges(ProcPid),
     %%% TODO: change to all when false branch is ready
     IsRecvList = is_one_edgerecv(ProcPid, EdgeList),
     %io:fwrite("IsRECV ~p EL ~p~n", [IsRecv, EL]),
@@ -560,15 +556,15 @@ complex_add_vertex_recv(Proc1, CurrVertex, Proc2, EdgeInfo, Data, Label) ->
             % io:fwrite("[DEBUG] Adding new global state ~p~n", [VNew]),
             NewM = maps:put(VNew, AggregateGlobalState, StateM),
             ets:insert(?DBMANAGER, {global_state, NewM}),
-            {VNew, true};
+            VNew;
         VFound ->
             % io:fwrite("[EXTERNFOUND] ~p~n", [VFound]),
             case SameL of
                 nomatch ->
                     digraph:add_edge(G, VLast, VFound, Label),
-                    {VFound, true};
+                    VFound;
                 VTo ->
-                    {VTo, false}
+                    VTo
             end
     end.
 
