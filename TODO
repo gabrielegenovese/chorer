@@ -1,0 +1,56 @@
+# Todos
+
+## List
+
+- aggiungere tutto nella label così si dà all'utente e comunque usare le additional info nelle gv!!!!
+- aggiungere nelle label delle spawn gli argomenti (usare comunque additiona_info per la costruzione di gv)
+- fare valutazione degli argomenti viene chiamata una funzione
+- format send labels like "ProcId ! DataSent"
+- unbounded send (\*stella di klene nei cicli di send)
+- settings as global var in
+- fare il filtro solo sulle send e azzerarlo quando avviene una receive (tutte le receive e tutti i processi)
+- lasciare numerini nelle lv -> fare check nelle gv quando si ripassa dalla stessa spawn
+- dividere localview data from wip_lv data
+
+## appunti temi diversi
+
+### Spawn in global view
+
+Nella add global state fare andare avanti i processi spawnati! dare errore ma comunque provare a produrre qualcosa
+(fare un test con due processi paralleli, uno che registra un processo e uno che invia un messaggio a quello registrato)
+
+### value propagation:
+
+creare graph generico
+
+fare valutazione con argument fatta così
+se chiamata ricorsiva rifare valutazione con nuovi arguments
+(valutazione della ricorsione da fare qua perché se avviene durante la
+costruzione del grafo può essere parziale, essendo un particolare tipo di visita)
+(particolare attenzione all'esempio barber dove due funzioni si chiamano
+a vicenda e quindi il tool entra in un loop infinito)
+
+pseudo codice:
+funcall(FunName,Parameters) ->
+GenericG = lv(fun),
+EvalG = eval(GenericG, Parameters),
+merge(GPadre, EvalG)
+eval(G, P) ->
+%super pseudo codice
+RetG = graph:new
+while continue
+G, P = eval(RetG, G, P) %continua a valutare se c'è una chiamata ricorsiva con dati valutabili
+problemi:
+come fare eval?
+nel merge come attaccare con anche le additional_info?
+
+la creazione di una lv deve essere paramentrizzata
+
+### fsa minimize
+
+prima: nella gv fare la valutazione del ptmt su i dati passati nella additional_info e non
+
+- usare nella gv le versioni non minimizzate delle lv
+- chiedere all'utente se salvare la totale o la minimizzata
+
+-> aggiungere valutazione nella gv di tutti i possibili edge
