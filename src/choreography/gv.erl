@@ -46,8 +46,12 @@ create_globalview(Name) ->
     MainProcPid = spawn(actor_emul, proc_loop, [#actor_info{fun_name = Name, id = N}]),
     PidKey = share:atol(Name) ++ ?NSEQSEP ++ integer_to_list(N),
     ProcPidMap = #{share:ltoa(PidKey) => MainProcPid},
+    S = sets:new(),
+    ets:insert(?DBMANAGER, {state_m, #{1 => sets:add_element({share:ltoa(PidKey), 1}, S)}}),
     % initialize first branch
-    progress(RetG, [new_branch(RetG, VNew, ProcPidMap)]).
+    BData = progress(RetG, [new_branch(RetG, VNew, ProcPidMap)]),
+    show_global_state(),
+    BData.
 
 new_branch(G, V, P) ->
     #branch{
@@ -60,6 +64,14 @@ new_message(F, D, E) ->
     #message{
         from = F, data = D, edge = E
     }.
+
+show_global_state() ->
+    [{_, StateM}] = ets:lookup(?DBMANAGER, state_m),
+    maps:fold(
+        fun(Key, Value, _F) -> io:fwrite("N ~p states ~p~n", [Key, sets:to_list(Value)]) end,
+        [],
+        StateM
+    ).
 
 %%% Explore every possible branch of executions
 progress(GlobalViewGraph, []) ->
@@ -124,7 +136,7 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
                 ?UNDEFINED ->
                     stop_processes(NewMap),
                     AccList;
-                %%% If an edge has been found, duplicate the branch and add the transition to the graph
+                %%% If an edge has been found, use the duplicated branch to add the transition to the gv
                 EdgeFound ->
                     % io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
                     ProcFrom = Message#message.from,
@@ -132,15 +144,30 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
                     PidFrom = maps:get(ProcFrom, NewMap),
                     Label = format_send_label(ProcFrom, ProcName, MessData),
                     % io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
-                    EFromInfo = actor_emul:get_proc_edge_info(PidFrom, Message#message.edge),
+                    % EFromInfo = actor_emul:get_proc_edge_info(PidFrom, Message#message.edge),
+                    % {EEE, _, _, _} = EFromInfo,
+                    ProcFromData = actor_emul:get_proc_data(PidFrom),
+                    CurrProcFromVertex = ProcFromData#actor_info.current_state,
                     EToInfo = actor_emul:get_proc_edge_info(NewPid, EdgeFound),
-                    {LastVertex, NewStateMap} = complex_add_vertex(
-                        ProcFrom, EFromInfo, ProcName, EToInfo, DupData, Label
+                    % {LastVertex, NewStateMap} = complex_add_vertex(
+                    %     ProcFrom, EFromInfo, ProcName, EToInfo, DupData, Label
+                    % ),
+                    {LastVertex, NewStateMap, Added} = complex_add_vertex_recv(
+                        ProcFrom, CurrProcFromVertex, ProcName, EToInfo, DupData, Label
                     ),
                     actor_emul:del_proc_mess_queue(NewPid, Message),
                     %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
                     actor_emul:use_proc_transition(NewPid, EdgeFound),
-                    AccList ++ [DupData#branch{last_vertex = LastVertex, states_m = NewStateMap}]
+                    %%% TODO: Spostare la send qua
+                    % NewPid2 = maps:get(ProcFrom, NewMap),
+                    % actor_emul:use_proc_transition(NewPid2, EEE),
+                    case Added of
+                        true ->
+                            AccList ++
+                                [DupData#branch{last_vertex = LastVertex, states_m = NewStateMap}];
+                        false ->
+                            AccList
+                    end
             end
         end,
         BaseBranchList,
@@ -274,7 +301,8 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             actor_emul:use_proc_transition(ProcPid, Edge),
             {BData, true};
         IsSpawn ->
-            {VNew, NewM} = add_spawn_to_global(SLabel, ProcName, BData),
+            EdgeInfo = actor_emul:get_proc_edge_info(ProcPid, Edge),
+            {VNew, NewM} = add_spawn_to_global(EdgeInfo, SLabel, ProcName, BData),
             NewBData = BData#branch{last_vertex = VNew, proc_pid_m = NewM},
             actor_emul:use_proc_transition(ProcPid, Edge),
             {NewBData, true};
@@ -289,7 +317,8 @@ is_substring(S, SubS) ->
     is_list(string:find(S, SubS)).
 
 %%% Add a spawn transition to the global view
-add_spawn_to_global(SLabel, EmulProcName, Data) ->
+add_spawn_to_global(EInfo, SLabel, EmulProcName, Data) ->
+    {_, _, PV, _} = EInfo,
     % get proc name
     FunSpawned = string:prefix(SLabel, "spawn "),
     {FunSName, Counter} = remove_id_from_proc(FunSpawned),
@@ -301,6 +330,10 @@ add_spawn_to_global(SLabel, EmulProcName, Data) ->
     lists:foreach(fun(Var) -> actor_emul:add_proc_spawnvars(FuncPid, Var) end, LocalList),
     % create the edge on the global graph
     VNew = share:add_vertex(Data#branch.graph),
+    [{_, StateM}] = ets:lookup(?DBMANAGER, state_m),
+    AggrGState = create_gv_state(NewMap, share:ltoa(FunSpawned), 1, EmulProcName, PV),
+    % io:fwrite("SPAWN AGGR ~p~n", [AggrGState]),
+    ets:insert(?DBMANAGER, {state_m, maps:put(VNew, AggrGState, StateM)}),
     NewLabel = share:atol(EmulProcName) ++ "Δ" ++ FunSpawned,
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
@@ -513,60 +546,106 @@ and_rec([{B, L} | T]) ->
     end.
 
 %%% Add a vertex to the global view, with some checks for recusive edges
-complex_add_vertex(Proc1, EdgeInfo1, Proc2, EdgeInfo2, Data, Label) ->
-    StateM = Data#branch.states_m,
+
+%%% Check if a equal global state exist, otherwise add a new one.
+%%% TODO: consider message queue also
+complex_add_vertex_recv(Proc1, CurrVertex, Proc2, EdgeInfo2, Data, Label) ->
+    ProcPid = Data#branch.proc_pid_m,
+    [{_, StateM}] = ets:lookup(?DBMANAGER, state_m),
+    % io:fwrite("stateM ~p~n", [StateM]),
+    % io:fwrite("Label ~p~n", [share:ltoa(Label)]),
     VLast = Data#branch.last_vertex,
     G = Data#branch.graph,
-    {_, V1, V2, _} = EdgeInfo1,
-    {_, PV1, PV2, _} = EdgeInfo2,
+    {_, _PV1, PV2, _} = EdgeInfo2,
     EL = digraph:out_edges(G, VLast),
-    %%% Check if these vertex correspond to a global view's vertex
-    Vfirst = maps:get({{Proc1, V2}, {Proc2, PV2}}, StateM, ?UNDEFINED),
-    %%% Recheck vertexs, but in another order
-    Vsecond = maps:get({{Proc2, PV2}, {Proc1, V2}}, StateM, ?UNDEFINED),
-    %%% Check if already exist the same transition
-    case check_same_label(G, EL, Label) of
-        nomatch ->
-            case Vfirst of
-                ?UNDEFINED ->
-                    case Vsecond of
-                        ?UNDEFINED ->
-                            Cond = (V1 =:= V2) and (PV1 =:= PV2),
-                            case Cond of
-                                true ->
-                                    digraph:add_edge(G, VLast, VLast, Label),
-                                    NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
-                                    {VLast, NewM};
-                                %%% Add a new vertex, because no match found in StateM
-                                false ->
-                                    VAdded = share:add_vertex(G),
-                                    digraph:add_edge(G, VLast, VAdded, Label),
-                                    NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
-                                    {VAdded, NewM}
-                            end;
-                        _ ->
-                            %%% Match second vertex
-                            digraph:add_edge(G, VLast, Vsecond, Label),
-                            NewM = maps:put({{Proc1, V1}, {Proc2, PV1}}, VLast, StateM),
-                            {Vsecond, NewM}
+    SameL = check_same_label(G, EL, VLast, Label),
+    % io:fwrite("~n~n[COMPLEX] new check~n", []),
+    AggregateGlobalState = create_gv_state(ProcPid, Proc1, CurrVertex, Proc2, PV2),
+    {RETV, RetStateM, _Added} =
+        case check_if_exist(StateM, AggregateGlobalState) of
+            nomatch ->
+                VNew = share:add_vertex(G),
+                digraph:add_edge(G, VLast, VNew, Label),
+                % io:fwrite("[DEBUG] Adding new global state ~p~n", [VNew]),
+                NewM = maps:put(VNew, AggregateGlobalState, StateM),
+                {VNew, NewM, true};
+            VFound ->
+                % io:fwrite("[EXTERNFOUND] ~p~n", [VFound]),
+                case SameL of
+                    nomatch ->
+                        digraph:add_edge(G, VLast, VFound, Label),
+                        {VFound, StateM, false};
+                    VTo ->
+                        {VTo, StateM, false}
+                end
+        end,
+    ets:insert(?DBMANAGER, {state_m, RetStateM}),
+    {RETV, RetStateM, true}.
+
+create_gv_state(ProcPid, Proc1, V2, Proc2, PV2) ->
+    maps:fold(
+        fun(Name, Pid, AccList) ->
+            RealName = share:remove_counter(Name),
+            LV = share:get_localview(RealName),
+            MG = LV#localview.min_graph,
+            EL =
+                case Name of
+                    Proc1 ->
+                        {_, L} = digraph:vertex(MG, V2),
+                        {Proc1, share:if_final_get_n(L)};
+                    Proc2 ->
+                        {_, L} = digraph:vertex(MG, PV2),
+                        {Proc2, share:if_final_get_n(L)};
+                    N ->
+                        Data = actor_emul:get_proc_data(Pid),
+                        {_, L} = digraph:vertex(MG, Data#actor_info.current_state),
+                        {N, share:if_final_get_n(L)}
+                end,
+            sets:add_element(EL, AccList)
+        end,
+        sets:new(),
+        ProcPid
+    ).
+
+check_if_exist(StateM, AggregateGlobalState) ->
+    maps:fold(
+        fun(Key, Value, Acc) ->
+            if
+                Acc =:= nomatch ->
+                    Sub1 = sets:subtract(Value, AggregateGlobalState),
+                    % io:fwrite("[CHECK] Key ~p~nV ~p~nA ~p~nS ~p~n~n", [
+                    %     Key, Value, AggregateGlobalState, Sub
+                    % ]),
+                    Sub2 = sets:subtract(AggregateGlobalState, Value),
+                    % io:fwrite("[CHECK] Key ~p~nV ~p~nA ~p~nS ~p~n~n", [
+                    %     Key, Value, AggregateGlobalState, Sub
+                    % ]),
+                    Cond = sets:is_empty(Sub1) and sets:is_empty(Sub2),
+                    % io:fwrite("[SUB] ~p~n", [Cond]),
+                    case Cond of
+                        true ->
+                            % io:fwrite("[FOUND] FOUND n ~p ~n", [Key]),
+                            Key;
+                        false ->
+                            Acc
                     end;
-                _ ->
-                    %%% Match First vertex
-                    digraph:add_edge(G, VLast, Vfirst, Label),
-                    {Vfirst, StateM}
-            end;
-        VRet ->
-            {VRet, StateM}
-    end.
+                true ->
+                    Acc
+            end
+        end,
+        nomatch,
+        StateM
+    ).
 
 %%% Returns the outgoing vertex given a label and a list of transition
-check_same_label(G, EL, Label) ->
+check_same_label(G, EL, VLast, Label) ->
     lists:foldl(
         fun(E, A) ->
-            {E, _, VTo, VLabel} = digraph:edge(G, E),
-            case VLabel =:= Label of
-                true -> VTo;
-                false -> A
+            {E, VFrom, VTo, VLabel} = digraph:edge(G, E),
+            case (VLast =:= VFrom) and (VLabel =:= Label) of
+                true when A =:= nomatch -> VTo;
+                false -> A;
+                _ -> A
             end
         end,
         nomatch,

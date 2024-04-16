@@ -1,6 +1,9 @@
--module(hello).
--export([main/0, customer/0, store/0]).
+-module(customer).
+-export([main/0, customer/0, store/0, customer_dummy/0]).
 
+customer_dummy() ->
+    store ! ciaooooo,
+    customer().
 customer() ->
     store ! item,
     %%% Simulazione della decisione di un utente
@@ -24,6 +27,7 @@ purchase() ->
 store() ->
     receive
         item ->
+            io:fwrite("richiesta ricevuta~n"),
             receive
                 buy -> payment();
                 more -> store()
@@ -46,7 +50,9 @@ payment() ->
     end.
 
 main() ->
-    Cstm = spawn(?MODULE, customer, []),
     Str = spawn(?MODULE, store, []),
+    register(store, Str),
+    timer:sleep(5),
+    Cstm = spawn(?MODULE, customer_dummy, []),
     register(customer, Cstm),
-    register(store, Str).
+    done.

@@ -4,11 +4,12 @@
 greet() ->
     Me = self(),
     Me ! hello1,
+    Bool = io:fread("~p"),
     if
-        true ->
+        Bool ->
             Me ! hello2,
             greet();
-        false ->
+        not Bool ->
             receive
                 hello1 -> done;
                 hello2 -> done

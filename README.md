@@ -61,6 +61,7 @@ Try out the tool using the `./test.py` script.
 | function       | ✅ yes         |
 | guards         | ❌ no          |
 | register       | 🟡 static eval |
+| unregister     | ❌ no          |
 | rand:uniform   | ✅ yes         |
 | self           | ✅ yes         |
 | anon functions | ✅ yes         |

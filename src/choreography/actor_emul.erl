@@ -78,7 +78,10 @@ proc_loop(Data) ->
     LV = share:get_localview(ProcName),
     G = LV#localview.min_graph,
     % timer:sleep(200),
+
     VCurr = Data#actor_info.current_state,
+    %% TODO: considera togliere filtro e smettere di esplorare con altri  (vedi TODO)
+    _FirstMarkedE = Data#actor_info.first_marked_edges,
     SecondMarkedE = Data#actor_info.second_marked_edges,
     MessageQueue = Data#actor_info.message_queue,
     SpawnVars = Data#actor_info.spawn_vars,
@@ -89,6 +92,14 @@ proc_loop(Data) ->
         {P, get_edges} ->
             EL = digraph:out_edges(G, VCurr),
             %% APPROX: filter out edges used two times
+            % TODO: cambiare questo ovunque nella gv
+            % case EL of
+            %     [] ->
+            %         P ! {final_state, []};
+            %     _ ->
+            %         ERet = filter_marked_edges(EL, SecondMarkedE),
+            %         P ! {filtered, ERet}
+            % end,
             ERet = filter_marked_edges(EL, SecondMarkedE),
             P ! {ERet},
             proc_loop(Data);

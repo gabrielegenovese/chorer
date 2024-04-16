@@ -1,0 +1,22 @@
+digraph global {
+	n_0 [label="global", shape="plaintext"];
+	n_0 -> n_1 [arrowhead=none];
+	n_1 [id="1", shape=circle, label="1"];
+	n_2 [id="2", shape=circle, label="2"];
+	n_3 [id="3", shape=circle, label="3"];
+	n_4 [id="4", shape=circle, label="4"];
+	n_5 [id="5", shape=circle, label="5"];
+	n_6 [id="6", shape=circle, label="6"];
+	n_7 [id="7", shape=circle, label="7"];
+
+	n_1 -> n_2 [id="[$e|0]", label="main/0.0Δagent/1.0"];
+	n_2 -> n_3 [id="[$e|1]", label="main/0.0Δagent/1.1"];
+	n_3 -> n_4 [id="[$e|2]", label="agent/1.0→main/0.0:{sell,pid_self}"];
+	n_3 -> n_5 [id="[$e|11]", label="agent/1.1→main/0.0:{sell,pid_self}"];
+	n_4 -> n_6 [id="[$e|7]", label="main/0.0→agent/1.0:{booked,Num}"];
+	n_5 -> n_7 [id="[$e|12]", label="main/0.0→agent/1.1:{booked,Num}"];
+	n_6 -> n_4 [id="[$e|2]", label="agent/1.0→main/0.0:{sell,pid_self}"];
+	n_7 -> n_5 [id="[$e|11]", label="agent/1.1→main/0.0:{sell,pid_self}"];
+	n_7 -> n_4 [id="[$e|2]", label="agent/1.0→main/0.0:{sell,pid_self}"];
+	n_6 -> n_5 [id="[$e|11]", label="agent/1.1→main/0.0:{sell,pid_self}"];
+}

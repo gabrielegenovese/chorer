@@ -28,6 +28,7 @@
     find_var/2,
     if_final_get_n/1,
     inc_spawn_counter/1,
+    remove_counter/1,
     atol/1,
     ltoa/1
 ]).
@@ -115,13 +116,13 @@ get_edgedata(FunName) ->
             io:fwrite("[S] Not Found in edgedata ~p~n", [FunName]),
             not_found;
         [{_, A}] ->
-            A#localview.edge_map
+            A#localview.additional_info
     end.
 
 warning(String, Content, RetData) ->
     [{_, Line}] = ets:lookup(?CLINE, line),
     io:fwrite("[LV] WARNING on line ~p: " ++ String ++ " ~p~n", [Line, Content]),
-    RetData.
+    RetData#localview{ret_var = #variable{}}.
 
 error(String, Content, RetData) ->
     io:fwrite("ERROR: ~p ~p~n", [String, Content]),
@@ -158,6 +159,11 @@ should_minimize(S) ->
 
 save_graph(Data, Settings, FunName, Mode) ->
     OutputDir = Settings#setting.output_dir,
+    % Minimize =
+    %     case Mode of
+    %         global -> false;
+    %         _ -> true
+    %     end,
     Minimize = should_minimize(atol(FunName) ++ " " ++ atol(Mode)),
     ToSaveG =
         case Minimize of
@@ -165,6 +171,10 @@ save_graph(Data, Settings, FunName, Mode) ->
             false -> Data#localview.graph
         end,
     save_graph_to_file(ToSaveG, OutputDir, FunName, Mode).
+
+remove_counter(S) ->
+    [Rest, _] = string:split(atol(S), "."),
+    Rest.
 
 %%% @doc
 %%% Remove the last element from a list.

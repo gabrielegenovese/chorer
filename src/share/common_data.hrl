@@ -22,6 +22,12 @@
 
 %%% RECORDS
 
+% -record(setting, {
+%     more_info_lv = true,
+%     debug = true,
+%     output_dir = "./",
+%     save_all = true
+% }).
 -record(setting, {
     more_info_lv = false,
     debug = false,
@@ -36,7 +42,7 @@
 
 -record(variable, {
     type = ?ANYDATA,
-    name = ?UNDEFINED,
+    name = unknown,
     value = ?ANYDATA
 }).
 
@@ -48,7 +54,12 @@
     last_vertex = 1,
     local_vars = [],
     ret_var = #variable{},
-    edge_map = #{},
+    % additioal info about the edges
+    % key: label, value: depends on the edge
+    % if key is a spawn label, value is spawn arguments
+    % if key is a send label, value is the data sent
+    % if key is a receive label, value is nothing
+    additional_info = #{},
     settings = #setting{}
 }).
 
@@ -60,11 +71,17 @@
 }).
 
 -record(actor_info, {
+    % name of the spawned function
     fun_name = "",
+    % sequential number of the actor
     id = ?UNDEFINED,
+    % local state of lv
     current_state = 1,
+    % first filter
     first_marked_edges = [],
+    % second filter
     second_marked_edges = [],
+    % actor's spawing variable TODO: CHANGE
     spawn_vars = sets:new(),
     local_vars = sets:new(),
     message_queue = []
