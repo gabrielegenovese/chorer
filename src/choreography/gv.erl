@@ -47,7 +47,7 @@ create_globalview(Name) ->
     PidKey = share:atol(Name) ++ ?NSEQSEP ++ integer_to_list(N),
     ProcPidMap = #{share:ltoa(PidKey) => MainProcPid},
     S = sets:new(),
-    ets:insert(?DBMANAGER, {state_m, #{1 => sets:add_element({share:ltoa(PidKey), 1}, S)}}),
+    ets:insert(?DBMANAGER, {global_state, #{1 => sets:add_element({share:ltoa(PidKey), 1}, S)}}),
     % initialize first branch
     BData = progress(RetG, [new_branch(RetG, VNew, ProcPidMap)]),
     show_global_state(),
@@ -66,7 +66,7 @@ new_message(F, D, E) ->
     }.
 
 show_global_state() ->
-    [{_, StateM}] = ets:lookup(?DBMANAGER, state_m),
+    [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
     maps:fold(
         fun(Key, Value, _F) -> io:fwrite("N ~p states ~p~n", [Key, sets:to_list(Value)]) end,
         [],
@@ -144,27 +144,19 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
                     PidFrom = maps:get(ProcFrom, NewMap),
                     Label = format_send_label(ProcFrom, ProcName, MessData),
                     % io:fwrite("~n~n[RECV] LABEL ~ts~n~n", [Label]),
-                    % EFromInfo = actor_emul:get_proc_edge_info(PidFrom, Message#message.edge),
-                    % {EEE, _, _, _} = EFromInfo,
                     ProcFromData = actor_emul:get_proc_data(PidFrom),
                     CurrProcFromVertex = ProcFromData#actor_info.current_state,
                     EToInfo = actor_emul:get_proc_edge_info(NewPid, EdgeFound),
-                    % {LastVertex, NewStateMap} = complex_add_vertex(
-                    %     ProcFrom, EFromInfo, ProcName, EToInfo, DupData, Label
-                    % ),
-                    {LastVertex, NewStateMap, Added} = complex_add_vertex_recv(
+                    {LastVertex, Added} = complex_add_vertex_recv(
                         ProcFrom, CurrProcFromVertex, ProcName, EToInfo, DupData, Label
                     ),
                     actor_emul:del_proc_mess_queue(NewPid, Message),
                     %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
                     actor_emul:use_proc_transition(NewPid, EdgeFound),
-                    %%% TODO: Spostare la send qua
-                    % NewPid2 = maps:get(ProcFrom, NewMap),
-                    % actor_emul:use_proc_transition(NewPid2, EEE),
                     case Added of
                         true ->
                             AccList ++
-                                [DupData#branch{last_vertex = LastVertex, states_m = NewStateMap}];
+                                [DupData#branch{last_vertex = LastVertex}];
                         false ->
                             AccList
                     end
@@ -330,10 +322,10 @@ add_spawn_to_global(EInfo, SLabel, EmulProcName, Data) ->
     lists:foreach(fun(Var) -> actor_emul:add_proc_spawnvars(FuncPid, Var) end, LocalList),
     % create the edge on the global graph
     VNew = share:add_vertex(Data#branch.graph),
-    [{_, StateM}] = ets:lookup(?DBMANAGER, state_m),
+    [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
     AggrGState = create_gv_state(NewMap, share:ltoa(FunSpawned), 1, EmulProcName, PV),
     % io:fwrite("SPAWN AGGR ~p~n", [AggrGState]),
-    ets:insert(?DBMANAGER, {state_m, maps:put(VNew, AggrGState, StateM)}),
+    ets:insert(?DBMANAGER, {global_state, maps:put(VNew, AggrGState, StateM)}),
     NewLabel = share:atol(EmulProcName) ++ "Δ" ++ FunSpawned,
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
@@ -549,38 +541,36 @@ and_rec([{B, L} | T]) ->
 
 %%% Check if a equal global state exist, otherwise add a new one.
 %%% TODO: consider message queue also
-complex_add_vertex_recv(Proc1, CurrVertex, Proc2, EdgeInfo2, Data, Label) ->
+complex_add_vertex_recv(Proc1, CurrVertex, Proc2, EdgeInfo, Data, Label) ->
     ProcPid = Data#branch.proc_pid_m,
-    [{_, StateM}] = ets:lookup(?DBMANAGER, state_m),
+    [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
     % io:fwrite("stateM ~p~n", [StateM]),
     % io:fwrite("Label ~p~n", [share:ltoa(Label)]),
     VLast = Data#branch.last_vertex,
     G = Data#branch.graph,
-    {_, _PV1, PV2, _} = EdgeInfo2,
+    {_, _PV1, PV2, _} = EdgeInfo,
     EL = digraph:out_edges(G, VLast),
     SameL = check_same_label(G, EL, VLast, Label),
     % io:fwrite("~n~n[COMPLEX] new check~n", []),
     AggregateGlobalState = create_gv_state(ProcPid, Proc1, CurrVertex, Proc2, PV2),
-    {RETV, RetStateM, _Added} =
-        case check_if_exist(StateM, AggregateGlobalState) of
-            nomatch ->
-                VNew = share:add_vertex(G),
-                digraph:add_edge(G, VLast, VNew, Label),
-                % io:fwrite("[DEBUG] Adding new global state ~p~n", [VNew]),
-                NewM = maps:put(VNew, AggregateGlobalState, StateM),
-                {VNew, NewM, true};
-            VFound ->
-                % io:fwrite("[EXTERNFOUND] ~p~n", [VFound]),
-                case SameL of
-                    nomatch ->
-                        digraph:add_edge(G, VLast, VFound, Label),
-                        {VFound, StateM, false};
-                    VTo ->
-                        {VTo, StateM, false}
-                end
-        end,
-    ets:insert(?DBMANAGER, {state_m, RetStateM}),
-    {RETV, RetStateM, true}.
+    case check_if_exist(StateM, AggregateGlobalState) of
+        nomatch ->
+            VNew = share:add_vertex(G),
+            digraph:add_edge(G, VLast, VNew, Label),
+            % io:fwrite("[DEBUG] Adding new global state ~p~n", [VNew]),
+            NewM = maps:put(VNew, AggregateGlobalState, StateM),
+            ets:insert(?DBMANAGER, {global_state, NewM}),
+            {VNew, true};
+        VFound ->
+            % io:fwrite("[EXTERNFOUND] ~p~n", [VFound]),
+            case SameL of
+                nomatch ->
+                    digraph:add_edge(G, VLast, VFound, Label),
+                    {VFound, true};
+                VTo ->
+                    {VTo, false}
+            end
+    end.
 
 create_gv_state(ProcPid, Proc1, V2, Proc2, PV2) ->
     maps:fold(

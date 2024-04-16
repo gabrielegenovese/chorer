@@ -66,8 +66,7 @@
 -record(branch, {
     graph = digraph:new(),
     last_vertex = 1,
-    proc_pid_m = #{},
-    states_m = #{}
+    proc_pid_m = #{}
 }).
 
 -record(actor_info, {
