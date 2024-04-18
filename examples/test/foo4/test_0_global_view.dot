@@ -15,18 +15,18 @@ digraph global {
 	n_11 [id="3", shape=circle, label="3"];
 
 	n_5 -> n_7 [id="[$e|0]", label="test/0.0Δr/0.0"];
+	n_8 -> n_2 [id="[$e|12]", label="test/0.0→w2/1.0:w2"];
+	n_3 -> n_8 [id="[$e|8]", label="test/0.0→r/0.0:r0"];
 	n_3 -> n_4 [id="[$e|9]", label="test/0.0→w2/1.0:w2"];
 	n_4 -> n_2 [id="[$e|14]", label="test/0.0→r/0.0:r0"];
-	n_9 -> n_10 [id="[$e|5]", label="test/0.0→w2/1.0:w2"];
-	n_9 -> n_1 [id="[$e|3]", label="test/0.0→r/0.0:r0"];
-	n_3 -> n_8 [id="[$e|8]", label="test/0.0→r/0.0:r0"];
-	n_8 -> n_2 [id="[$e|12]", label="test/0.0→w2/1.0:w2"];
-	n_1 -> n_8 [id="[$e|6]", label="test/0.0→w1/1.0:w1"];
 	n_11 -> n_9 [id="[$e|2]", label="test/0.0Δw2/1.0"];
-	n_10 -> n_6 [id="[$e|10]", label="test/0.0→r/0.0:r0"];
+	n_1 -> n_8 [id="[$e|6]", label="test/0.0→w1/1.0:w1"];
 	n_1 -> n_6 [id="[$e|7]", label="test/0.0→w2/1.0:w2"];
-	n_10 -> n_4 [id="[$e|11]", label="test/0.0→w1/1.0:w1"];
+	n_10 -> n_6 [id="[$e|10]", label="test/0.0→r/0.0:r0"];
 	n_6 -> n_2 [id="[$e|13]", label="test/0.0→w1/1.0:w1"];
+	n_10 -> n_4 [id="[$e|11]", label="test/0.0→w1/1.0:w1"];
+	n_9 -> n_1 [id="[$e|3]", label="test/0.0→r/0.0:r0"];
 	n_9 -> n_3 [id="[$e|4]", label="test/0.0→w1/1.0:w1"];
 	n_7 -> n_11 [id="[$e|1]", label="test/0.0Δw1/1.0"];
+	n_9 -> n_10 [id="[$e|5]", label="test/0.0→w2/1.0:w2"];
 }

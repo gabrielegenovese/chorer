@@ -2,11 +2,11 @@
 -export([main/0, customer/0, store/0, customer_dummy/0]).
 
 customer_dummy() ->
-    store ! ciaooooo,
+    store ! ciao,
     customer().
 customer() ->
     store ! item,
-    %%% Simulazione della decisione di un utente
+    %%% Simulation of a user decition
     Done = true,
     case Done of
         true ->
@@ -27,7 +27,7 @@ purchase() ->
 store() ->
     receive
         item ->
-            io:fwrite("richiesta ricevuta~n"),
+            io:fwrite("Request received~n"),
             receive
                 buy -> payment();
                 more -> store()
@@ -37,7 +37,7 @@ store() ->
 payment() ->
     receive
         payment ->
-            %%% Simulazione del esito del pagamento
+            %%% Simulation of a payment
             PaymentDone = true,
             case PaymentDone of
                 true ->

@@ -19,7 +19,8 @@
     set_proc_data/2,
     get_proc_mess_queue/1,
     add_proc_mess_queue/2,
-    del_proc_mess_queue/2
+    del_proc_mess_queue/2,
+    empty_filter_proc/1
 ]).
 
 %%%===================================================================
@@ -71,6 +72,10 @@ add_proc_mess_queue(P, M) -> P ! {add_mess_queue, M}.
 del_proc_mess_queue(P, M) -> P ! {del_mess_queue, M}.
 
 %%% @doc
+%%% Delete process filters
+empty_filter_proc(P) -> P ! {empty_filters}.
+
+%%% @doc
 %%% Loop function to simulate a process.
 proc_loop(Data) ->
     ProcName = Data#actor_info.fun_name,
@@ -91,34 +96,37 @@ proc_loop(Data) ->
             %% APPROX: filter out edges used two times
             case EL of
                 [] ->
-                    P ! {{final_state, []}};
+                    P ! {final_state, []};
                 _ ->
                     ERet = filter_marked_edges(EL, SecondMarkedE),
-                    P ! {{filtered, ERet}}
+                    P ! {filtered, ERet}
             end,
             proc_loop(Data);
         {P, get_edge_info, E} ->
-            P ! {digraph:edge(G, E)},
+            P ! digraph:edge(G, E),
             proc_loop(Data);
         {P, get_data} ->
-            P ! {Data},
+            P ! Data,
             proc_loop(Data);
         {set_data, NewData} ->
             proc_loop(NewData);
         {P, get_local_vars} ->
-            P ! {sets:to_list(LocalVars)},
+            P ! sets:to_list(LocalVars),
             proc_loop(Data);
         {add_spawn_var, V} ->
             proc_loop(Data#actor_info{spawn_vars = sets:add_element(V, SpawnVars)});
         {add_local_var, V} ->
+            io:fwrite("local v~p~n", [Data#actor_info.local_vars]),
             proc_loop(Data#actor_info{local_vars = sets:add_element(V, LocalVars)});
         {P, get_mess_queue} ->
-            P ! {MessageQueue},
+            P ! MessageQueue,
             proc_loop(Data);
         {add_mess_queue, M} ->
             proc_loop(Data#actor_info{message_queue = MessageQueue ++ [M]});
         {del_mess_queue, M} ->
             proc_loop(Data#actor_info{message_queue = lists:delete(M, MessageQueue)});
+        {empty_filters} ->
+            proc_loop(Data#actor_info{first_marked_edges = [], second_marked_edges = []});
         stop ->
             ok
     end.
@@ -164,6 +172,7 @@ check_recursion(G, VCurr, VNew, LocalVars) ->
             % io:fwrite("[EMUL] RESET LOCALV IN ~p from ~p to ~p~n", [
             %     ProcName, FromLabel, ToLabel
             % ]),
+            % LocalVars;
             sets:new();
         false ->
             LocalVars
@@ -174,5 +183,5 @@ filter_marked_edges(EdgeL, MarkedE) -> [E || E <- EdgeL, not lists:member(E, Mar
 send_recv(P, Data) ->
     P ! Data,
     receive
-        {D} -> D
+        D -> D
     end.

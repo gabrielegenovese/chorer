@@ -151,6 +151,7 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
                         ProcFrom, CurrProcFromVertex, ProcName, EToInfo, DupData, Label
                     ),
                     actor_emul:del_proc_mess_queue(NewPid, Message),
+                    % empty_filter_all_proc(NewMap),
                     %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
                     actor_emul:use_proc_transition(NewPid, EdgeFound),
                     AccList ++ [DupData#branch{last_vertex = LastVertex}]
@@ -158,6 +159,14 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
         end,
         BaseBranchList,
         MessageQueue
+    ).
+
+empty_filter_all_proc(ProcPidMap) ->
+    maps:foreach(
+        fun(_, Pid) ->
+            actor_emul:empty_filter_proc(Pid)
+        end,
+        ProcPidMap
     ).
 
 %%% Format the send label for the global view
@@ -465,7 +474,7 @@ is_pm_msg_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
     {IsCompatible, ToRegisterList} = check_msg_comp(
         ProcPid, CallingProc, PatternMatching, Message#message.data
     ),
-    % io:fwrite("Reg List ~p~n", [RegList]),
+    % io:fwrite("Reg List ~p~n", [ToRegisterList]),
     lists:foreach(
         fun(Item) -> register_var(Item) end,
         ToRegisterList
