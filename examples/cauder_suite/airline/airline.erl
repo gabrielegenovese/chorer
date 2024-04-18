@@ -4,7 +4,6 @@
 main() ->
     Main = self(),
     spawn(?MODULE, agent, [1, Main]),
-    spawn(?MODULE, agent, [2, Main]),
     seats(3).
 
 seats(Num) ->
@@ -15,7 +14,9 @@ seats(Num) ->
         {sell, Pid} ->
             io:format("Seat sold!~n"),
             Pid ! {booked, Num},
-            seats(Num - 1)
+            seats(Num - 1);
+        stop ->
+            done
     end.
 
 agent(NAg, Pid) ->
@@ -26,6 +27,6 @@ agent(NAg, Pid) ->
             receive
                 {booked, _} -> agent(NAg, Pid)
             end;
-        _ ->
-            io:format("Agent~p done!~n", [NAg])
+        {seats, 0} ->
+            Pid ! stop
     end.

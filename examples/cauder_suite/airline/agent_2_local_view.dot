@@ -1,0 +1,18 @@
+digraph agent_2 {
+	rankdir="LR";
+	n_0 [label="agent_2", shape="plaintext"];
+	n_1 [id="5", shape=doublecircle, label="6"];
+	n_2 [id="6", shape=circle, label="3"];
+	n_3 [id="1", shape=circle, label="1"];
+	n_0 -> n_3 [arrowhead=none];
+	n_4 [id="2", shape=circle, label="2"];
+	n_5 [id="4", shape=circle, label="4"];
+	n_6 [id="3", shape=circle, label="5"];
+
+	n_4 -> n_5 [id="[$e|3]", label="receive {seats,0}"];
+	n_4 -> n_2 [id="[$e|1]", label="receive {seats,Num}"];
+	n_3 -> n_4 [id="[$e|6]", label="send {numOfSeats,pid_self} to Pid"];
+	n_6 -> n_3 [id="[$e|7]", label="receive {booked,_}"];
+	n_5 -> n_1 [id="[$e|2]", label="send stop to Pid"];
+	n_2 -> n_6 [id="[$e|5]", label="send {sell,pid_self} to Pid"];
+}

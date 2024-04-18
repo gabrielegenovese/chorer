@@ -3,13 +3,15 @@
 %may lead to final value 1 instead of 2 under some schedulings
 
 -module(meViolation).
--export([main/0, meManager/0, varManager/1, incrementer/2]).
+-export([main/0, meManager/0, varManager/1, incrementer/0]).
 
 main() ->
     MePid = spawn(?MODULE, meManager, []),
     XPid = spawn(?MODULE, varManager, [0]),
-    spawn(?MODULE, incrementer, [MePid, XPid]),
-    spawn(?MODULE, incrementer, [MePid, XPid]).
+    register(xx, XPid),
+    register(mm, MePid),
+    spawn(?MODULE, incrementer, []),
+    spawn(?MODULE, incrementer, []).
 
 meManager() ->
     receive
@@ -27,14 +29,14 @@ varManager(Val) ->
     end,
     varManager(Val).
 
-incrementer(MePid, XPid) ->
-    MePid ! {request, self()},
+incrementer() ->
+    mm ! {request, self()},
     receive
         answer ->
-            XPid ! {read, self()},
+            xx ! {read, self()},
             receive
                 X ->
-                    XPid ! {write, X + 1},
-                    MePid ! {release}
+                    xx ! {write, X + 1},
+                    mm ! {release}
             end
     end.
