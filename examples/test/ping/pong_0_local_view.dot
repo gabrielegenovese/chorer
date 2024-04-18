@@ -8,7 +8,7 @@ digraph pong_0 {
 	n_4 [id="3", shape=circle, label="2"];
 
 	n_1 -> n_4 [id="[$e|0]", label="receive {S,N}"];
-	n_2 -> n_3 [id="[$e|5]", label="send kill to S"];
 	n_4 -> n_1 [id="[$e|6]", label="send N to S"];
+	n_2 -> n_3 [id="[$e|5]", label="send kill to S"];
 	n_1 -> n_2 [id="[$e|4]", label="receive {S,0}"];
 }
