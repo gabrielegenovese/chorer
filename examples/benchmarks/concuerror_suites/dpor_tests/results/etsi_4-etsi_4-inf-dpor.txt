@@ -1,0 +1,190 @@
+################################################################################
+Concuerror started with options:
+  [{'after-timeout',infinite},
+   {bound,-1},
+   {distributed,true},
+   {files,["/home/stavros/git/Concuerror/tests/suites/dpor_tests/src/etsi_4.erl"]},
+   {'light-dpor',false},
+   {symbolic,true},
+   {target,{etsi_4,etsi_4,[]}},
+   {verbose,0},
+   {wait,5000}]
+################################################################################
+Erroneous interleaving 1:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in etsi_4.erl line 32
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in etsi_4.erl line 10
+   2: P: true = ets:insert(table, {x,0})
+    in etsi_4.erl line 11
+   3: P: true = ets:insert(table, {y,0})
+    in etsi_4.erl line 12
+   4: P: P.1 = erlang:spawn(erlang, apply, [#Fun<etsi_4.0.49723266>,[]])
+    in erlang.erl line 2188
+   5: P: P.2 = erlang:spawn(erlang, apply, [#Fun<etsi_4.1.49723266>,[]])
+    in erlang.erl line 2188
+   6: P: P.3 = erlang:spawn(erlang, apply, [#Fun<etsi_4.2.49723266>,[]])
+    in erlang.erl line 2188
+   7: P.1: true = ets:insert(table, {y,1})
+    in etsi_4.erl line 14
+   8: P.2: [{x,0}] = ets:lookup(table, x)
+    in etsi_4.erl line 20
+   9: P.2: [{y,1}] = ets:lookup(table, y)
+    in etsi_4.erl line 21
+  10: P.3: true = ets:insert(table, {x,1})
+    in etsi_4.erl line 27
+  11: P.3: ok = P.2 ! ok
+    in etsi_4.erl line 28
+  12: Message (ok) from P.3 reaches P.2
+  13: P.2: receives message (ok)
+    in etsi_4.erl line 22
+  14: P.2: ok = P.1 ! ok
+    in etsi_4.erl line 22
+  15: Message (ok) from P.2 reaches P.1
+  16: P.1: receives message (ok)
+    in etsi_4.erl line 15
+  17: P.1: ok = P ! ok
+    in etsi_4.erl line 15
+  18: Message (ok) from P.1 reaches P
+  19: P: receives message (ok)
+    in etsi_4.erl line 31
+  20: P.1: exits normally
+  21: P.2: exits normally
+  22: P.3: exits normally
+################################################################################
+Erroneous interleaving 2:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in etsi_4.erl line 32
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in etsi_4.erl line 10
+   2: P: true = ets:insert(table, {x,0})
+    in etsi_4.erl line 11
+   3: P: true = ets:insert(table, {y,0})
+    in etsi_4.erl line 12
+   4: P: P.1 = erlang:spawn(erlang, apply, [#Fun<etsi_4.0.49723266>,[]])
+    in erlang.erl line 2188
+   5: P: P.2 = erlang:spawn(erlang, apply, [#Fun<etsi_4.1.49723266>,[]])
+    in erlang.erl line 2188
+   6: P: P.3 = erlang:spawn(erlang, apply, [#Fun<etsi_4.2.49723266>,[]])
+    in erlang.erl line 2188
+   7: P.1: true = ets:insert(table, {y,1})
+    in etsi_4.erl line 14
+   8: P.3: true = ets:insert(table, {x,1})
+    in etsi_4.erl line 27
+   9: P.2: [{x,1}] = ets:lookup(table, x)
+    in etsi_4.erl line 20
+  10: P.2: [{y,1}] = ets:lookup(table, y)
+    in etsi_4.erl line 21
+  11: P.3: ok = P.2 ! ok
+    in etsi_4.erl line 28
+  12: Message (ok) from P.3 reaches P.2
+  13: P.2: receives message (ok)
+    in etsi_4.erl line 22
+  14: P.2: ok = P.1 ! ok
+    in etsi_4.erl line 22
+  15: Message (ok) from P.2 reaches P.1
+  16: P.1: receives message (ok)
+    in etsi_4.erl line 15
+  17: P.1: ok = P ! ok
+    in etsi_4.erl line 15
+  18: Message (ok) from P.1 reaches P
+  19: P: receives message (ok)
+    in etsi_4.erl line 31
+  20: P.1: exits normally
+  21: P.2: exits normally
+  22: P.3: exits normally
+################################################################################
+Erroneous interleaving 3:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in etsi_4.erl line 32
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in etsi_4.erl line 10
+   2: P: true = ets:insert(table, {x,0})
+    in etsi_4.erl line 11
+   3: P: true = ets:insert(table, {y,0})
+    in etsi_4.erl line 12
+   4: P: P.1 = erlang:spawn(erlang, apply, [#Fun<etsi_4.0.49723266>,[]])
+    in erlang.erl line 2188
+   5: P: P.2 = erlang:spawn(erlang, apply, [#Fun<etsi_4.1.49723266>,[]])
+    in erlang.erl line 2188
+   6: P: P.3 = erlang:spawn(erlang, apply, [#Fun<etsi_4.2.49723266>,[]])
+    in erlang.erl line 2188
+   7: P.2: [{x,0}] = ets:lookup(table, x)
+    in etsi_4.erl line 20
+   8: P.3: true = ets:insert(table, {x,1})
+    in etsi_4.erl line 27
+   9: P.3: ok = P.2 ! ok
+    in etsi_4.erl line 28
+  10: Message (ok) from P.3 reaches P.2
+  11: P.3: exits normally
+  12: P.2: [{y,0}] = ets:lookup(table, y)
+    in etsi_4.erl line 21
+  13: P.1: true = ets:insert(table, {y,1})
+    in etsi_4.erl line 14
+  14: P.2: receives message (ok)
+    in etsi_4.erl line 22
+  15: P.2: ok = P.1 ! ok
+    in etsi_4.erl line 22
+  16: Message (ok) from P.2 reaches P.1
+  17: P.1: receives message (ok)
+    in etsi_4.erl line 15
+  18: P.1: ok = P ! ok
+    in etsi_4.erl line 15
+  19: Message (ok) from P.1 reaches P
+  20: P: receives message (ok)
+    in etsi_4.erl line 31
+  21: P.1: exits normally
+  22: P.2: exits normally
+################################################################################
+Erroneous interleaving 4:
+* Blocked at a 'receive' (when all other processes have exited):
+    P in etsi_4.erl line 32
+--------------------------------------------------------------------------------
+Interleaving info:
+   1: P: table = ets:new(table, [public,named_table])
+    in etsi_4.erl line 10
+   2: P: true = ets:insert(table, {x,0})
+    in etsi_4.erl line 11
+   3: P: true = ets:insert(table, {y,0})
+    in etsi_4.erl line 12
+   4: P: P.1 = erlang:spawn(erlang, apply, [#Fun<etsi_4.0.49723266>,[]])
+    in erlang.erl line 2188
+   5: P: P.2 = erlang:spawn(erlang, apply, [#Fun<etsi_4.1.49723266>,[]])
+    in erlang.erl line 2188
+   6: P: P.3 = erlang:spawn(erlang, apply, [#Fun<etsi_4.2.49723266>,[]])
+    in erlang.erl line 2188
+   7: P.3: true = ets:insert(table, {x,1})
+    in etsi_4.erl line 27
+   8: P.2: [{x,1}] = ets:lookup(table, x)
+    in etsi_4.erl line 20
+   9: P.3: ok = P.2 ! ok
+    in etsi_4.erl line 28
+  10: Message (ok) from P.3 reaches P.2
+  11: P.3: exits normally
+  12: P.2: [{y,0}] = ets:lookup(table, y)
+    in etsi_4.erl line 21
+  13: P.1: true = ets:insert(table, {y,1})
+    in etsi_4.erl line 14
+  14: P.2: receives message (ok)
+    in etsi_4.erl line 22
+  15: P.2: ok = P.1 ! ok
+    in etsi_4.erl line 22
+  16: Message (ok) from P.2 reaches P.1
+  17: P.1: receives message (ok)
+    in etsi_4.erl line 15
+  18: P.1: ok = P ! ok
+    in etsi_4.erl line 15
+  19: Message (ok) from P.1 reaches P
+  20: P: receives message (ok)
+    in etsi_4.erl line 31
+  21: P.1: exits normally
+  22: P.2: exits normally
+################################################################################
+Done! (Exit status: completed)
+  Summary: 4 errors, 4/4 interleavings explored

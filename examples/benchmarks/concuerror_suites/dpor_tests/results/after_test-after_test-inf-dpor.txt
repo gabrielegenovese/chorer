@@ -1,0 +1,1474 @@
+Concuerror 0.17 (a62e2f6) started at 09 Aug 2017 12:46:44
+ Options:
+  [{after_timeout,infinity},
+   {assertions_only,false},
+   {assume_racing,false},
+   {depth_bound,500},
+   {disable_sleep_sets,false},
+   {dpor,optimal},
+   {entry_point,{after_test,after_test,[]}},
+   {files,["/home/stavros/git/Concuerror/tests/suites/dpor_tests/src/after_test.erl"]},
+   {ignore_error,[]},
+   {instant_delivery,true},
+   {interleaving_bound,infinity},
+   {keep_going,true},
+   {non_racing_system,[]},
+   {print_depth,20},
+   {quiet,true},
+   {scheduling,round_robin},
+   {scheduling_bound_type,none},
+   {show_races,false},
+   {strict_scheduling,false},
+   {symbolic_names,true},
+   {timeout,infinity},
+   {treat_as_normal,[]},
+   {use_receive_patterns,false}]
+################################################################################
+Interleaving #1
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   5: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   6: P.1: exits normally
+   7: P: receives message (ok1)
+    in after_test.erl line 22
+   8: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   9: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  11: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  12: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  13: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  14: P.2: exits normally
+  15: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  16: P.3: exits normally
+  17: P: receives message (ok2)
+    in after_test.erl line 22
+  18: P: receives message (ok2)
+    in after_test.erl line 22
+  19: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #2
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   5: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   6: P.1: exits normally
+   7: P: receives message (ok1)
+    in after_test.erl line 22
+   8: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   9: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  11: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  12: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  13: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  14: P.3: exits normally
+  15: P: receives message (ok2)
+    in after_test.erl line 22
+  16: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  17: P.2: exits normally
+  18: P: receives message (ok2)
+    in after_test.erl line 22
+  19: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #3
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   5: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   6: P.1: exits normally
+   7: P: receives message (ok1)
+    in after_test.erl line 22
+   8: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   9: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  11: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  12: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  13: P.2: exits normally
+  14: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  15: P.3: exits normally
+  16: P: receives message (ok2)
+    in after_test.erl line 26
+  17: P: receives message (ok2)
+    in after_test.erl line 26
+  18: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #4
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   5: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   6: P.1: exits normally
+   7: P: receives message (ok1)
+    in after_test.erl line 22
+   8: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   9: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  11: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  12: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  13: P.2: exits normally
+  14: P: receives message (ok2)
+    in after_test.erl line 26
+  15: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  16: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  17: P.3: exits normally
+  18: P: receives message (ok2)
+    in after_test.erl line 22
+  19: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #5
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   5: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   6: P.1: exits normally
+   7: P: receives message (ok1)
+    in after_test.erl line 22
+   8: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   9: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  11: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  12: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  13: P.3: exits normally
+  14: P: receives message (ok2)
+    in after_test.erl line 26
+  15: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  16: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  17: P.2: exits normally
+  18: P: receives message (ok2)
+    in after_test.erl line 22
+  19: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #6
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   5: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   6: P.1: exits normally
+   7: P: receives message (ok1)
+    in after_test.erl line 22
+   8: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   9: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  11: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  12: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  13: P.3: exits normally
+  14: P: receives message (ok2)
+    in after_test.erl line 26
+  15: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  16: P.2: exits normally
+  17: P: receives message (ok2)
+    in after_test.erl line 26
+  18: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #7
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   5: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   6: P.1: exits normally
+   7: P: receives message (ok1)
+    in after_test.erl line 22
+   8: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   9: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  11: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  12: P.2: exits normally
+  13: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  14: P.3: exits normally
+  15: P: receives message (ok2)
+    in after_test.erl line 26
+  16: P: receives message (ok2)
+    in after_test.erl line 26
+  17: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #8
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   5: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   6: P.1: exits normally
+   7: P: receives message (ok1)
+    in after_test.erl line 22
+   8: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   9: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  11: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  12: P.2: exits normally
+  13: P: receives message (ok2)
+    in after_test.erl line 26
+  14: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  15: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  16: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  17: P.3: exits normally
+  18: P: receives message (ok2)
+    in after_test.erl line 22
+  19: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #9
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   5: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   6: P.1: exits normally
+   7: P: receives message (ok1)
+    in after_test.erl line 22
+   8: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   9: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  11: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  12: P.2: exits normally
+  13: P: receives message (ok2)
+    in after_test.erl line 26
+  14: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  15: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  16: P.3: exits normally
+  17: P: receives message (ok2)
+    in after_test.erl line 26
+  18: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #10
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   5: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   6: P.1: exits normally
+   7: P: receives message (ok1)
+    in after_test.erl line 22
+   8: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   9: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  11: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  12: P.3: exits normally
+  13: P: receives message (ok2)
+    in after_test.erl line 26
+  14: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  15: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  16: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  17: P.2: exits normally
+  18: P: receives message (ok2)
+    in after_test.erl line 22
+  19: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #11
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   5: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   6: P.1: exits normally
+   7: P: receives message (ok1)
+    in after_test.erl line 22
+   8: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   9: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  11: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  12: P.3: exits normally
+  13: P: receives message (ok2)
+    in after_test.erl line 26
+  14: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  15: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  16: P.2: exits normally
+  17: P: receives message (ok2)
+    in after_test.erl line 26
+  18: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #12
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   5: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   6: P.1: exits normally
+   7: P: receives message (ok1)
+    in after_test.erl line 22
+   8: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   9: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  11: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  12: P.3: exits normally
+  13: P: receives message (ok2)
+    in after_test.erl line 26
+  14: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  15: P.2: exits normally
+  16: P: receives message (ok2)
+    in after_test.erl line 26
+  17: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #13
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   5: P.1: exits normally
+   6: P: receives message (ok1)
+    in after_test.erl line 26
+   7: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   8: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  11: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  12: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  13: P.2: exits normally
+  14: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  15: P.3: exits normally
+  16: P: receives message (ok2)
+    in after_test.erl line 22
+  17: P: receives message (ok2)
+    in after_test.erl line 22
+  18: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #14
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   5: P.1: exits normally
+   6: P: receives message (ok1)
+    in after_test.erl line 26
+   7: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   8: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  11: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  12: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  13: P.3: exits normally
+  14: P: receives message (ok2)
+    in after_test.erl line 22
+  15: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  16: P.2: exits normally
+  17: P: receives message (ok2)
+    in after_test.erl line 22
+  18: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #15
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   5: P.1: exits normally
+   6: P: receives message (ok1)
+    in after_test.erl line 26
+   7: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   8: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  11: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  12: P.2: exits normally
+  13: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  14: P.3: exits normally
+  15: P: receives message (ok2)
+    in after_test.erl line 26
+  16: P: receives message (ok2)
+    in after_test.erl line 26
+  17: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #16
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   5: P.1: exits normally
+   6: P: receives message (ok1)
+    in after_test.erl line 26
+   7: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   8: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  11: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  12: P.2: exits normally
+  13: P: receives message (ok2)
+    in after_test.erl line 26
+  14: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  15: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  16: P.3: exits normally
+  17: P: receives message (ok2)
+    in after_test.erl line 22
+  18: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #17
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   5: P.1: exits normally
+   6: P: receives message (ok1)
+    in after_test.erl line 26
+   7: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   8: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  11: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  12: P.3: exits normally
+  13: P: receives message (ok2)
+    in after_test.erl line 26
+  14: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  15: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  16: P.2: exits normally
+  17: P: receives message (ok2)
+    in after_test.erl line 22
+  18: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #18
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   5: P.1: exits normally
+   6: P: receives message (ok1)
+    in after_test.erl line 26
+   7: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   8: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  10: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  11: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  12: P.3: exits normally
+  13: P: receives message (ok2)
+    in after_test.erl line 26
+  14: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  15: P.2: exits normally
+  16: P: receives message (ok2)
+    in after_test.erl line 26
+  17: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #19
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   5: P.1: exits normally
+   6: P: receives message (ok1)
+    in after_test.erl line 26
+   7: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   8: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  10: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  11: P.2: exits normally
+  12: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  13: P.3: exits normally
+  14: P: receives message (ok2)
+    in after_test.erl line 26
+  15: P: receives message (ok2)
+    in after_test.erl line 26
+  16: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #20
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   5: P.1: exits normally
+   6: P: receives message (ok1)
+    in after_test.erl line 26
+   7: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   8: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  10: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  11: P.2: exits normally
+  12: P: receives message (ok2)
+    in after_test.erl line 26
+  13: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  14: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  15: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  16: P.3: exits normally
+  17: P: receives message (ok2)
+    in after_test.erl line 22
+  18: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #21
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   5: P.1: exits normally
+   6: P: receives message (ok1)
+    in after_test.erl line 26
+   7: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   8: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  10: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  11: P.2: exits normally
+  12: P: receives message (ok2)
+    in after_test.erl line 26
+  13: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  14: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  15: P.3: exits normally
+  16: P: receives message (ok2)
+    in after_test.erl line 26
+  17: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #22
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   5: P.1: exits normally
+   6: P: receives message (ok1)
+    in after_test.erl line 26
+   7: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   8: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  10: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  11: P.3: exits normally
+  12: P: receives message (ok2)
+    in after_test.erl line 26
+  13: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  14: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  15: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  16: P.2: exits normally
+  17: P: receives message (ok2)
+    in after_test.erl line 22
+  18: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #23
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   5: P.1: exits normally
+   6: P: receives message (ok1)
+    in after_test.erl line 26
+   7: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   8: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  10: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  11: P.3: exits normally
+  12: P: receives message (ok2)
+    in after_test.erl line 26
+  13: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  14: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  15: P.2: exits normally
+  16: P: receives message (ok2)
+    in after_test.erl line 26
+  17: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #24
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+   4: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   5: P.1: exits normally
+   6: P: receives message (ok1)
+    in after_test.erl line 26
+   7: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   8: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+  10: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  11: P.3: exits normally
+  12: P: receives message (ok2)
+    in after_test.erl line 26
+  13: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  14: P.2: exits normally
+  15: P: receives message (ok2)
+    in after_test.erl line 26
+  16: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #25
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   4: P.1: exits normally
+   5: P: receives message (ok1)
+    in after_test.erl line 26
+   6: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   7: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   8: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  10: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  11: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  12: P.2: exits normally
+  13: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  14: P.3: exits normally
+  15: P: receives message (ok2)
+    in after_test.erl line 22
+  16: P: receives message (ok2)
+    in after_test.erl line 22
+  17: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #26
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   4: P.1: exits normally
+   5: P: receives message (ok1)
+    in after_test.erl line 26
+   6: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   7: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   8: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  10: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  11: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  12: P.3: exits normally
+  13: P: receives message (ok2)
+    in after_test.erl line 22
+  14: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  15: P.2: exits normally
+  16: P: receives message (ok2)
+    in after_test.erl line 22
+  17: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #27
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   4: P.1: exits normally
+   5: P: receives message (ok1)
+    in after_test.erl line 26
+   6: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   7: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   8: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  10: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  11: P.2: exits normally
+  12: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  13: P.3: exits normally
+  14: P: receives message (ok2)
+    in after_test.erl line 26
+  15: P: receives message (ok2)
+    in after_test.erl line 26
+  16: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #28
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   4: P.1: exits normally
+   5: P: receives message (ok1)
+    in after_test.erl line 26
+   6: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   7: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   8: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  10: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  11: P.2: exits normally
+  12: P: receives message (ok2)
+    in after_test.erl line 26
+  13: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  14: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  15: P.3: exits normally
+  16: P: receives message (ok2)
+    in after_test.erl line 22
+  17: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #29
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   4: P.1: exits normally
+   5: P: receives message (ok1)
+    in after_test.erl line 26
+   6: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   7: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   8: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  10: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  11: P.3: exits normally
+  12: P: receives message (ok2)
+    in after_test.erl line 26
+  13: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  14: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  15: P.2: exits normally
+  16: P: receives message (ok2)
+    in after_test.erl line 22
+  17: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #30
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   4: P.1: exits normally
+   5: P: receives message (ok1)
+    in after_test.erl line 26
+   6: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   7: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   8: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+   9: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  10: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  11: P.3: exits normally
+  12: P: receives message (ok2)
+    in after_test.erl line 26
+  13: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  14: P.2: exits normally
+  15: P: receives message (ok2)
+    in after_test.erl line 26
+  16: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #31
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   4: P.1: exits normally
+   5: P: receives message (ok1)
+    in after_test.erl line 26
+   6: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   7: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   8: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+   9: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  10: P.2: exits normally
+  11: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  12: P.3: exits normally
+  13: P: receives message (ok2)
+    in after_test.erl line 26
+  14: P: receives message (ok2)
+    in after_test.erl line 26
+  15: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #32
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   4: P.1: exits normally
+   5: P: receives message (ok1)
+    in after_test.erl line 26
+   6: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   7: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   8: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+   9: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  10: P.2: exits normally
+  11: P: receives message (ok2)
+    in after_test.erl line 26
+  12: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  13: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  14: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  15: P.3: exits normally
+  16: P: receives message (ok2)
+    in after_test.erl line 22
+  17: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #33
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   4: P.1: exits normally
+   5: P: receives message (ok1)
+    in after_test.erl line 26
+   6: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   7: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   8: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+   9: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  10: P.2: exits normally
+  11: P: receives message (ok2)
+    in after_test.erl line 26
+  12: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  13: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  14: P.3: exits normally
+  15: P: receives message (ok2)
+    in after_test.erl line 26
+  16: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #34
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   4: P.1: exits normally
+   5: P: receives message (ok1)
+    in after_test.erl line 26
+   6: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   7: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   8: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+   9: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  10: P.3: exits normally
+  11: P: receives message (ok2)
+    in after_test.erl line 26
+  12: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  13: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  14: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  15: P.2: exits normally
+  16: P: receives message (ok2)
+    in after_test.erl line 22
+  17: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #35
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   4: P.1: exits normally
+   5: P: receives message (ok1)
+    in after_test.erl line 26
+   6: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   7: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   8: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+   9: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  10: P.3: exits normally
+  11: P: receives message (ok2)
+    in after_test.erl line 26
+  12: P: receive timeout expired after 0 ms
+    in after_test.erl line 26
+  13: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  14: P.2: exits normally
+  15: P: receives message (ok2)
+    in after_test.erl line 26
+  16: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Interleaving #36
+--------------------------------------------------------------------------------
+Errors found:
+* Blocked at a 'receive' ("deadlocked"; other processes have exited):
+    P in after_test.erl line 16
+--------------------------------------------------------------------------------
+Event trace:
+   1: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   2: P: P.1 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-0-'.0>,[]])
+    in erlang.erl line 2673
+   3: P.1: ok1 = P ! ok1
+    in after_test.erl line 11
+   4: P.1: exits normally
+   5: P: receives message (ok1)
+    in after_test.erl line 26
+   6: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+   7: P: P.2 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-1-'.0>,[]])
+    in erlang.erl line 2673
+   8: P: P.3 = erlang:spawn(erlang, apply, [#Fun<after_test.'-after_test/0-fun-2-'.0>,[]])
+    in erlang.erl line 2673
+   9: P.3: ok2 = P ! ok2
+    in after_test.erl line 14
+  10: P.3: exits normally
+  11: P: receives message (ok2)
+    in after_test.erl line 26
+  12: P.2: ok2 = P ! ok2
+    in after_test.erl line 13
+  13: P.2: exits normally
+  14: P: receives message (ok2)
+    in after_test.erl line 26
+  15: P: receive timeout expired after 0 ms
+    in after_test.erl line 33
+################################################################################
+Exploration completed!
+################################################################################
+Tips:
+--------------------------------------------------------------------------------
+Increase '--print_depth' if output/graph contains "...".
+Each of the first 10 interleavings explored so far had some error. This can make later debugging difficult, as the generated report will include too much info. Consider refactoring your code, or using the appropriate options to filter out irrelevant errors.
+
+################################################################################
+Info:
+--------------------------------------------------------------------------------
+Instrumented after_test
+Instrumented io_lib
+Instrumented gen_server
+Instrumented erlang
+You can see pairs of racing instructions (in the report and '--graph') with '--show_races true'
+Continuing after error (-k)
+
+################################################################################
+Done at 09 Aug 2017 12:46:45 (Exit status: error)
+  Summary: 36 errors, 36/36 interleavings explored
