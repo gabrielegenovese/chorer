@@ -20,6 +20,7 @@
 %%% @doc
 %%% Generate the glabal view from an entrypoint and save it in a specified folder.
 generate(Settings, EntryPoint) ->
+    io:fwrite("Generating the global view~n"),
     MainGraph = share:get_localview(EntryPoint),
     case MainGraph of
         not_found ->
@@ -105,7 +106,7 @@ generate_possible_branches(NewBranchData, BaseBranchList) ->
     maps:fold(
         fun(Name, Pid, AccList) ->
             MessageQueue = actor_emul:get_proc_mess_queue(Pid),
-            io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
+            % io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
             gen_branch_foreach_mess(NewBranchData, MessageQueue, Name, AccList)
         end,
         BaseBranchList,
@@ -428,8 +429,7 @@ manage_recv(ProcPid, Message) ->
             % {H, T, NOp};
             ?UNDEFINED;
         true ->
-            %%% IMPORTANT TODO: evaluation of the edge's order not implemented!!
-            %%% Evaluate edges in order as in the code
+            OrderedEdges = order_edge(ProcPid, EdgeList),
             {_, EdgeChoosen} = lists:foldl(
                 fun(Edge, {AlreadyFound, RetEdge}) ->
                     case AlreadyFound of
@@ -445,10 +445,32 @@ manage_recv(ProcPid, Message) ->
                     end
                 end,
                 {false, ?UNDEFINED},
-                EdgeList
+                OrderedEdges
             ),
             EdgeChoosen
     end.
+
+order_edge(ProcPid, EL) ->
+    SepE =
+        lists:foldl(
+            fun(E, L) ->
+                {_, _, _, ELabel} = actor_emul:get_proc_edge_info(ProcPid, E),
+                Label = share:atol(ELabel),
+                Cond = is_list(string:find(Label, "receive")),
+                case Cond of
+                    true ->
+                        [N, P] = string:split(share:atol(ELabel), ?PMSEQSEP),
+                        L ++ [{list_to_integer(N), P, E}];
+                    false ->
+                        L
+                end
+            end,
+            [],
+            EL
+        ),
+    Sort = lists:sort(fun({N1, _, _}, {N2, _, _}) -> N1 < N2 end, SepE),
+    io:fwrite("sorted ~p~n", [Sort]),
+    [E || {_, _, E} <- Sort].
 
 %%% Find the actor id from a variable's list, given the variable name
 check_vars(ProcPid, VarName) ->
@@ -474,8 +496,12 @@ check_vars(ProcPid, VarName) ->
 
 %%% Check if a pattern metching match a message, then register the new variables
 is_pm_msg_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
+    %% removing receive
+    [_ | PM] = string:split(share:atol(PatternMatching), "receive "),
+    PatternMS = lists:flatten(PM),
+    %% check pm
     {IsCompatible, ToRegisterList} = check_msg_comp(
-        ProcPid, CallingProc, PatternMatching, Message#message.data
+        ProcPid, CallingProc, PatternMS, Message#message.data
     ),
     % io:fwrite("Reg List ~p~n", [ToRegisterList]),
     lists:foreach(
@@ -487,17 +513,16 @@ is_pm_msg_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
 %%% Check if a pattern metching match a message
 check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
     MessageS = share:atol(Message),
-    PatternMS = lists:flatten(string:replace(share:atol(PatternMatching), "receive ", "")),
-    [FirstPtmtChar | RestPtmt] = PatternMS,
+    [FirstPtmtChar | RestPtmt] = PatternMatching,
     [FirstMessChar | RestMess] = MessageS,
-    IsFirstCharUpperCase = share:is_erlvar(PatternMS),
+    IsFirstCharUpperCase = share:is_erlvar(PatternMatching),
     if
         ([FirstPtmtChar] =:= "{") and ([FirstMessChar] =:= "{") ->
             check_tuple(ProcPid, CallingProc, RestPtmt, RestMess);
-        PatternMS =:= MessageS ->
+        PatternMatching =:= MessageS ->
             {true, []};
         IsFirstCharUpperCase ->
-            {true, [{ProcPid, share:ltoa(PatternMS), check_pid_self(Message, CallingProc)}]};
+            {true, [{ProcPid, share:ltoa(PatternMatching), check_pid_self(Message, CallingProc)}]};
         [FirstPtmtChar] =:= "_" ->
             {true, []};
         true ->
@@ -568,6 +593,7 @@ complex_add_vertex_recv(Proc1, CurrVertex, Proc2, EdgeInfo, Data, Label) ->
             % io:fwrite("[DEBUG] Adding new global state ~p~n", [VNew]),
             NewM = maps:put(VNew, AggregateGlobalState, StateM),
             ets:insert(?DBMANAGER, {global_state, NewM}),
+            empty_filter_all_proc(ProcPid),
             VNew;
         VFound ->
             % io:fwrite("[EXTERNFOUND] ~p~n", [VFound]),

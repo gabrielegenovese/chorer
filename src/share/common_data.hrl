@@ -18,6 +18,7 @@
 
 %%% Separators
 -define(ARITYSEP, "/").
+-define(PMSEQSEP, "#").
 -define(NSEQSEP, ".").
 
 %%% RECORDS

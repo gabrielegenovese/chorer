@@ -10,7 +10,7 @@
 %%% API
 -export([
     function_list/2,
-    clause/5,
+    clause/6,
     match/3,
     case_pm/3,
     if_pm/2,
@@ -33,30 +33,45 @@
 %%% @doc
 %%% Evaluate the clauses of a function.
 function_list(ContList, Data) ->
-    lists:foldl(
-        fun(FunctionBody, AccData) ->
-            case FunctionBody of
-                {clause, _, Pattern, Guard, Content} ->
-                    % io:fwrite("Clause ~p~n", [Vars]),
-                    ets:insert(?ARGUMENTS, {Data#localview.fun_name, Pattern}),
-                    clause(Content, Pattern, Guard, AccData#localview{last_vertex = 1}, "arg");
-                C ->
-                    share:warning("should be a clause but it's", C, ?UNDEFINED)
-            end
-        end,
-        Data,
-        ContList
+    element(
+        1,
+        lists:foldl(
+            fun(FunctionBody, {AccData, Counter}) ->
+                case FunctionBody of
+                    {clause, _, Pattern, Guard, Content} ->
+                        % io:fwrite("Clause ~p~n", [Vars]),
+                        ets:insert(?ARGUMENTS, {Data#localview.fun_name, Pattern}),
+                        {
+                            clause(
+                                Content,
+                                Pattern,
+                                Guard,
+                                AccData#localview{last_vertex = 1},
+                                "arg",
+                                Counter
+                            ),
+                            Counter + 1
+                        };
+                    C ->
+                        share:warning("should be a clause but it's", C, {?UNDEFINED, Counter + 1})
+                end
+            end,
+            {Data, 0},
+            ContList
+        )
     ).
 
 %%% @doc
 %%% Evaluate a single clause (might be from `case', `receive' or `if').
-clause(Code, Pattern, Guards, Data, BaseLabel) ->
+clause(Code, Pattern, Guards, Data, BaseLabel, Counter) ->
     % io:fwrite("[CLAUSE] Code ~p~n Vars ~p~n Guards ~p~n", [Code, Pattern, Guards]),
     LocalV = Data#localview.local_vars,
     TempData = lv:eval_codeline(Pattern, Data),
     % should always be a list
     EvalVarList = TempData#localview.ret_var,
-    TempLabel = BaseLabel ++ " " ++ var_to_string(EvalVarList) ++ guards_to_string(Guards),
+    TempLabel =
+        integer_to_list(Counter) ++ ?PMSEQSEP ++ BaseLabel ++ " " ++ var_to_string(EvalVarList) ++
+            guards_to_string(Guards),
     FinalLabel = decide_label(BaseLabel, TempLabel, Data),
     NewData = add_vertex_edge(FinalLabel, Data),
     lists:foldl(
@@ -503,18 +518,21 @@ pattern_matching(PMList, Label, Data) ->
 
 %%% Explore every pm's branch and returns the list of last added vertex
 explore_pm(PMList, Base, Data) ->
-    lists:foldl(
-        fun(CodeLine, AddedVertexList) ->
-            case CodeLine of
-                {clause, _, Vars, Guard, Content} ->
-                    VDataRet = clause(Content, Vars, Guard, Data, Base),
-                    AddedVertexList ++ [VDataRet#localview.last_vertex];
-                C ->
-                    share:warning("Should be clause but it's", C, AddedVertexList)
-            end
-        end,
-        [],
-        PMList
+    element(
+        1,
+        lists:foldl(
+            fun(CodeLine, {AddedVertexList, Couter}) ->
+                case CodeLine of
+                    {clause, _, Vars, Guard, Content} ->
+                        VDataRet = clause(Content, Vars, Guard, Data, Base, Couter),
+                        {AddedVertexList ++ [VDataRet#localview.last_vertex], Couter + 1};
+                    C ->
+                        share:warning("Should be clause but it's", C, {AddedVertexList, Couter})
+                end
+            end,
+            {[], 0},
+            PMList
+        )
     ).
 
 add_vertex_edge(Label, Data) ->
