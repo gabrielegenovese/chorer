@@ -23,12 +23,12 @@
 minimize(NFA) ->
     % Convert a NFA to a DFA
     remove_unreachable(NFA),
-    DFA = subset_construction(NFA),
+    % DFA = subset_construction(NFA),
     % Minimization of the DFA
-    remove_unreachable(DFA),
-    remove_nondistinguishable(DFA),
-    rename_states(DFA),
-    DFA.
+    % remove_unreachable(DFA),
+    remove_nondistinguishable(NFA),
+    % rename_states(DFA),
+    NFA.
 
 %%%===================================================================
 %%% Internal Functions
@@ -177,6 +177,7 @@ remove_nondistinguishable(G) ->
     Table = init_scale_table(G),
     InitMarkedStates = distinguish_final(G, Table),
     FinalMarkedStatesMap = find_nondistinguishable(G, InitMarkedStates),
+    io:fwrite("final ~p~n", [FinalMarkedStatesMap]),
     ForEachFun = fun(K, V) ->
         case V of
             true ->
@@ -205,7 +206,13 @@ remove_nondistinguishable(G) ->
 
 %%% Find non-distinguishable states: a state is non-distinguishable if given two state
 %%% and a path to follow, they end up in the same state for all their transitions
-find_nondistinguishable(G, M) ->
+find_nondistinguishable(G, Table) ->
+    % UnmarkedCouples = get_unmarked(Table),
+    % NewUnmarked = remove_nondistinguishable_from_list(UnmarkedCouples),
+    % case sets:is_subset(UnmarkedCouples, NewUnmarked) of
+    %     true -> find_nondistinguishable(G, NewUnmarked);
+    %     false -> NewUnmarked
+    % end,
     {OpDone, NewL} = maps:fold(
         fun(StateCouple, IsMarked, A) ->
             {_, UpdatedM} = A,
@@ -221,26 +228,37 @@ find_nondistinguishable(G, M) ->
                     end
             end
         end,
-        {false, M},
-        M
+        {false, Table},
+        Table
     ),
     case OpDone of
         true -> find_nondistinguishable(G, NewL);
-        false -> M
+        false -> Table
     end.
+
+get_unmarked(Table) ->
+    maps:fold(
+        fun(State, Mark, Acc) ->
+            case Mark of
+                true -> Acc;
+                false -> Acc ++ [State]
+            end
+        end,
+        [],
+        Table
+    ).
 
 %%% Check if two states non-distinguishable
 check_if_nondistinguishable(Map, G, S1, S2) ->
     L1 = get_all_labels(G, S1),
     L2 = get_all_labels(G, S2),
-    LL =
+    ShortestList =
         if
-            length(L1) >= length(L2) -> L1;
-            true -> L2
+            length(L1) >= length(L2) -> L2;
+            true -> L1
         end,
     lists:foldl(
         fun(L, A) ->
-            V1 = get_vertex_using_label(G, S1, L),
             case get_vertex_using_label(G, S1, L) of
                 false ->
                     false;
@@ -259,7 +277,7 @@ check_if_nondistinguishable(Map, G, S1, S2) ->
             end
         end,
         true,
-        LL
+        ShortestList
     ).
 
 %%% Given a vertex, returns each vertex than is reached using a given label
@@ -267,7 +285,8 @@ get_vertex_using_label(Graph, Vertex, Label) ->
     EL = digraph:out_edges(Graph, Vertex),
     lists:foldl(
         fun(E, A) ->
-            case digraph:edge(Graph, E) of
+            Info = digraph:edge(Graph, E),
+            case Info of
                 {_, _, VRet, Label} -> VRet;
                 _ -> A
             end
@@ -306,12 +325,12 @@ init_scale_table(Graph) ->
 %%% Distinguish final and non-final states
 distinguish_final(G, Table) ->
     lists:foldl(
-        fun(I, Acc) ->
-            {H, T} = get_both_states(I),
+        fun(Item, AccMap) ->
+            {H, T} = get_both_states(Item),
             IsHF = is_final_state(G, H),
             IsTF = is_final_state(G, T),
-            IMark = ((not IsHF and IsTF) or (IsHF and not IsTF)),
-            maps:merge(Acc, #{I => IMark})
+            IsMarked = ((not IsHF and IsTF) or (IsHF and not IsTF)),
+            maps:put(Item, IsMarked, AccMap)
         end,
         #{},
         Table

@@ -1,10 +1,12 @@
 digraph handle_req_1 {
 	rankdir="LR";
 	n_0 [label="handle_req_1", shape="plaintext"];
-	n_1 [id="1", shape=circle, label="1"];
-	n_0 -> n_1 [arrowhead=none];
-	n_2 [id="2", shape=doublecircle, label="2"];
+	n_1 [id="5", shape=doublecircle, label="5"];
+	n_2 [id="1", shape=circle, label="1"];
+	n_0 -> n_2 [arrowhead=none];
+	n_3 [id="2", shape=circle, label="2"];
 
-	n_1 -> n_1 [id="[$e|5]", label="receive next"];
-	n_1 -> n_2 [id="[$e|1]", label="receive done"];
+	n_3 -> n_2 [id="[$e|6]", label="receive done"];
+	n_2 -> n_3 [id="[$e|0]", label="ɛ"];
+	n_3 -> n_2 [id="[$e|7]", label="receive next"];
 }

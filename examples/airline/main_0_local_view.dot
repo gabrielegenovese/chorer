@@ -5,10 +5,12 @@ digraph main_0 {
 	n_2 [id="1", shape=circle, label="1"];
 	n_0 -> n_2 [arrowhead=none];
 	n_3 [id="2", shape=doublecircle, label="3"];
-	n_4 [id="3", shape=circle, label="2"];
+	n_4 [id="4", shape=doublecircle, label="5"];
+	n_5 [id="3", shape=circle, label="2"];
 
-	n_4 -> n_3 [id="[$e|2]", label="spawn agent/1.1"];
-	n_1 -> n_3 [id="[$e|5]", label="send {booked,Num} to Pid1"];
-	n_2 -> n_4 [id="[$e|1]", label="spawn agent/1.0"];
+	n_5 -> n_3 [id="[$e|2]", label="spawn agent/1.1"];
+	n_1 -> n_4 [id="[$e|3]", label="send {booked,Num} to Pid1"];
+	n_2 -> n_5 [id="[$e|1]", label="spawn agent/1.0"];
 	n_3 -> n_1 [id="[$e|0]", label="receive {sell,Pid1}"];
+	n_4 -> n_1 [id="[$e|4]", label="receive {sell,Pid1}"];
 }
