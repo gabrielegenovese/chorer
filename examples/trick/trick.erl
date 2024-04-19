@@ -1,13 +1,13 @@
 -module(trick).
--export([main/0, a/0, b/0, c/0]).
+-export([main/0, a/2, b/1, c/0]).
 
-a() ->
-    cc ! v1,
-    bb ! v2.
+a(B, C) ->
+    C ! v1,
+    B ! v2.
 
-b() ->
+b(C) ->
     receive
-        v2 -> cc ! v2
+        v2 -> C ! v2
     end.
 
 c() ->
@@ -19,9 +19,6 @@ c() ->
     end.
 
 main() ->
-    A = spawn(?MODULE, a, []),
-    B = spawn(?MODULE, b, []),
     C = spawn(?MODULE, c, []),
-    register(aa, A),
-    register(bb, B),
-    register(cc, C).
+    B = spawn(?MODULE, b, [C]),
+    spawn(?MODULE, a, [B, C]).

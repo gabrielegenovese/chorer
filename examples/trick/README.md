@@ -4,7 +4,7 @@
 
 ```bash
 ./_build/default/bin/chorer ./examples/trick/trick.erl main/0 examples/trick
-./_build/default/bin/chorer ./examples/trick/trick2.erl main/0 examples/trick
+./_build/default/bin/chorer ./examples/trick/trick2.erl main/0 examples/trick/trick2
 ```
 
 ## Description

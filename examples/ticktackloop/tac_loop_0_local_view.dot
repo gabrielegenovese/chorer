@@ -7,8 +7,8 @@ digraph tac_loop_0 {
 	n_3 [id="4", shape=doublecircle, label="4"];
 	n_4 [id="3", shape=circle, label="2"];
 
-	n_4 -> n_3 [id="[$e|3]", label="send stop to tic_loop/0.0"];
 	n_2 -> n_1 [id="[$e|6]", label="send tac to tic_loop/0.0"];
-	n_1 -> n_4 [id="[$e|0]", label="receive stop"];
+	n_4 -> n_3 [id="[$e|3]", label="send stop to tic_loop/0.0"];
 	n_1 -> n_2 [id="[$e|4]", label="receive tic"];
+	n_1 -> n_4 [id="[$e|0]", label="receive stop"];
 }

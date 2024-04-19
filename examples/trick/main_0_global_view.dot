@@ -12,13 +12,13 @@ digraph global {
 	n_8 [id="7", shape=circle, label="7"];
 	n_9 [id="3", shape=circle, label="3"];
 
-	n_7 -> n_1 [id="[$e|3]", label="a/0.0→b/0.0:v2"];
-	n_2 -> n_6 [id="[$e|6]", label="a/0.0→b/0.0:v2"];
-	n_9 -> n_7 [id="[$e|2]", label="main/0.0Δc/0.0"];
-	n_6 -> n_4 [id="[$e|8]", label="b/0.0→c/0.0:v2"];
-	n_3 -> n_5 [id="[$e|0]", label="main/0.0Δa/0.0"];
-	n_5 -> n_9 [id="[$e|1]", label="main/0.0Δb/0.0"];
-	n_8 -> n_4 [id="[$e|7]", label="b/0.0→c/0.0:v2"];
-	n_7 -> n_2 [id="[$e|4]", label="a/0.0→c/0.0:v1"];
-	n_1 -> n_8 [id="[$e|5]", label="a/0.0→c/0.0:v1"];
+	n_1 -> n_8 [id="[$e|5]", label="a/2.0→b/1.0:v2"];
+	n_3 -> n_5 [id="[$e|0]", label="main/0.0Δc/0.0"];
+	n_2 -> n_6 [id="[$e|6]", label="a/2.0→c/0.0:v1"];
+	n_7 -> n_1 [id="[$e|3]", label="a/2.0→c/0.0:v1"];
+	n_9 -> n_7 [id="[$e|2]", label="main/0.0Δa/2.0"];
+	n_8 -> n_4 [id="[$e|7]", label="b/1.0→c/0.0:v2"];
+	n_7 -> n_2 [id="[$e|4]", label="a/2.0→b/1.0:v2"];
+	n_6 -> n_4 [id="[$e|8]", label="b/1.0→c/0.0:v2"];
+	n_5 -> n_9 [id="[$e|1]", label="main/0.0Δb/1.0"];
 }
