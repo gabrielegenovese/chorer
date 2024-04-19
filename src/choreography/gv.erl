@@ -299,10 +299,11 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             {BData, true};
         IsSpawn ->
             EdgeInfo = actor_emul:get_proc_edge_info(ProcPid, Edge),
-            {VNew, NewM} = add_spawn_to_global(EdgeInfo, SLabel, ProcName, BData),
-            NewBData = BData#branch{last_vertex = VNew, proc_pid_m = NewM},
             actor_emul:use_proc_transition(ProcPid, Edge),
-            {NewBData, true};
+            % {VNew, NewM} = add_spawn_to_global(EdgeInfo, SLabel, ProcName, BData),
+            % NewBData = BData#branch{last_vertex = VNew, proc_pid_m = NewM},
+            % {NewBData, true};
+            {add_spawn_to_global(EdgeInfo, SLabel, ProcName, BData), true};
         IsSend ->
             manage_send(SLabel, BData, ProcName, ProcPid, Edge);
         true ->
@@ -319,6 +320,7 @@ add_spawn_to_global(EInfo, SLabel, EmulProcName, Data) ->
     % get proc name
     FunSpawned = string:prefix(SLabel, "spawn "),
     {FunSName, Counter} = remove_id_from_proc(FunSpawned),
+
     % spawn the actor emulator
     FuncPid = spawn(actor_emul, proc_loop, [#actor_info{fun_name = FunSName, id = Counter}]),
     NewMap = maps:put(share:ltoa(FunSpawned), FuncPid, Data#branch.proc_pid_m),
@@ -326,15 +328,23 @@ add_spawn_to_global(EInfo, SLabel, EmulProcName, Data) ->
     LocalList = get_local_vars(EmulProcName, SLabel, FunSName),
     lists:foreach(fun(Var) -> actor_emul:add_proc_spawnvars(FuncPid, Var) end, LocalList),
     % io:fwrite("LocalList ~p~n", [LocalList]),
+    
     % create the edge on the global graph
     VNew = share:add_vertex(Data#branch.graph),
-    [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
-    AggrGState = create_gv_state(NewMap, share:ltoa(FunSpawned), 1, EmulProcName, PV),
     % io:fwrite("SPAWN AGGR ~p~n", [AggrGState]),
-    ets:insert(?DBMANAGER, {global_state, maps:put(VNew, AggrGState, StateM)}),
     NewLabel = share:atol(EmulProcName) ++ "Δ" ++ FunSpawned,
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
-    {VNew, NewMap}.
+
+    %% progress branch
+    NewBData = Data#branch{last_vertex = VNew, proc_pid_m = NewMap},
+    [H | _] = progress_branch([NewBData]), %% WIP not working, should use eval_branch_until_recv
+
+    %% create new global state
+    [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
+    AggrGState = create_gv_state(NewMap, share:ltoa(FunSpawned), 1, EmulProcName, PV),
+    ets:insert(?DBMANAGER, {global_state, maps:put(VNew, AggrGState, StateM)}),
+
+    H.
 
 %%% TODO: refactor
 get_local_vars(ProcId, Label, FunSName) ->
