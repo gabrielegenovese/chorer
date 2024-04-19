@@ -276,7 +276,7 @@ call_by_atom(Name, ArgList, Data) ->
         _ -> generic_call(Name, ArgList, Data)
     end.
 
-%%% TODO: What to do with argument lists? Put them in the #localview.additional_info?
+%%% TODO: What to do with argument lists? Put them in the #localview.edge_additional_info?
 recursive(_ArgList, Data) ->
     % io:fwrite("[RECURSIVE] from vertex ~p~n", [Data#localview.last_vertex]),
     digraph:add_edge(Data#localview.graph, Data#localview.last_vertex, 1, 'ɛ'),
@@ -306,9 +306,9 @@ spawn_three(Name, ArgList, Data) ->
     NewData = lv:eval_codeline(ArgList, Data),
     NewDataRetVar = NewData#localview.ret_var,
     {Label, ProcId} = format_spawn_label(Name, NewDataRetVar),
-    EM = maps:put(Label, NewDataRetVar, NewData#localview.additional_info),
+    EM = maps:put(Label, NewDataRetVar, NewData#localview.edge_additional_info),
     % io:fwrite("label ~p new edge map ~p map ~p~n", [Label, NewData#localview.fun_name, EM]),
-    ND = NewData#localview{additional_info = EM},
+    ND = NewData#localview{edge_additional_info = EM},
     RetData = add_vertex_edge(Label, ND),
     RetData#localview{ret_var = #variable{type = pid, value = ProcId}}.
 
@@ -357,14 +357,14 @@ generic_call(Name, ArgList, Data) ->
             LastV = Data#localview.last_vertex,
             NewG = NewD#localview.graph,
             NewRet = NewD#localview.ret_var,
-            EM = NewD#localview.additional_info,
+            EM = NewD#localview.edge_additional_info,
             NewLastV = merge_graph(G, NewG, LastV),
             % io:fwrite("LastV ~p VarRet ~p~n", [LastV, NewRet]),
-            % io:fwrite("OldEM ~p NewEM ~p~n", [Data#localview.additional_info, EM]),
+            % io:fwrite("OldEM ~p NewEM ~p~n", [Data#localview.edge_additional_info, EM]),
             Data#localview{
                 ret_var = NewRet,
                 last_vertex = NewLastV,
-                additional_info = maps:merge(Data#localview.additional_info, EM)
+                edge_additional_info = maps:merge(Data#localview.edge_additional_info, EM)
             }
     end.
 
@@ -411,9 +411,9 @@ send(Destination, MessageContent, Data) ->
     VarDataSent = NewData#localview.ret_var,
     DataSent = var_to_string(VarDataSent),
     SLabel = "send " ++ share:atol(DataSent) ++ " to " ++ share:atol(ProcName),
-    EM = NewData#localview.additional_info,
+    EM = NewData#localview.edge_additional_info,
     add_vertex_edge(SLabel, NewData#localview{
-        additional_info = maps:put(SLabel, {VarProcName, VarDataSent}, EM)
+        edge_additional_info = maps:put(SLabel, {VarProcName, VarDataSent}, EM)
     }).
 
 get_pid(Var) ->

@@ -116,7 +116,7 @@ get_edgedata(FunName) ->
             io:fwrite("[S] Not Found in edgedata ~p~n", [FunName]),
             not_found;
         [{_, A}] ->
-            A#localview.additional_info
+            A#localview.edge_additional_info
     end.
 
 warning(String, Content, RetData) ->

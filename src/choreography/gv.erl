@@ -20,7 +20,7 @@
 %%% @doc
 %%% Generate the glabal view from an entrypoint and save it in a specified folder.
 generate(Settings, EntryPoint) ->
-    io:fwrite("Generating the global view~n"),
+    io:fwrite("Generating the global view...~n"),
     MainGraph = share:get_localview(EntryPoint),
     case MainGraph of
         not_found ->
@@ -389,12 +389,32 @@ manage_send(SendLabel, Data, ProcName, ProcPid, Edge) ->
     case ProcSentPid of
         no_pid ->
             io:fwrite("[SEND-ERR] no pid found for: var ~p pid ~p~n", [ProcSentTemp, ProcSentName]),
+            check_send_to_not_existing_proc(ProcSentName, ProcName),
             {Data, false};
         P ->
             actor_emul:add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge)),
             %%% NOTE: the last operation MUST be use_proc_transition, otherwise the final graph might be wrong
             actor_emul:use_proc_transition(ProcPid, Edge),
             {Data, true}
+    end.
+
+check_send_to_not_existing_proc(Proc, ProcName) ->
+    S1 = string:split(share:atol(Proc), ?ARITYSEP),
+    case S1 of
+        [_Name | T] ->
+            S2 = string:split(share:atol(T), ?NSEQSEP),
+            case S2 of
+                [_Arity | _Seq] ->
+                    io:fwrite(
+                        "We detected a bug in your code: ~p is a process ID but the process didn't start yet.~n" ++
+                            "The process ~p should start before ~p.~n",
+                        [Proc, Proc, ProcName]
+                    );
+                _ ->
+                    done
+            end;
+        _ ->
+            done
     end.
 
 %%% Evaluate a receive transition of an actor
@@ -469,7 +489,7 @@ order_edge(ProcPid, EL) ->
             EL
         ),
     Sort = lists:sort(fun({N1, _, _}, {N2, _, _}) -> N1 < N2 end, SepE),
-    io:fwrite("sorted ~p~n", [Sort]),
+    % io:fwrite("sorted ~p~n", [Sort]),
     [E || {_, _, E} <- Sort].
 
 %%% Find the actor id from a variable's list, given the variable name
