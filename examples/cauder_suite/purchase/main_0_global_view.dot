@@ -1,0 +1,31 @@
+digraph global {
+	rankdir="LR";
+	n_0 [label="global", shape="plaintext"];
+	n_1 [id="5", shape=circle, label="5"];
+	n_2 [id="6", shape=circle, label="6"];
+	n_3 [id="1", shape=circle, label="1"];
+	n_0 -> n_3 [arrowhead=none];
+	n_4 [id="9", shape=circle, label="9"];
+	n_5 [id="2", shape=circle, label="2"];
+	n_6 [id="8", shape=circle, label="8"];
+	n_7 [id="4", shape=circle, label="4"];
+	n_8 [id="7", shape=circle, label="7"];
+	n_9 [id="3", shape=circle, label="3"];
+
+	n_8 -> n_2 [id="[$e|10]", label="checkItem/1.0→asynchAnd/2.0:true"];
+	n_2 -> n_2 [id="[$e|11]", label="checkAddress/1.0→asynchAnd/2.0:true"];
+	n_8 -> n_2 [id="[$e|9]", label="checkAddress/1.0→asynchAnd/2.0:true"];
+	n_2 -> n_2 [id="[$e|12]", label="checkItem/1.0→asynchAnd/2.0:true"];
+	n_8 -> n_6 [id="[$e|8]", label="checkCredit/2.0→asynchAnd/2.0:false"];
+	n_6 -> n_4 [id="[$e|14]", label="asynchAnd/2.0→main/0.0:false"];
+	n_1 -> n_2 [id="[$e|6]", label="checkItem/1.0→asynchAnd/2.0:true"];
+	n_7 -> n_1 [id="[$e|3]", label="main/0.0ΔcheckItem/1.0"];
+	n_9 -> n_7 [id="[$e|2]", label="main/0.0ΔcheckAddress/1.0"];
+	n_2 -> n_2 [id="[$e|13]", label="checkCredit/2.0→asynchAnd/2.0:true"];
+	n_1 -> n_2 [id="[$e|5]", label="checkAddress/1.0→asynchAnd/2.0:true"];
+	n_2 -> n_6 [id="[$e|15]", label="checkCredit/2.0→asynchAnd/2.0:false"];
+	n_5 -> n_9 [id="[$e|1]", label="main/0.0ΔcheckCredit/2.0"];
+	n_1 -> n_2 [id="[$e|4]", label="checkCredit/2.0→asynchAnd/2.0:true"];
+	n_7 -> n_8 [id="[$e|7]", label="main/0.0ΔcheckItem/1.0"];
+	n_3 -> n_5 [id="[$e|0]", label="main/0.0ΔasynchAnd/2.0"];
+}

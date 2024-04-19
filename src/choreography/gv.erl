@@ -322,9 +322,10 @@ add_spawn_to_global(EInfo, SLabel, EmulProcName, Data) ->
     % spawn the actor emulator
     FuncPid = spawn(actor_emul, proc_loop, [#actor_info{fun_name = FunSName, id = Counter}]),
     NewMap = maps:put(share:ltoa(FunSpawned), FuncPid, Data#branch.proc_pid_m),
-    % get spawn arguemnt and add them to the local variables of the actor
+    % get spawn argument and add them to the local variables of the actor
     LocalList = get_local_vars(EmulProcName, SLabel, FunSName),
     lists:foreach(fun(Var) -> actor_emul:add_proc_spawnvars(FuncPid, Var) end, LocalList),
+    % io:fwrite("LocalList ~p~n", [LocalList]),
     % create the edge on the global graph
     VNew = share:add_vertex(Data#branch.graph),
     [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
@@ -383,10 +384,10 @@ manage_send(SendLabel, Data, ProcName, ProcPid, Edge) ->
             true -> check_vars(ProcPid, ProcSentTemp);
             false -> share:ltoa(check_pid_self(ProcSentTemp, ProcName))
         end,
-    ProcSentPid = maps:get(ProcSentName, ProcPidMap, no_pid),
+    ProcSentPid = maps:get(share:ltoa(ProcSentName), ProcPidMap, no_pid),
     case ProcSentPid of
         no_pid ->
-            io:fwrite("[SEND-ERR] no pid found for: ~p~n", [ProcSentTemp]),
+            io:fwrite("[SEND-ERR] no pid found for: var ~p pid ~p~n", [ProcSentTemp, ProcSentName]),
             {Data, false};
         P ->
             actor_emul:add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge)),
@@ -454,14 +455,16 @@ check_vars(ProcPid, VarName) ->
     ProcLocalVars = actor_emul:get_proc_localvars(ProcPid),
     % io:fwrite("Find var ~p in ~p pid ~p~n", [VarName, ProcLocalVars, ProcPid]),
     VarValue = share:find_var(ProcLocalVars, VarName),
+    % io:fwrite("Found ~p~n", [VarValue]),
     case VarValue of
         not_found ->
             VarName;
         V ->
+            % io:fwrite("Found ~p~n", [V#variable.type]),
             case V#variable.type of
-                ?UNDEFINED -> VarName;
                 "pid" -> V#variable.value;
                 pid -> V#variable.value;
+                ?UNDEFINED -> VarName;
                 _ -> V#variable.type
             end
     end.

@@ -46,9 +46,10 @@ Try out the tool using the `./test.py` script.
 | atom           | ✅ yes         |
 | integer        | ✅ yes         |
 | float          | ✅ yes         |
-| boolean        | ❌ no          |
+| boolean        | ✅ yes         |
 | tuple          | ✅ yes         |
 | list           | 🟡 partial     |
+| string         | 🟡 partial     |
 | record         | ❌ no          |
 | map            | ❌ no          |
 | binary         | ❌ no          |

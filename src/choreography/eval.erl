@@ -213,6 +213,7 @@ match_with_var(VarName, LeftContent, Data) ->
     Var = NewData#localview.ret_var,
     L = NewData#localview.local_vars,
     NewVarEntry = Var#variable{name = VarName},
+    % io:fwrite("New var ~p~n", [NewVarEntry]),
     NewData#localview{ret_var = NewVarEntry, local_vars = L ++ [NewVarEntry]}.
 
 match_with_tuple(VarList, LeftContent, Data) ->

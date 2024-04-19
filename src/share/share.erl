@@ -187,6 +187,7 @@ find_var([], _) ->
     not_found;
 find_var([Var | Tail], Name) ->
     Cond = Var#variable.name =:= Name,
+    io:fwrite("AAA ~p ~p ~p~n", [Var#variable.name, Name, Cond]),
     case Cond of
         true -> Var;
         false -> find_var(Tail, Name)
