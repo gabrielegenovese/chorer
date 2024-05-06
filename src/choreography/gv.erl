@@ -8,7 +8,7 @@
 -include("../share/common_data.hrl").
 
 %%% API
--export([generate/2]).
+-export([generate/1]).
 
 %%% Record used in this module
 -record(message, {from, data, edge}).
@@ -19,7 +19,7 @@
 
 %%% @doc
 %%% Generate the glabal view from an entrypoint and save it in a specified folder.
-generate(Settings, EntryPoint) ->
+generate(EntryPoint) ->
     MainGraph = share:get_localview(EntryPoint),
     case MainGraph of
         not_found ->
@@ -30,7 +30,7 @@ generate(Settings, EntryPoint) ->
             G = create_globalview(EntryPoint),
             MinG = fsa:minimize(G),
             Data = #localview{graph = G, min_graph = MinG},
-            share:save_graph(Data, Settings, EntryPoint, global),
+            share:save_graph(Data, EntryPoint, global),
             finished
     end.
 

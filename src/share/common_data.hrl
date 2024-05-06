@@ -59,8 +59,7 @@
     % if key is a spawn label, value is spawn arguments
     % if key is a send label, value is the data sent
     % if key is a receive label, value is nothing
-    additional_info = #{},
-    settings = #setting{}
+    additional_info = #{}
 }).
 
 -record(branch, {

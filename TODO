@@ -2,9 +2,9 @@
 
 ## List
 
-- aggiungere tutto nella label così si dà all'utente e comunque usare le additional info nelle gv!!!!
-- aggiungere nelle label delle spawn gli argomenti (usare comunque additiona_info per la costruzione di gv)
 - fare valutazione degli argomenti viene chiamata una funzione
+- aggiungere tutto nella label così si dà feedback all'utente e comunque usare le additional info nelle gv
+- aggiungere nelle label delle spawn gli argomenti (usare comunque additiona_info per la costruzione di gv)
 - format send labels like "ProcId ! DataSent"
 - unbounded send (\*stella di klene nei cicli di send)
 - settings as global var in
