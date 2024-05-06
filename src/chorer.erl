@@ -25,7 +25,9 @@ main([InputFile, EntryPoint, OutputDir] = _Args) ->
     InputFile :: string(),
     EntryPoint :: atom().
 generate(InputFile, EntryPoint) ->
-    generate(InputFile, EntryPoint, "./").
+    %% default: output files in the same directory of the input file
+    generate(InputFile, EntryPoint, filename:dirname(InputFile)).
+    %generate(InputFile, EntryPoint, "./").
 
 %%% @doc
 %%% Generate the localviews and the globalview specifing the output directory.
@@ -40,7 +42,8 @@ generate(InputFile, EntryPoint, OutDir) ->
     init_db(Settings),
     md:extract(InputFile),
     lv:generate(),
-    gv:generate(EntryPoint).
+    gv:generate(EntryPoint),
+    del_db().
 
 %%%===================================================================
 %%% Internal Functions
@@ -55,3 +58,12 @@ init_db(Settings) ->
     ets:new(?REGISTERDB, [set, named_table]),
     ets:new(?ARGUMENTS, [set, named_table]),
     ets:new(?SPAWNC, [set, named_table]).
+
+del_db() ->
+    ets:delete(?DBMANAGER),
+    ets:delete(?CLINE),
+    ets:delete(?FUNAST),
+    ets:delete(?LOCALVIEW),
+    ets:delete(?REGISTERDB),
+    ets:delete(?ARGUMENTS),
+    ets:delete(?SPAWNC).
