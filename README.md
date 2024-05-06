@@ -58,11 +58,13 @@ Try out the tool using the `./test.py` script.
 | receive        | ✅ yes         |
 | send           | ✅ yes         |
 | spawn          | ✅ yes         |
+| spawn_monitor  | ❌ no          |
 | match          | 🟡 partial     |
 | function       | ✅ yes         |
 | guards         | ❌ no          |
 | register       | 🟡 static eval |
 | unregister     | ❌ no          |
+| whereis        | ❌ no          |
 | rand:uniform   | ✅ yes         |
 | self           | ✅ yes         |
 | anon functions | ✅ yes         |

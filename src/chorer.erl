@@ -37,18 +37,19 @@ generate(InputFile, EntryPoint) ->
 generate(InputFile, EntryPoint, OutDir) ->
     io:fwrite("Analysing ~p, entrypoint: ~p~n", [InputFile, EntryPoint]),
     Settings = #setting{output_dir = OutDir},
-    init_db(),
+    init_db(Settings),
     md:extract(InputFile),
-    lv:generate(Settings),
-    gv:generate(Settings, EntryPoint).
+    lv:generate(),
+    gv:generate(EntryPoint).
 
 %%%===================================================================
 %%% Internal Functions
 %%%===================================================================
 
-init_db() ->
-    ets:new(?CLINE, [set, named_table]),
+init_db(Settings) ->
     ets:new(?DBMANAGER, [set, named_table]),
+    ets:insert(?DBMANAGER, {settings, Settings}),
+    ets:new(?CLINE, [set, named_table]),
     ets:new(?FUNAST, [set, named_table]),
     ets:new(?LOCALVIEW, [set, named_table]),
     ets:new(?REGISTERDB, [set, named_table]),

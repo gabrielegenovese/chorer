@@ -23,7 +23,7 @@
     get_base_label/2,
     merge_fun_ar/2,
     should_minimize/1,
-    save_graph/4,
+    save_graph/3,
     remove_last/1,
     find_var/2,
     if_final_get_n/1,
@@ -157,7 +157,8 @@ should_minimize(S) ->
         _ -> true
     end.
 
-save_graph(Data, Settings, FunName, Mode) ->
+save_graph(Data, FunName, Mode) ->
+    [{_, Settings}] = ets:lookup(?DBMANAGER, settings),
     OutputDir = Settings#setting.output_dir,
     Minimize =
         case Mode of
