@@ -116,7 +116,6 @@ proc_loop(Data) ->
         {add_spawn_var, V} ->
             proc_loop(Data#actor_info{spawn_vars = sets:add_element(V, SpawnVars)});
         {add_local_var, V} ->
-            io:fwrite("local v~p~n", [Data#actor_info.local_vars]),
             proc_loop(Data#actor_info{local_vars = sets:add_element(V, LocalVars)});
         {P, get_mess_queue} ->
             P ! MessageQueue,

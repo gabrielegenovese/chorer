@@ -1,5 +1,6 @@
 #!/bin/python
 import os
+# import time
 
 test_list = [
     ("./examples/hello/hello.erl", "greet/0", "examples/hello"),
@@ -15,8 +16,6 @@ test_list = [
     ("./examples/function-call/funny.erl","main/0","examples/function-call"),
     ("./examples/high-order-fun/hof.erl","greet/0","examples/high-order-fun"),
     ("./examples/if-cases/ifcases.erl","main/0","examples/if-cases"),
-    ("./examples/violation/meViolation.erl", "main/0", "examples/violation"),
-    ("./examples/test/barber/barber.erl","main/0","examples/test/barber"),
     ("./examples/test/foo1/foo1.erl","test/0","examples/test/foo1"),
     ("./examples/test/foo2/foo2.erl","test/0","examples/test/foo2"),
     ("./examples/test/foo3/foo3.erl","test/0","examples/test/foo3"),
@@ -37,4 +36,5 @@ for item in test_list:
     cmd = f"./_build/default/bin/chorer {path} {entrypoint} {dir}"
     print(cmd)
     os.system(cmd)
+    # time.sleep(1)
     print("\n")

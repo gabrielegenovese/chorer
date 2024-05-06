@@ -77,10 +77,10 @@ show_global_state() ->
 progress_all(GlobalViewGraph, []) ->
     GlobalViewGraph;
 progress_all(GlobalViewGraph, BranchList) when is_list(BranchList) ->
-    io:fwrite("Branch to eval ~p~n", [length(BranchList)]),
+    % io:fwrite("Branch to eval ~p~n", [length(BranchList)]),
     NewBranchList = lists:foldl(
         fun(Item, AccList) ->
-            io:fwrite("Eval branch~n"),
+            % io:fwrite("Eval branch~n"),
             AccList ++ progress_branch(Item)
         end,
         [],
@@ -105,7 +105,7 @@ generate_possible_branches(NewBranchData, BaseBranchList) ->
     maps:fold(
         fun(Name, Pid, AccList) ->
             MessageQueue = actor_emul:get_proc_mess_queue(Pid),
-            io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
+            % io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
             gen_branch_foreach_mess(NewBranchData, MessageQueue, Name, AccList)
         end,
         BaseBranchList,
@@ -138,7 +138,7 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
                     AccList;
                 %%% If an edge has been found, use the duplicated branch to add the transition to the gv
                 EdgeFound ->
-                    io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
+                    % io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
                     ProcFrom = Message#message.from,
                     MessData = Message#message.data,
                     PidFrom = maps:get(ProcFrom, NewMap),
@@ -290,13 +290,13 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     {Edge, _, _, PLabel} = EdgeInfo,
     % io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
     SLabel = share:atol(PLabel),
-    IsArg = is_substring(SLabel, "arg"),
+    % IsArg = is_substring(SLabel, "arg"),
     IsSpawn = is_substring(SLabel, "spawn"),
     IsSend = is_substring(SLabel, "send"),
     if
-        IsArg ->
-            actor_emul:use_proc_transition(ProcPid, Edge),
-            {BData, true};
+        % IsArg ->
+        %     actor_emul:use_proc_transition(ProcPid, Edge),
+        %     {BData, true};
         IsSpawn ->
             EdgeInfo = actor_emul:get_proc_edge_info(ProcPid, Edge),
             {VNew, NewM} = add_spawn_to_global(EdgeInfo, SLabel, ProcName, BData),
@@ -310,14 +310,14 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     end.
 
 %%% If SubS is substring of S return True, otherwise False.
-is_substring(S, SubS) ->
-    is_list(string:find(S, SubS)).
+is_substring(String, SubString) ->
+    is_list(string:find(String, SubString)).
 
 %%% Add a spawn transition to the global view
 add_spawn_to_global(EInfo, SLabel, EmulProcName, Data) ->
     {_, _, PV, _} = EInfo,
     % get proc name
-    FunSpawned = string:prefix(SLabel, "spawn "),
+    FunSpawned = lists:nth(2, string:split(SLabel, " ", all)),
     {FunSName, Counter} = remove_id_from_proc(FunSpawned),
     % spawn the actor emulator
     FuncPid = spawn(actor_emul, proc_loop, [#actor_info{fun_name = FunSName, id = Counter}]),

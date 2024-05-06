@@ -250,8 +250,8 @@ match_with_list(List, Data) ->
 
 call_by_atom(Name, ArgList, Data) ->
     FunName = Data#localview.fun_name,
-    %%% TODO: change this line to be generic (split with ?ARITYSEP)
-    RealName = share:ltoa(share:remove_last(share:remove_last(FunName))),
+    [RealNameS | _] = string:split(share:atol(FunName), ?ARITYSEP),
+    RealName = share:ltoa(RealNameS),
     case Name of
         RealName -> recursive(ArgList, Data);
         spawn -> spawn_call(ArgList, Data);
@@ -290,6 +290,7 @@ spawn_one(Content, Data) ->
 spawn_three(Name, ArgList, Data) ->
     NewData = lv:eval_codeline(ArgList, Data),
     NewDataRetVar = NewData#localview.ret_var,
+    % io:fwrite("Rer var ~p~n", [NewDataRetVar]),
     {Label, ProcId} = format_spawn_label(Name, NewDataRetVar),
     EM = maps:put(Label, NewDataRetVar, NewData#localview.additional_info),
     % io:fwrite("label ~p new edge map ~p map ~p~n", [Label, NewData#localview.fun_name, EM]),
@@ -302,7 +303,8 @@ format_spawn_label(Name, NewDataRetVar) ->
     C = share:inc_spawn_counter(Name),
     Arity = length(NewDataRetVar#variable.value),
     ProcId = share:merge_fun_ar(Name, Arity) ++ ?NSEQSEP ++ integer_to_list(C),
-    {"spawn " ++ ProcId, ProcId}.
+    Label = "spawn " ++ ProcId ++ " args " ++ var_to_string(NewDataRetVar),
+    {Label, ProcId}.
 
 spawn_monitor_call(ArgList, Data) ->
     share:warning("spawn_monitor not yet implemted. Arguments =", ArgList, Data).
