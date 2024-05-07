@@ -332,9 +332,21 @@ add_spawn_to_global(EInfo, SLabel, EmulProcName, Data) ->
     AggrGState = create_gv_state(NewMap, share:ltoa(FunSpawned), 1, EmulProcName, PV),
     % io:fwrite("SPAWN AGGR ~p~n", [AggrGState]),
     ets:insert(?DBMANAGER, {global_state, maps:put(VNew, AggrGState, StateM)}),
-    NewLabel = share:atol(EmulProcName) ++ "Δ" ++ FunSpawned,
+    NewLabel = format_spawn_label(SLabel, EmulProcName, FunSpawned),
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
+
+format_spawn_label(SLabel, EmulProcName, FunSpawned) ->
+    Cond = is_list(string:find(SLabel, "args")),
+    More =
+        case Cond of
+            true ->
+                ArgsFunSpawned = lists:nth(4, string:split(SLabel, " ", all)),
+                " args " ++ ArgsFunSpawned;
+            false ->
+                ""
+        end,
+    share:atol(EmulProcName) ++ "Δ" ++ FunSpawned ++ More.
 
 %%% TODO: refactor
 get_local_vars(ProcId, Label, FunSName) ->
