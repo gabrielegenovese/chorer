@@ -7,7 +7,7 @@ digraph r_0 {
 	n_3 [id="4", shape=doublecircle, label="4"];
 	n_4 [id="3", shape=circle, label="2"];
 
-	n_2 -> n_3 [id="[$e|0]", label="0#receive Z"];
-	n_4 -> n_2 [id="[$e|2]", label="0#receive Y"];
 	n_1 -> n_4 [id="[$e|1]", label="0#receive X"];
+	n_4 -> n_2 [id="[$e|2]", label="0#receive Y"];
+	n_2 -> n_3 [id="[$e|0]", label="0#receive Z"];
 }

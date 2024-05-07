@@ -6,7 +6,7 @@ digraph test_0 {
 	n_2 [id="2", shape=circle, label="2"];
 	n_3 [id="3", shape=doublecircle, label="3"];
 
-	n_2 -> n_2 [id="[$e|0]", label="spawn client/1.1"];
-	n_2 -> n_3 [id="[$e|4]", label="spawn client/1.0"];
 	n_1 -> n_2 [id="[$e|5]", label="spawn server/0.0"];
+	n_2 -> n_3 [id="[$e|4]", label="spawn client/1.0"];
+	n_2 -> n_2 [id="[$e|0]", label="spawn client/1.1"];
 }

@@ -1,17 +1,17 @@
 digraph main_0 {
 	rankdir="LR";
 	n_0 [label="main_0", shape="plaintext"];
-	n_1 [id="5", shape=circle, label="3"];
+	n_1 [id="5", shape=doublecircle, label="3"];
 	n_2 [id="1", shape=circle, label="1"];
 	n_0 -> n_2 [arrowhead=none];
 	n_3 [id="2", shape=circle, label="2"];
-	n_4 [id="4", shape=doublecircle, label="4"];
+	n_4 [id="4", shape=circle, label="4"];
 	n_5 [id="7", shape=circle, label="5"];
 
-	n_3 -> n_1 [id="[$e|3]", label="0#receive {numOfSeats,Pid}"];
-	n_1 -> n_3 [id="[$e|12]", label="send {seats,Num} to Pid"];
-	n_3 -> n_4 [id="[$e|6]", label="2#receive stop"];
+	n_3 -> n_4 [id="[$e|3]", label="0#receive {numOfSeats,Pid}"];
+	n_4 -> n_3 [id="[$e|12]", label="send {seats,Num} to Pid"];
+	n_3 -> n_1 [id="[$e|6]", label="2#receive stop"];
+	n_3 -> n_5 [id="[$e|10]", label="1#receive {sell,Pid}"];
 	n_5 -> n_3 [id="[$e|7]", label="send {booked,Num} to Pid"];
 	n_2 -> n_3 [id="[$e|13]", label="spawn agent/2.0"];
-	n_3 -> n_5 [id="[$e|10]", label="1#receive {sell,Pid}"];
 }

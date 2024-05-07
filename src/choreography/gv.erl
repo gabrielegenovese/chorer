@@ -11,7 +11,7 @@
 -export([generate/2]).
 
 %%% Record used in this module
--record(message, {from, data, edge}).
+-record(message, {from, data}).
 
 %%%===================================================================
 %%% API
@@ -51,7 +51,7 @@ create_globalview(Name) ->
     ets:insert(?DBMANAGER, {global_state, #{1 => sets:add_element({share:ltoa(PidKey), 1}, S)}}),
     % initialize first branch
     BData = progress_all(RetG, [new_branch(RetG, VNew, ProcPidMap)]),
-    show_global_state(),
+    % show_global_state(),
     BData.
 
 new_branch(G, V, P) ->
@@ -61,10 +61,8 @@ new_branch(G, V, P) ->
         proc_pid_m = P
     }.
 
-new_message(F, D, E) ->
-    #message{
-        from = F, data = D, edge = E
-    }.
+new_message(F, D) ->
+    #message{from = F, data = D}.
 
 show_global_state() ->
     [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
@@ -148,14 +146,16 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
                     ProcFromData = actor_emul:get_proc_data(PidFrom),
                     CurrProcFromVertex = ProcFromData#actor_info.current_state,
                     EToInfo = actor_emul:get_proc_edge_info(NewPid, EdgeFound),
-                    LastVertex = complex_add_vertex_recv(
+                    actor_emul:del_proc_mess_queue(NewPid, Message),
+                    {LastVertex, Added} = complex_add_vertex_recv(
                         ProcFrom, CurrProcFromVertex, ProcName, EToInfo, DupData, Label
                     ),
-                    actor_emul:del_proc_mess_queue(NewPid, Message),
-                    % empty_filter_all_proc(NewMap),
                     %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
                     actor_emul:use_proc_transition(NewPid, EdgeFound),
-                    AccList ++ [DupData#branch{last_vertex = LastVertex}]
+                    case Added of
+                        true -> AccList ++ [DupData#branch{last_vertex = LastVertex}];
+                        false -> AccList
+                    end
             end
         end,
         BaseBranchList,
@@ -320,9 +320,10 @@ add_spawn_to_global(EInfo, SLabel, EmulProcName, Data) ->
     % get proc name
     FunSpawned = string:prefix(SLabel, "spawn "),
     {FunSName, Counter} = remove_id_from_proc(FunSpawned),
+    ProcPidMap = Data#branch.proc_pid_m,
     % spawn the actor emulator
     FuncPid = spawn(actor_emul, proc_loop, [#actor_info{fun_name = FunSName, id = Counter}]),
-    NewMap = maps:put(share:ltoa(FunSpawned), FuncPid, Data#branch.proc_pid_m),
+    NewMap = maps:put(share:ltoa(FunSpawned), FuncPid, ProcPidMap),
     % get spawn argument and add them to the local variables of the actor
     LocalList = get_local_vars(EmulProcName, SLabel, FunSName),
     lists:foreach(fun(Var) -> actor_emul:add_proc_spawnvars(FuncPid, Var) end, LocalList),
@@ -392,7 +393,7 @@ manage_send(SendLabel, Data, ProcName, ProcPid, Edge) ->
             check_send_to_not_existing_proc(ProcSentName, ProcName),
             {Data, false};
         P ->
-            actor_emul:add_proc_mess_queue(P, new_message(ProcName, DataSent, Edge)),
+            actor_emul:add_proc_mess_queue(P, new_message(ProcName, DataSent)),
             %%% NOTE: the last operation MUST be use_proc_transition, otherwise the final graph might be wrong
             actor_emul:use_proc_transition(ProcPid, Edge),
             {Data, true}
@@ -537,6 +538,8 @@ check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
     [FirstMessChar | RestMess] = MessageS,
     IsFirstCharUpperCase = share:is_erlvar(PatternMatching),
     if
+        % MessageS =:= 'undefined' ->
+        %     {true, []};
         ([FirstPtmtChar] =:= "{") and ([FirstMessChar] =:= "{") ->
             check_tuple(ProcPid, CallingProc, RestPtmt, RestMess);
         PatternMatching =:= MessageS ->
@@ -548,6 +551,14 @@ check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
         true ->
             {false, []}
     end.
+
+%%% AGGIORNARE COMPATIBILITA':
+%% se sono sicuro che fa match, genero e non vado a vedere altro
+%% se sicuro che non fa match, non genero e vado a vedere il prossimo arco
+%% non sono sicuro, genero e vado a vedere il prossimo
+
+%%% più avanti, match coi tipi
+%%% fare esempi con X + 1, oppure X = io:fread, Pid ! X
 
 %%% Check if the rest of the tuple is compatible
 check_tuple(ProcPid, CallingProc, RestPtmt, RestMess) ->
@@ -613,16 +624,16 @@ complex_add_vertex_recv(Proc1, CurrVertex, Proc2, EdgeInfo, Data, Label) ->
             % io:fwrite("[DEBUG] Adding new global state ~p~n", [VNew]),
             NewM = maps:put(VNew, AggregateGlobalState, StateM),
             ets:insert(?DBMANAGER, {global_state, NewM}),
-            empty_filter_all_proc(ProcPid),
-            VNew;
+            empty_filter_all_proc(Data#branch.proc_pid_m),
+            {VNew, true};
         VFound ->
             % io:fwrite("[EXTERNFOUND] ~p~n", [VFound]),
             case SameL of
                 nomatch ->
                     digraph:add_edge(G, VLast, VFound, Label),
-                    VFound;
+                    {VFound, true};
                 VTo ->
-                    VTo
+                    {VTo, false}
             end
     end.
 
@@ -632,18 +643,19 @@ create_gv_state(ProcPid, Proc1, V2, Proc2, PV2) ->
             RealName = share:remove_counter(Name),
             LV = share:get_localview(RealName),
             MG = LV#localview.min_graph,
+            Data = actor_emul:get_proc_data(Pid),
+            MessageQueue = Data#actor_info.message_queue,
             EL =
                 case Name of
                     Proc1 ->
                         {_, L} = digraph:vertex(MG, V2),
-                        {Proc1, share:if_final_get_n(L)};
+                        {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
                     Proc2 ->
                         {_, L} = digraph:vertex(MG, PV2),
-                        {Proc2, share:if_final_get_n(L)};
+                        {Proc2, share:if_final_get_n(L), sets:from_list(MessageQueue)};
                     N ->
-                        Data = actor_emul:get_proc_data(Pid),
                         {_, L} = digraph:vertex(MG, Data#actor_info.current_state),
-                        {N, share:if_final_get_n(L)}
+                        {N, share:if_final_get_n(L), sets:from_list(MessageQueue)}
                 end,
             sets:add_element(EL, AccList)
         end,
@@ -656,15 +668,8 @@ check_if_exist(StateM, AggregateGlobalState) ->
         fun(Key, Value, Acc) ->
             if
                 Acc =:= nomatch ->
-                    Sub1 = sets:subtract(Value, AggregateGlobalState),
-                    % io:fwrite("[CHECK] Key ~p~nV ~p~nA ~p~nS ~p~n~n", [
-                    %     Key, Value, AggregateGlobalState, Sub
-                    % ]),
-                    Sub2 = sets:subtract(AggregateGlobalState, Value),
-                    % io:fwrite("[CHECK] Key ~p~nV ~p~nA ~p~nS ~p~n~n", [
-                    %     Key, Value, AggregateGlobalState, Sub
-                    % ]),
-                    Cond = sets:is_empty(Sub1) and sets:is_empty(Sub2),
+                    %%% Check if the set has the same elements
+                    Cond = Value =:= AggregateGlobalState,
                     % io:fwrite("[SUB] ~p~n", [Cond]),
                     case Cond of
                         true ->
@@ -697,6 +702,7 @@ check_same_label(G, EL, VLast, Label) ->
     ).
 
 %%% Get the data from a send local view's label
+%%% TODO: do not use label to parse data, use additional_info and return a variable
 get_data_from_label(S) ->
     Ret = lists:nth(2, string:split(S, " ", all)),
     FirstChar = share:first(Ret),

@@ -173,7 +173,7 @@ save_graph(Data, Settings, FunName, Mode) ->
     save_graph_to_file(ToSaveG, OutputDir, FunName, Mode).
 
 remove_counter(S) ->
-    [Rest, _] = string:split(atol(S), "."),
+    [Rest, _] = string:split(atol(S), ?NSEQSEP),
     Rest.
 
 %%% @doc
