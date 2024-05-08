@@ -52,3 +52,12 @@ prima: nella gv fare la valutazione del ptmt su i dati passati nella additional_
 - chiedere all'utente se salvare la totale o la minimizzata
 
 -> aggiungere valutazione nella gv di tutti i possibili edge
+
+
+## Notes 8/5
+
+show one possible execution -> creare una cartella con tutte le possibili singole esecuzioni
+preserve orders of messages in gv
+mutual recursion will diverge (we needs to at least detect it -> keep a trace of the function call and stop)
+
+controllare minimizzazione e informazioni negli edge (attaccarli agli id e non alle label, come? si uniscono le informazioni in fase minimizzazione)
