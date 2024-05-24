@@ -4,6 +4,7 @@
 main() ->
     Main = self(),
     spawn(?MODULE, agent, [1, Main]),
+    spawn(?MODULE, agent, [2, Main]),
     seats(3).
 
 seats(Num) ->

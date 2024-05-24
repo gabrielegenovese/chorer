@@ -7,7 +7,7 @@ digraph greet_0 {
 	n_3 [id="3", shape=doublecircle, label="3"];
 
 	n_1 -> n_2 [id="[$e|3]", label="send hello1 to pid_self"];
-	n_2 -> n_3 [id="[$e|6]", label="receive hello1"];
 	n_2 -> n_1 [id="[$e|5]", label="send hello2 to pid_self"];
 	n_2 -> n_3 [id="[$e|0]", label="receive hello2"];
+	n_2 -> n_3 [id="[$e|6]", label="receive hello1"];
 }

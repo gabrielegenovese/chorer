@@ -7,7 +7,7 @@ digraph global {
 	n_3 [id="4", shape=circle, label="4"];
 	n_4 [id="3", shape=circle, label="3"];
 
-	n_1 -> n_2 [id="[$e|0]", label="test/0.0Δc/0.0"];
-	n_2 -> n_4 [id="[$e|1]", label="test/0.0Δa/1.0"];
+	n_2 -> n_4 [id="[$e|1]", label="test/0.0Δa/1.0 args [c/0.0]"];
 	n_4 -> n_3 [id="[$e|2]", label="a/1.0→c/0.0:2"];
+	n_1 -> n_2 [id="[$e|0]", label="test/0.0Δc/0.0 args nil"];
 }
