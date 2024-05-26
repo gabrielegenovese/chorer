@@ -29,6 +29,7 @@
     if_final_get_n/1,
     inc_spawn_counter/1,
     remove_counter/1,
+    show_global_state/0,
     atol/1,
     ltoa/1
 ]).
@@ -203,6 +204,14 @@ inc_spawn_counter(Name) ->
         end,
     ets:insert(?SPAWNC, {Name, Ret + 1}),
     Ret.
+
+show_global_state() ->
+    [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
+    maps:fold(
+        fun(Key, Value, _F) -> io:fwrite("N ~p states ~p~n", [Key, sets:to_list(Value)]) end,
+        [],
+        StateM
+    ).
 
 %%%===================================================================
 %%% Internal Functions

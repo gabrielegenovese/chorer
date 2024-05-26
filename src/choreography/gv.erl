@@ -51,7 +51,7 @@ create_globalview(Name) ->
     ets:insert(?DBMANAGER, {global_state, #{1 => sets:add_element({share:ltoa(PidKey), 1}, S)}}),
     % initialize first branch
     BData = progress_all(RetG, [new_branch(RetG, VNew, ProcPidMap)]),
-    % show_global_state(),
+    % share:show_global_state(),
     BData.
 
 new_branch(G, V, P) ->
@@ -63,14 +63,6 @@ new_branch(G, V, P) ->
 
 new_message(F, D) ->
     #message{from = F, data = D}.
-
-show_global_state() ->
-    [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
-    maps:fold(
-        fun(Key, Value, _F) -> io:fwrite("N ~p states ~p~n", [Key, sets:to_list(Value)]) end,
-        [],
-        StateM
-    ).
 
 %%% Explore every possible branch of executions
 progress_all(GlobalViewGraph, []) ->
@@ -227,6 +219,7 @@ eval_proc_branch(ProcName, ProcPid, Data) ->
     ELLength = length(EdgeList),
     if
         (ELLength =:= 0) and (Mode =:= final_state) ->
+            check_and_set_global_final_state(Data),
             {Data, false, []};
         (ELLength =:= 0) and (Mode =:= filtered) ->
             {Data#branch{proc_pid_m = #{}}, false, []};
@@ -237,6 +230,39 @@ eval_proc_branch(ProcName, ProcPid, Data) ->
             {D, B, []};
         true ->
             manage_more_edges(ProcName, ProcPid, Data)
+    end.
+
+check_and_set_global_final_state(Data) ->
+    IsFinal = is_global_final_state(Data),
+    case IsFinal of
+        true -> set_global_final_state(Data);
+        false -> done
+    end.
+
+is_global_final_state(Data) ->
+    maps:fold(
+        fun(_, ProcPid, Acc) ->
+            {Mode, _} = actor_emul:get_proc_edges(ProcPid),
+            case Mode =/= final_state of
+                true -> false;
+                false -> Acc
+            end
+        end,
+        true,
+        Data#branch.proc_pid_m
+    ).
+
+set_global_final_state(Data) ->
+    G = Data#branch.graph,
+    LV = Data#branch.last_vertex,
+    {LV, Label} = digraph:vertex(G, LV),
+    SLabel = share:atol(Label),
+    case string:find(SLabel, ?FINALTAG) of
+        nomatch ->
+            FinalL = ?FINALTAG ++ SLabel,
+            digraph:add_vertex(G, LV, FinalL);
+        _ ->
+            done
     end.
 
 %%% Evaluate edges of a localview, we are probably evaluating a receive
