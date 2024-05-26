@@ -2,12 +2,10 @@
 
 ## List
 
-- aggiungere tutto nella label così si dà all'utente e comunque usare le additional info nelle gv!!!!
-- aggiungere nelle label delle spawn gli argomenti (usare comunque additiona_info per la costruzione di gv)
 - fare valutazione degli argomenti viene chiamata una funzione
+- aggiungere tutto nella label così si dà feedback all'utente e comunque usare le additional info nelle gv
 - format send labels like "ProcId ! DataSent"
 - unbounded send (\*stella di klene nei cicli di send)
-- settings as global var in
 - fare il filtro solo sulle send e azzerarlo quando avviene una receive (tutte le receive e tutti i processi)
 - lasciare numerini nelle lv -> fare check nelle gv quando si ripassa dalla stessa spawn
 - dividere localview data from wip_lv data
@@ -31,18 +29,18 @@ costruzione del grafo può essere parziale, essendo un particolare tipo di visit
 a vicenda e quindi il tool entra in un loop infinito)
 
 pseudo codice:
-funcall(FunName,Parameters) ->
-GenericG = lv(fun),
-EvalG = eval(GenericG, Parameters),
-merge(GPadre, EvalG)
-eval(G, P) ->
-%super pseudo codice
-RetG = graph:new
-while continue
-G, P = eval(RetG, G, P) %continua a valutare se c'è una chiamata ricorsiva con dati valutabili
+    funcall(FunName,Parameters) ->
+        GenericG = lv(fun),
+        EvalG = eval(GenericG, Parameters),
+        merge(GPadre, EvalG)
+    eval(G, P) ->
+        %super pseudo codice
+        RetG = graph:new
+        while continue
+        G, P = eval(RetG, G, P) %continua a valutare se c'è una chiamata ricorsiva con dati valutabili
 problemi:
-come fare eval?
-nel merge come attaccare con anche le additional_info?
+    come fare eval?
+    nel merge come attaccare con anche le additional_info?
 
 la creazione di una lv deve essere paramentrizzata
 
@@ -54,3 +52,12 @@ prima: nella gv fare la valutazione del ptmt su i dati passati nella additional_
 - chiedere all'utente se salvare la totale o la minimizzata
 
 -> aggiungere valutazione nella gv di tutti i possibili edge
+
+
+## Notes 8/5
+
+show one possible execution -> creare una cartella con tutte le possibili singole esecuzioni
+preserve orders of messages in gv
+mutual recursion will diverge (we needs to at least detect it -> keep a trace of the function call and stop)
+
+controllare minimizzazione e informazioni negli edge (attaccarli agli id e non alle label, come? si uniscono le informazioni in fase minimizzazione)

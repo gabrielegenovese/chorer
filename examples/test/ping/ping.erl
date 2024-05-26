@@ -3,9 +3,8 @@
 
 start() ->
     Pong = spawn(ping, pong, []),
-    S = self(),
-    S ! 3,
-    ping(Pong).
+    Ping = spawn(ping, ping, [Pong]),
+    Ping ! 3.
 
 ping(Pong) ->
     receive

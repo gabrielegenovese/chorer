@@ -9,10 +9,10 @@ digraph agent_2 {
 	n_5 [id="4", shape=circle, label="4"];
 	n_6 [id="3", shape=circle, label="5"];
 
-	n_4 -> n_2 [id="[$e|0]", label="0#receive {seats,Num}"];
-	n_2 -> n_6 [id="[$e|5]", label="send {sell,pid_self} to Pid"];
-	n_5 -> n_1 [id="[$e|3]", label="send stop to Pid"];
 	n_3 -> n_4 [id="[$e|6]", label="send {numOfSeats,pid_self} to Pid"];
-	n_6 -> n_3 [id="[$e|7]", label="0#receive {booked,_}"];
+	n_2 -> n_6 [id="[$e|5]", label="send {sell,pid_self} to Pid"];
+	n_4 -> n_2 [id="[$e|0]", label="0#receive {seats,Num}"];
 	n_4 -> n_5 [id="[$e|4]", label="1#receive {seats,0}"];
+	n_6 -> n_3 [id="[$e|7]", label="0#receive {booked,_}"];
+	n_5 -> n_1 [id="[$e|3]", label="send stop to Pid"];
 }

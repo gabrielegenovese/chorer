@@ -10,10 +10,10 @@ digraph greet_0 {
 	n_6 [id="7", shape=circle, label="5"];
 	n_7 [id="3", shape=circle, label="2"];
 
-	n_6 -> n_5 [id="[$e|7]", label="send hello3 to anonfun_10.0"];
+	n_7 -> n_4 [id="[$e|4]", label="send hello1 to anonfun_15.0"];
+	n_5 -> n_3 [id="[$e|1]", label="0#receive _"];
 	n_2 -> n_7 [id="[$e|3]", label="spawn anonfun_15.0"];
 	n_1 -> n_6 [id="[$e|6]", label="spawn anonfun_10.0"];
-	n_5 -> n_3 [id="[$e|1]", label="0#receive _"];
+	n_6 -> n_5 [id="[$e|7]", label="send hello3 to anonfun_10.0"];
 	n_4 -> n_1 [id="[$e|0]", label="send hello2 to pid_self"];
-	n_7 -> n_4 [id="[$e|4]", label="send hello1 to anonfun_15.0"];
 }

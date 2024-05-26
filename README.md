@@ -11,7 +11,7 @@ The project requires `erlang` and `rebar3` to run.
 Use `rebar3` to run the program from the command line or to compile it.
 
 ```erlang
-# rebar3 escript
+# rebar3 escriptize
 # ./_build/default/bin/chorer ./path/to/your/program.erl main/0 path/to/folder
 ```
 
@@ -19,7 +19,7 @@ or
 
 ```erlang
 # rebar3 shell
-1> chorer:generate("./examples/ticktack/tictacstop.erl", start/0).
+1> chorer:generate("./examples/ticktack/tictacstop.erl", "start/0").
 finished
 ```
 
@@ -58,11 +58,13 @@ Try out the tool using the `./test.py` script.
 | receive        | ✅ yes         |
 | send           | ✅ yes         |
 | spawn          | ✅ yes         |
+| spawn_monitor  | ❌ no          |
 | match          | 🟡 partial     |
 | function       | ✅ yes         |
 | guards         | ❌ no          |
 | register       | 🟡 static eval |
 | unregister     | ❌ no          |
+| whereis        | ❌ no          |
 | rand:uniform   | ✅ yes         |
 | self           | ✅ yes         |
 | anon functions | ✅ yes         |

@@ -8,8 +8,8 @@ digraph main_0 {
 	n_4 [id="4", shape=doublecircle, label="5"];
 	n_5 [id="3", shape=circle, label="4"];
 
-	n_3 -> n_1 [id="[$e|1]", label="spawn varManager/1.0"];
-	n_5 -> n_4 [id="[$e|3]", label="spawn incrementer/2.1"];
-	n_2 -> n_3 [id="[$e|0]", label="spawn meManager/0.0"];
-	n_1 -> n_5 [id="[$e|2]", label="spawn incrementer/2.0"];
+	n_5 -> n_4 [id="[$e|1]", label="spawn incrementer/2.1 args [meManager/0.0,varManager/1.0]"];
+	n_3 -> n_1 [id="[$e|2]", label="spawn varManager/1.0 args [0]"];
+	n_1 -> n_5 [id="[$e|0]", label="spawn incrementer/2.0 args [meManager/0.0,varManager/1.0]"];
+	n_2 -> n_3 [id="[$e|3]", label="spawn meManager/0.0 args nil"];
 }

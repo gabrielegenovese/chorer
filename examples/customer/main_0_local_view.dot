@@ -6,6 +6,6 @@ digraph main_0 {
 	n_2 [id="2", shape=circle, label="2"];
 	n_3 [id="3", shape=doublecircle, label="3"];
 
-	n_1 -> n_2 [id="[$e|0]", label="spawn store/0.0"];
-	n_2 -> n_3 [id="[$e|1]", label="spawn customer/0.0"];
+	n_1 -> n_2 [id="[$e|1]", label="spawn store/0.0 args nil"];
+	n_2 -> n_3 [id="[$e|0]", label="spawn customer/0.0 args nil"];
 }

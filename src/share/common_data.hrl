@@ -61,8 +61,7 @@
     % if key is a send label, value is the data sent
     % if key is a receive label, value is nothing
     edge_additional_info = #{},
-    states_additional_info = #{},
-    settings = #setting{}
+    states_additional_info = #{}
 }).
 
 -record(branch, {

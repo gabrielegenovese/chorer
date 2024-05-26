@@ -8,7 +8,7 @@
 -include("../share/common_data.hrl").
 
 %%% API
--export([generate/2]).
+-export([generate/1]).
 
 %%% Record used in this module
 -record(message, {from, data}).
@@ -19,8 +19,7 @@
 
 %%% @doc
 %%% Generate the glabal view from an entrypoint and save it in a specified folder.
-generate(Settings, EntryPoint) ->
-    io:fwrite("Generating the global view...~n"),
+generate(EntryPoint) ->
     MainGraph = share:get_localview(EntryPoint),
     case MainGraph of
         not_found ->
@@ -31,7 +30,7 @@ generate(Settings, EntryPoint) ->
             G = create_globalview(EntryPoint),
             MinG = fsa:minimize(G),
             Data = #localview{graph = G, min_graph = MinG},
-            share:save_graph(Data, Settings, EntryPoint, global),
+            share:save_graph(Data, EntryPoint, global),
             finished
     end.
 
@@ -68,10 +67,10 @@ new_message(F, D) ->
 progress_all(GlobalViewGraph, []) ->
     GlobalViewGraph;
 progress_all(GlobalViewGraph, BranchList) when is_list(BranchList) ->
-    io:fwrite("Branch to eval ~p~n", [length(BranchList)]),
+    % io:fwrite("Branch to eval ~p~n", [length(BranchList)]),
     NewBranchList = lists:foldl(
         fun(Item, AccList) ->
-            io:fwrite("Eval branch~n"),
+            % io:fwrite("Eval branch~n"),
             AccList ++ progress_branch(Item)
         end,
         [],
@@ -129,7 +128,7 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
                     AccList;
                 %%% If an edge has been found, use the duplicated branch to add the transition to the gv
                 EdgeFound ->
-                    io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
+                    % io:fwrite("[RECV] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
                     ProcFrom = Message#message.from,
                     MessData = Message#message.data,
                     PidFrom = maps:get(ProcFrom, NewMap),
@@ -317,13 +316,13 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     {Edge, _, _, PLabel} = EdgeInfo,
     % io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
     SLabel = share:atol(PLabel),
-    IsArg = is_substring(SLabel, "arg"),
+    % IsArg = is_substring(SLabel, "arg"),
     IsSpawn = is_substring(SLabel, "spawn"),
     IsSend = is_substring(SLabel, "send"),
     if
-        IsArg ->
-            actor_emul:use_proc_transition(ProcPid, Edge),
-            {BData, true};
+        % IsArg ->
+        %     actor_emul:use_proc_transition(ProcPid, Edge),
+        %     {BData, true};
         IsSpawn ->
             EdgeInfo = actor_emul:get_proc_edge_info(ProcPid, Edge),
             {VNew, NewM} = add_spawn_to_global(EdgeInfo, SLabel, ProcName, BData),
@@ -337,14 +336,14 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     end.
 
 %%% If SubS is substring of S return True, otherwise False.
-is_substring(S, SubS) ->
-    is_list(string:find(S, SubS)).
+is_substring(String, SubString) ->
+    is_list(string:find(String, SubString)).
 
 %%% Add a spawn transition to the global view
 add_spawn_to_global(EInfo, SLabel, EmulProcName, Data) ->
     {_, _, PV, _} = EInfo,
     % get proc name
-    FunSpawned = string:prefix(SLabel, "spawn "),
+    FunSpawned = lists:nth(2, string:split(SLabel, " ", all)),
     {FunSName, Counter} = remove_id_from_proc(FunSpawned),
     ProcPidMap = Data#branch.proc_pid_m,
     % spawn the actor emulator
@@ -360,9 +359,21 @@ add_spawn_to_global(EInfo, SLabel, EmulProcName, Data) ->
     AggrGState = create_gv_state(NewMap, share:ltoa(FunSpawned), 1, EmulProcName, PV),
     % io:fwrite("SPAWN AGGR ~p~n", [AggrGState]),
     ets:insert(?DBMANAGER, {global_state, maps:put(VNew, AggrGState, StateM)}),
-    NewLabel = share:atol(EmulProcName) ++ "Δ" ++ FunSpawned,
+    NewLabel = format_spawn_label(SLabel, EmulProcName, FunSpawned),
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
+
+format_spawn_label(SLabel, EmulProcName, FunSpawned) ->
+    Cond = is_list(string:find(SLabel, "args")),
+    More =
+        case Cond of
+            true ->
+                ArgsFunSpawned = lists:nth(4, string:split(SLabel, " ", all)),
+                " args " ++ ArgsFunSpawned;
+            false ->
+                ""
+        end,
+    share:atol(EmulProcName) ++ "Δ" ++ FunSpawned ++ More.
 
 %%% TODO: refactor
 get_local_vars(ProcId, Label, FunSName) ->

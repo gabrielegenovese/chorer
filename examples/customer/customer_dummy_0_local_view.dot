@@ -9,6 +9,7 @@ digraph customer_dummy_0 {
 	n_5 [id="8", shape=circle, label="3"];
 	n_6 [id="4", shape=doublecircle, label="6"];
 
+<<<<<<< HEAD
 	n_5 -> n_1 [id="[$e|9]", label="send more to store/0.0"];
 	n_4 -> n_2 [id="[$e|8]", label="send payment to store/0.0"];
 	n_1 -> n_5 [id="[$e|3]", label="send item to store/0.0"];
@@ -16,4 +17,13 @@ digraph customer_dummy_0 {
 	n_2 -> n_6 [id="[$e|4]", label="0#receive accepted"];
 	n_2 -> n_4 [id="[$e|5]", label="1#receive reject"];
 	n_5 -> n_4 [id="[$e|10]", label="send buy to store/0.0"];
+=======
+	n_2 -> n_4 [id="[$e|3]", label="receive reject"];
+	n_5 -> n_1 [id="[$e|9]", label="send more to store/0.0"];
+	n_5 -> n_4 [id="[$e|10]", label="send buy to store/0.0"];
+	n_1 -> n_5 [id="[$e|5]", label="send item to store/0.0"];
+	n_4 -> n_2 [id="[$e|8]", label="send payment to store/0.0"];
+	n_2 -> n_6 [id="[$e|2]", label="receive accepted"];
+	n_3 -> n_1 [id="[$e|0]", label="send ciao to store/0.0"];
+>>>>>>> origin/master
 }

@@ -72,7 +72,7 @@ clause(Code, Pattern, Guards, Data, BaseLabel, Counter) ->
     TempLabel =
         integer_to_list(Counter) ++ ?PMSEQSEP ++ BaseLabel ++ " " ++ var_to_string(EvalVarList) ++
             guards_to_string(Guards),
-    FinalLabel = decide_label(BaseLabel, TempLabel, Data),
+    FinalLabel = decide_label(BaseLabel, TempLabel),
     NewData = add_vertex_edge(FinalLabel, Data),
     lists:foldl(
         fun(Line, AccData) -> lv:eval_codeline(Line, AccData) end,
@@ -197,8 +197,8 @@ variable(VarName, Data) ->
 %%% Internal Functions
 %%%===================================================================
 
-decide_label(Base, Label, Data) ->
-    Settings = Data#localview.settings,
+decide_label(Base, Label) ->
+    [{_, Settings}] = ets:lookup(?DBMANAGER, settings),
     MoreInfo = Settings#setting.more_info_lv,
     ToWriteL =
         if
@@ -265,8 +265,8 @@ match_with_list(List, Data) ->
 
 call_by_atom(Name, ArgList, Data) ->
     FunName = Data#localview.fun_name,
-    %%% TODO: change this line to be generic (split with ?ARITYSEP)
-    RealName = share:ltoa(share:remove_last(share:remove_last(FunName))),
+    [RealNameS | _] = string:split(share:atol(FunName), ?ARITYSEP),
+    RealName = share:ltoa(RealNameS),
     case Name of
         RealName -> recursive(ArgList, Data);
         spawn -> spawn_call(ArgList, Data);
@@ -295,7 +295,7 @@ spawn_one(Content, Data) ->
     NewData = lv:eval_codeline(Content, Data),
     VarFound = NewData#localview.ret_var,
     Id = VarFound#variable.value,
-    lv:create_localview(Id, Data#localview.settings, true),
+    lv:create_localview(Id, true),
     C = share:inc_spawn_counter(Id),
     S = Id ++ ?NSEQSEP ++ integer_to_list(C),
     RetData = add_vertex_edge("spawn " ++ S, NewData),
@@ -305,6 +305,7 @@ spawn_one(Content, Data) ->
 spawn_three(Name, ArgList, Data) ->
     NewData = lv:eval_codeline(ArgList, Data),
     NewDataRetVar = NewData#localview.ret_var,
+    % io:fwrite("Rer var ~p~n", [NewDataRetVar]),
     {Label, ProcId} = format_spawn_label(Name, NewDataRetVar),
     EM = maps:put(Label, NewDataRetVar, NewData#localview.edge_additional_info),
     % io:fwrite("label ~p new edge map ~p map ~p~n", [Label, NewData#localview.fun_name, EM]),
@@ -317,7 +318,8 @@ format_spawn_label(Name, NewDataRetVar) ->
     C = share:inc_spawn_counter(Name),
     Arity = length(NewDataRetVar#variable.value),
     ProcId = share:merge_fun_ar(Name, Arity) ++ ?NSEQSEP ++ integer_to_list(C),
-    {"spawn " ++ ProcId, ProcId}.
+    Label = "spawn " ++ ProcId ++ " args " ++ var_to_string(NewDataRetVar),
+    {Label, ProcId}.
 
 spawn_monitor_call(ArgList, Data) ->
     share:warning("spawn_monitor not yet implemted. Arguments =", ArgList, Data).
@@ -349,7 +351,7 @@ generic_call(Name, ArgList, Data) ->
     % io:fwrite("ARG LIST ~p~n", [ArgList]),
     % io:fwrite("RET VAR ~p~n", [NewData#localview.ret_var#variable.value]),
     NameString = share:merge_fun_ar(Name, length(ArgList)),
-    case get_function_graph(NameString, Data#localview.settings) of
+    case get_function_graph(NameString) of
         no_graph ->
             share:warning("couldn't parse function", Name, Data#localview{ret_var = #variable{}});
         NewD ->
@@ -379,8 +381,9 @@ call_by_var(VarName, ArgList, Data) ->
             share:warning("variable not found in call_by_var with name", VarName, Data);
         _ ->
             Id = VarFound#variable.value,
-            ND = lv:eval_codeline(ArgList, Data),
-            NewData = lv:create_localview(Id, ND#localview.settings, false),
+            %%% TODO: eval args
+            _ND = lv:eval_codeline(ArgList, Data),
+            NewData = lv:create_localview(Id, false),
             NewG = NewData#localview.graph,
             NewRet = NewData#localview.ret_var,
             NewLastV = merge_graph(G, NewG, VLast),
@@ -499,11 +502,11 @@ merge_graph(MainG, GToAdd, VLast) ->
     % return last added vertex, which is the max number in the key list
     maps:get(lists:max(maps:keys(VEquiMap)), VEquiMap).
 
-get_function_graph(FuncName, Settings) ->
+get_function_graph(FuncName) ->
     FunAst = share:get_fun_ast(FuncName),
     case FunAst of
         not_found -> no_graph;
-        _ -> lv:create_localview(FuncName, Settings, false)
+        _ -> lv:create_localview(FuncName, false)
     end.
 
 %%% Evaluate Pattern Matching's list of clauses: evaluate every branch alone, then
