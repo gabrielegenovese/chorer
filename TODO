@@ -2,10 +2,9 @@
 
 ## List
 
-- fare valutazione degli argomenti viene chiamata una funzione
+- fare valutazione degli argomenti quando viene chiamata una funzione
 - aggiungere tutto nella label così si dà feedback all'utente e comunque usare le additional info nelle gv
-- format send labels like "ProcId ! DataSent"
-- unbounded send (\*stella di klene nei cicli di send)
+- unbounded send (*stella di klene nei cicli di send)
 - fare il filtro solo sulle send e azzerarlo quando avviene una receive (tutte le receive e tutti i processi)
 - lasciare numerini nelle lv -> fare check nelle gv quando si ripassa dalla stessa spawn
 - dividere localview data from wip_lv data

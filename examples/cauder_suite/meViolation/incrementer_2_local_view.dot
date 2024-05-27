@@ -10,10 +10,10 @@ digraph incrementer_2 {
 	n_6 [id="7", shape=circle, label="3"];
 	n_7 [id="3", shape=circle, label="4"];
 
-	n_4 -> n_6 [id="[$e|1]", label="0#receive answer"];
-	n_7 -> n_2 [id="[$e|2]", label="0#receive X"];
-	n_2 -> n_5 [id="[$e|0]", label="send {write,unknown} to XPid"];
-	n_5 -> n_1 [id="[$e|3]", label="send {release} to MePid"];
-	n_6 -> n_7 [id="[$e|5]", label="send {read,pid_self} to XPid"];
-	n_3 -> n_4 [id="[$e|4]", label="send {request,pid_self} to MePid"];
+	n_3 -> n_4 [id="[$e|1]", label="MePid ! {request,pid_self}"];
+	n_4 -> n_6 [id="[$e|2]", label="0#receive answer"];
+	n_5 -> n_1 [id="[$e|0]", label="MePid ! {release}"];
+	n_6 -> n_7 [id="[$e|3]", label="XPid ! {read,pid_self}"];
+	n_2 -> n_5 [id="[$e|5]", label="XPid ! {write,unknown}"];
+	n_7 -> n_2 [id="[$e|4]", label="0#receive X"];
 }

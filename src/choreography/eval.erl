@@ -413,11 +413,14 @@ send(Destination, MessageContent, Data) ->
     NewData = lv:eval_codeline(MessageContent, TempData),
     VarDataSent = NewData#localview.ret_var,
     DataSent = var_to_string(VarDataSent),
-    SLabel = "send " ++ share:atol(DataSent) ++ " to " ++ share:atol(ProcName),
+    SLabel = format_send_local_label(ProcName, DataSent),
     EM = NewData#localview.edge_additional_info,
     add_vertex_edge(SLabel, NewData#localview{
         edge_additional_info = maps:put(SLabel, {VarProcName, VarDataSent}, EM)
     }).
+
+format_send_local_label(Proc, Data) ->
+    share:atol(Proc) ++ " " ++ ?SENDSEP ++ " " ++ share:atol(Data).
 
 get_pid(Var) ->
     case Var#variable.type of

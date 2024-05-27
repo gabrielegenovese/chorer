@@ -20,6 +20,7 @@
 -define(ARITYSEP, "/").
 -define(NSEQSEP, ".").
 -define(PMSEQSEP, "#").
+-define(SENDSEP, "!").
 
 %%% RECORDS
 

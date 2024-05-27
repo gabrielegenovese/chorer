@@ -10,6 +10,6 @@ digraph greet_0 {
 
 	n_3 -> n_1 [id="[$e|0]", label="spawn dummy/0.0 args nil"];
 	n_1 -> n_5 [id="[$e|3]", label="spawn dummy/0.1 args nil"];
-	n_2 -> n_3 [id="[$e|2]", label="send 1 to pid_self"];
+	n_2 -> n_3 [id="[$e|2]", label="pid_self ! 1"];
 	n_5 -> n_4 [id="[$e|1]", label="0#receive X"];
 }

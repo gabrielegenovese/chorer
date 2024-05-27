@@ -318,7 +318,7 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     SLabel = share:atol(PLabel),
     % IsArg = is_substring(SLabel, "arg"),
     IsSpawn = is_substring(SLabel, "spawn"),
-    IsSend = is_substring(SLabel, "send"),
+    IsSend = is_substring(SLabel, "!"),
     if
         % IsArg ->
         %     actor_emul:use_proc_transition(ProcPid, Edge),
@@ -415,8 +415,8 @@ get_local_vars(ProcId, Label, FunSName) ->
 %%% Evaluate a send transition of an actor
 manage_send(SendLabel, Data, ProcName, ProcPid, Edge) ->
     ProcPidMap = Data#branch.proc_pid_m,
-    DataSent = get_data_from_label(SendLabel),
-    ProcSentTemp = share:ltoa(get_proc_from_label(SendLabel)),
+    DataSent = get_data_from_send_label(SendLabel),
+    ProcSentTemp = share:ltoa(get_proc_from_send_label(SendLabel)),
     IsVar = share:is_erlvar(ProcSentTemp),
     ProcSentName =
         case IsVar of
@@ -739,18 +739,12 @@ check_same_label(G, EL, VLast, Label) ->
     ).
 
 %%% Get the data from a send local view's label
-%%% TODO: do not use label to parse data, use additional_info and return a variable
-get_data_from_label(S) ->
-    Ret = lists:nth(2, string:split(S, " ", all)),
-    FirstChar = share:first(Ret),
-    if
-        [FirstChar] =:= "[" -> Ret ++ " " ++ lists:nth(3, string:split(S, " ", all));
-        true -> Ret
-    end.
+get_data_from_send_label(Label) ->
+    string:trim(lists:nth(2, string:split(Label, ?SENDSEP))).
 
 %%% Get the process from a send local view's label
-get_proc_from_label(S) ->
-    lists:reverse(lists:nth(1, string:split(lists:reverse(S), " ", all))).
+get_proc_from_send_label(Label) ->
+    string:trim(lists:nth(1, string:split(Label, ?SENDSEP))).
 
 %%% Stop all the processes from the process map
 stop_processes(DataL) when is_list(DataL) ->
