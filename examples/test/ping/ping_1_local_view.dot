@@ -1,0 +1,12 @@
+digraph ping_1 {
+	rankdir="LR";
+	n_0 [label="ping_1", shape="plaintext"];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="2", shape=doublecircle, label="2"];
+	n_3 [id="4", shape=circle, label="3"];
+
+	n_1 -> n_2 [id="[$e|3]", label="0#receive kill"];
+	n_1 -> n_3 [id="[$e|1]", label="1#receive N"];
+	n_3 -> n_1 [id="[$e|5]", label="Pong ! {pid_self,unknown}"];
+}

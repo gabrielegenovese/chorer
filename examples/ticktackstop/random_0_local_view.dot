@@ -5,5 +5,5 @@ digraph random_0 {
 	n_0 -> n_1 [arrowhead=none];
 	n_2 [id="2", shape=doublecircle, label="2"];
 
-	n_1 -> n_2 [id="[$e|0]", label="send stop to tic_loop/0.0"];
+	n_1 -> n_2 [id="[$e|0]", label="tic_loop/0.0 ! stop"];
 }

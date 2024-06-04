@@ -6,6 +6,6 @@ digraph dummy2_0 {
 	n_2 [id="2", shape=circle, label="2"];
 	n_3 [id="3", shape=doublecircle, label="3"];
 
-	n_1 -> n_2 [id="[$e|1]", label="send ciao to dummy1/0.0"];
-	n_2 -> n_3 [id="[$e|0]", label="receive bello"];
+	n_1 -> n_2 [id="[$e|0]", label="dummy1/0.0 ! ciao"];
+	n_2 -> n_3 [id="[$e|1]", label="0#receive bello"];
 }

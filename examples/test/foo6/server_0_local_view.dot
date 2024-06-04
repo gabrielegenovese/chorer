@@ -4,5 +4,5 @@ digraph server_0 {
 	n_1 [id="1", shape=circle, label="1"];
 	n_0 -> n_1 [arrowhead=none];
 
-	n_1 -> n_1 [id="[$e|3]", label="receive X"];
+	n_1 -> n_1 [id="[$e|3]", label="0#receive X"];
 }

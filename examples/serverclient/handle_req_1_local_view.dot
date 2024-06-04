@@ -5,6 +5,6 @@ digraph handle_req_1 {
 	n_0 -> n_1 [arrowhead=none];
 	n_2 [id="2", shape=doublecircle, label="2"];
 
-	n_1 -> n_2 [id="[$e|1]", label="receive done"];
-	n_1 -> n_1 [id="[$e|5]", label="receive next"];
+	n_1 -> n_2 [id="[$e|1]", label="1#receive done"];
+	n_1 -> n_1 [id="[$e|5]", label="0#receive next"];
 }

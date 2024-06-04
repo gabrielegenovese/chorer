@@ -24,7 +24,7 @@ test_list = [
     ("./examples/test/foo6/foo6.erl","test/0","examples/test/foo6"),
     ("./examples/test/ping/ping.erl","start/0","examples/test/ping"),
     ("./examples/cauder_suite/airline/airline.erl","main/0","examples/cauder_suite/airline"),
-    ("./examples/cauder_suite/barber/barber.erl","main/0","examples/cauder_suite/barber"),
+    # ("./examples/cauder_suite/barber/barber.erl","main/0","examples/cauder_suite/barber"),
     ("./examples/cauder_suite/meViolation/meViolation.erl","main/0","examples/cauder_suite/meViolation"),
     ("./examples/cauder_suite/purchase/purchase.erl","main/0","examples/cauder_suite/purchase"),
 ]

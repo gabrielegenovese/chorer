@@ -8,6 +8,7 @@
 
 %%% API
 -export([
+    inspect/1,
     first/1,
     save_graph_to_file/4,
     add_vertex/1,
@@ -29,6 +30,7 @@
     if_final_get_n/1,
     inc_spawn_counter/1,
     remove_counter/1,
+    show_global_state/0,
     atol/1,
     ltoa/1
 ]).
@@ -41,6 +43,9 @@
 %%% Pick first element from a list
 first([]) -> [];
 first([H | _]) -> H.
+
+inspect(D) ->
+    io:fwrite("~p~n", [D]).
 
 save_graph_to_file(Graph, Dir, FileName, Type) ->
     StringName = format_name(FileName),
@@ -116,7 +121,7 @@ get_edgedata(FunName) ->
             io:fwrite("[S] Not Found in edgedata ~p~n", [FunName]),
             not_found;
         [{_, A}] ->
-            A#localview.additional_info
+            A#localview.edge_additional_info
     end.
 
 warning(String, Content, RetData) ->
@@ -174,7 +179,7 @@ save_graph(Data, FunName, Mode) ->
     save_graph_to_file(ToSaveG, OutputDir, FunName, Mode).
 
 remove_counter(S) ->
-    [Rest, _] = string:split(atol(S), "."),
+    [Rest, _] = string:split(atol(S), ?NSEQSEP),
     Rest.
 
 %%% @doc
@@ -204,6 +209,14 @@ inc_spawn_counter(Name) ->
         end,
     ets:insert(?SPAWNC, {Name, Ret + 1}),
     Ret.
+
+show_global_state() ->
+    [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
+    maps:fold(
+        fun(Key, Value, _F) -> io:fwrite("N ~p states ~p~n", [Key, sets:to_list(Value)]) end,
+        [],
+        StateM
+    ).
 
 %%%===================================================================
 %%% Internal Functions

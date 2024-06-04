@@ -19,6 +19,8 @@
 %%% Separators
 -define(ARITYSEP, "/").
 -define(NSEQSEP, ".").
+-define(PMSEQSEP, "#").
+-define(SENDSEP, "!").
 
 %%% RECORDS
 
@@ -54,12 +56,13 @@
     last_vertex = 1,
     local_vars = [],
     ret_var = #variable{},
-    % additioal info about the edges
+    % additional info about the edges
     % key: label, value: depends on the edge
     % if key is a spawn label, value is spawn arguments
     % if key is a send label, value is the data sent
     % if key is a receive label, value is nothing
-    additional_info = #{}
+    edge_additional_info = #{},
+    states_additional_info = #{}
 }).
 
 -record(branch, {

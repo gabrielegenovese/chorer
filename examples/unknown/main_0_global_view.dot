@@ -5,5 +5,6 @@ digraph global {
 	n_0 -> n_1 [arrowhead=none];
 	n_2 [id="2", shape=circle, label="2"];
 
-	n_1 -> n_2 [id="[$e|0]", label="greet/0.0→greet/0.0:hello1"];
+	n_2 -> n_2 [id="[$e|1]", label="main/0.0→main/0.0:N"];
+	n_1 -> n_2 [id="[$e|0]", label="main/0.0→main/0.0:N"];
 }

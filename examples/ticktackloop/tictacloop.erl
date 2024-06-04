@@ -3,7 +3,7 @@
 
 start() ->
     spawn_process(),
-    ticl ! tac. % inizia il loop
+    ticl ! tac. % start the loop
 
 spawn_process() ->
     TacPid = spawn(?MODULE, tac_loop, []),
