@@ -28,39 +28,44 @@ generate() ->
 %%% Internal Functions
 %%%===================================================================
 
+inspect(D) ->
+    io:fwrite("~p~n", [D]).
+
 get_actors() ->
     [{_, ActorList}] = ets:lookup(?DBMANAGER, ?ACTORLIST),
     ActorList.
 
 create_localview(ActorName, Save) ->
-    case does_actor_exist(ActorName) of
-        false ->
-            io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]),
-            no_graph;
-        ActorAst ->
-            LV = share:get_localview(ActorName),
-            case LV of
-                not_found ->
-                    io:fwrite("[LV] Creating a localview for ~p~n", [ActorName]),
-                    [{_, Settings}] = ets:lookup(?DBMANAGER, settings),
-                    BaseData = #localview{fun_name = ActorName, fun_ast = ActorAst},
-                    share:add_vertex(BaseData#localview.graph),
-                    LVData = eval_codeline(BaseData#localview.fun_ast, BaseData),
-                    G = LVData#localview.graph,
-                    % this operation MUST be before the minimize
-                    set_final_state(G),
-                    MinG = fsa:minimize(G),
-                    NewLV = LVData#localview{min_graph = MinG},
-                    ets:insert(?LOCALVIEW, {ActorName, NewLV}),
-                    case Save or Settings#setting.save_all of
-                        true -> share:save_graph(NewLV, ActorName, local);
-                        false -> done
-                    end,
-                    NewLV;
-                L ->
-                    L
-            end
-    end.
+    [{_, Settings}] = ets:lookup(?DBMANAGER, settings),
+    RetLV =
+        case does_actor_exist(ActorName) of
+            false ->
+                io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]),
+                no_graph;
+            ActorAst ->
+                LV = share:get_localview(ActorName),
+                case LV of
+                    not_found ->
+                        io:fwrite("[LV] Creating a localview for ~p~n", [ActorName]),
+                        BaseData = #localview{fun_name = ActorName, fun_ast = ActorAst},
+                        share:add_vertex(BaseData#localview.graph),
+                        LVData = eval_codeline(BaseData#localview.fun_ast, BaseData),
+                        G = LVData#localview.graph,
+                        % this operation MUST be before the minimize
+                        set_final_state(G),
+                        MinG = fsa:minimize(G),
+                        NewLV = LVData#localview{min_graph = MinG},
+                        ets:insert(?LOCALVIEW, {ActorName, NewLV}),
+                        NewLV;
+                    L ->
+                        L
+                end
+        end,
+    case Save or Settings#setting.save_all of
+        true -> share:save_graph(RetLV, ActorName, local);
+        false -> done
+    end,
+    RetLV.
 
 does_actor_exist(ActorName) ->
     ActorAst = share:get_fun_ast(share:atol(ActorName)),
