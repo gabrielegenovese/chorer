@@ -5,9 +5,10 @@
 - fare valutazione degli argomenti quando viene chiamata una funzione
 - aggiungere tutto nella label così si dà feedback all'utente e comunque usare le additional info nelle gv
 - unbounded send (*stella di klene nei cicli di send)
-- fare il filtro solo sulle send e azzerarlo quando avviene una receive (tutte le receive e tutti i processi)
+- fare il filtro solo sulle send e azzerarlo quando avviene una receive (tutte le receive e tutti i processi) -> fatto ma implementando la unvounded send dovrei poter eliminare questa cosa
 - lasciare numerini nelle lv -> fare check nelle gv quando si ripassa dalla stessa spawn
 - dividere localview data from wip_lv data
+- se c'è un loop che cambia variabili -> perdere la variabile (unknown) così alla secoda receive matcha più (o tutte) branch (hello.erl example)
 
 ## appunti temi diversi
 
@@ -28,15 +29,17 @@ costruzione del grafo può essere parziale, essendo un particolare tipo di visit
 a vicenda e quindi il tool entra in un loop infinito)
 
 pseudo codice:
-    funcall(FunName,Parameters) ->
-        GenericG = lv(fun),
-        EvalG = eval(GenericG, Parameters),
-        merge(GPadre, EvalG)
-    eval(G, P) ->
-        %super pseudo codice
-        RetG = graph:new
-        while continue
-        G, P = eval(RetG, G, P) %continua a valutare se c'è una chiamata ricorsiva con dati valutabili
+```erlang
+funcall(FunName, Parameters) ->
+    GenericG = get_lv(FunName),
+    EvalG = eval(GenericG, Parameters),
+    merge(GPadre, EvalG)
+eval(G, P) ->
+    %super pseudo codice
+    RetG = graph:new
+    while continue
+    G, P = eval(RetG, G, P) %continua a valutare se c'è una chiamata ricorsiva con dati valutabili
+```
 problemi:
     come fare eval?
     nel merge come attaccare con anche le additional_info?

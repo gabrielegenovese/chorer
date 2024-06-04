@@ -28,9 +28,6 @@ generate() ->
 %%% Internal Functions
 %%%===================================================================
 
-inspect(D) ->
-    io:fwrite("~p~n", [D]).
-
 get_actors() ->
     [{_, ActorList}] = ets:lookup(?DBMANAGER, ?ACTORLIST),
     ActorList.
