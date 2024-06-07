@@ -16,7 +16,7 @@
 
 %%% @doc
 %%% A localview is generated for each possible actor.
-%%% `md:extract` must be used before this function.
+%%% `md:extract' must be used before this function.
 generate() ->
     ActorList = get_actors(),
     lists:foreach(
