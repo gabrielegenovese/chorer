@@ -1,0 +1,20 @@
+digraph main_0 {
+	rankdir="LR";
+	n_0 [label="main_0", shape="plaintext"];
+	n_1 [id="4", shape=circle, label="3"];
+	n_2 [id="5", shape=circle, label="5"];
+	n_3 [id="2", shape=circle, label="4"];
+	n_4 [id="7", shape=doublecircle, label="6"];
+	n_5 [id="1", shape=circle, label="1"];
+	n_0 -> n_5 [arrowhead=none];
+	n_6 [id="8", shape=circle, label="2"];
+
+	n_6 -> n_1 [id="[$e|15]", label="S ! msg"];
+	n_1 -> n_3 [id="[$e|16]", label="spawn foo/0.1 args nil"];
+	n_6 -> n_1 [id="[$e|8]", label="spawn foo/0.1 args nil"];
+	n_1 -> n_3 [id="[$e|6]", label="S ! msg"];
+	n_5 -> n_6 [id="[$e|10]", label="spawn foo/0.0 args nil"];
+	n_1 -> n_2 [id="[$e|2]", label="S ! msg1"];
+	n_3 -> n_2 [id="[$e|13]", label="S ! msg0"];
+	n_2 -> n_4 [id="[$e|11]", label="foo/0.0 ! ok"];
+}

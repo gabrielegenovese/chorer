@@ -1,0 +1,10 @@
+digraph h_2 {
+	rankdir="LR";
+	n_0 [label="h_2", shape="plaintext"];
+	n_1 [id="2", shape=doublecircle, label="2"];
+	n_2 [id="1", shape=circle, label="1"];
+	n_0 -> n_2 [arrowhead=none];
+
+	n_2 -> n_1 [id="[$e|2]", label="spawn foo/0.2 args nil"];
+	n_2 -> n_1 [id="[$e|1]", label="S ! msg2"];
+}
