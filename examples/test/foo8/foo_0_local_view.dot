@@ -1,0 +1,7 @@
+digraph foo_0 {
+	rankdir="LR";
+	n_0 [label="foo_0", shape="plaintext"];
+	n_1 [id="1", shape=doublecircle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+
+}
