@@ -5,5 +5,5 @@ digraph f_2 {
 	n_2 [id="1", shape=circle, label="1"];
 	n_0 -> n_2 [arrowhead=none];
 
-	n_2 -> n_1 [id="[$e|0]", label="S ! 0"];
+	n_2 -> n_1 [id="[$e|0]", label="S ! stop"];
 }
