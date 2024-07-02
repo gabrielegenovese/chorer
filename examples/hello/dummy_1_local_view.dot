@@ -1,0 +1,12 @@
+digraph dummy_1 {
+	rankdir="LR";
+	n_0 [label="dummy_1", shape="plaintext"];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="4", shape=circle, label="2"];
+	n_3 [id="3", shape=doublecircle, label="3"];
+
+	n_1 -> n_2 [id="[$e|6]", label="pid_self ! N"];
+	n_2 -> n_1 [id="[$e|8]", label="0#receive _"];
+	n_1 -> n_2 [id="[$e|0]", label="pid_self ! N"];
+}

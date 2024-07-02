@@ -55,6 +55,10 @@ prima: nella gv fare la valutazione del ptmt su i dati passati nella additional_
 
 -> aggiungere valutazione nella gv di tutti i possibili edge
 
+## fix mutual recurtion
+
+aggiungere una stack di chiamate alla struct wip_lv
+se si aggiungono le variabili locali si implementa anche una sorta di scope sorta scope  
 
 ## Notes 8/5
 

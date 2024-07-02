@@ -14,7 +14,8 @@
 -define(ARGUMENTS, args).
 -define(LOCALVIEW, lv).
 -define(REGISTERDB, reg).
--define(SPAWNC, spc).
+-define(SPAWNCOUNT, spc).
+-define(SETTINGS, settings).
 
 %%% Separators
 -define(ARITYSEP, "/").
@@ -23,24 +24,6 @@
 -define(SENDSEP, "!").
 
 %%% RECORDS
-
-% -record(setting, {
-%     more_info_lv = true,
-%     debug = true,
-%     output_dir = "./",
-%     save_all = true
-% }).
--record(setting, {
-    more_info_lv = false,
-    debug = false,
-    output_dir = "./",
-    save_all = false
-}).
--type setting() :: #setting{
-    more_info_lv :: boolean(),
-    debug :: boolean(),
-    output_dir :: string()
-}.
 
 -record(variable, {
     type = ?ANYDATA,

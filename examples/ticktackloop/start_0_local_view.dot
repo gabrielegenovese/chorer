@@ -3,11 +3,11 @@ digraph start_0 {
 	n_0 [label="start_0", shape="plaintext"];
 	n_1 [id="1", shape=circle, label="1"];
 	n_0 -> n_1 [arrowhead=none];
-	n_2 [id="2", shape=circle, label="3"];
-	n_3 [id="4", shape=circle, label="2"];
-	n_4 [id="3", shape=doublecircle, label="4"];
+	n_2 [id="4", shape=circle, label="3"];
+	n_3 [id="3", shape=doublecircle, label="4"];
+	n_4 [id="2", shape=circle, label="2"];
 
-	n_2 -> n_4 [id="[$e|2]", label="tic_loop/0.0 ! tac"];
-	n_1 -> n_3 [id="[$e|0]", label="spawn tac_loop/0.0 args nil"];
-	n_3 -> n_2 [id="[$e|1]", label="spawn tic_loop/0.0 args nil"];
+	n_4 -> n_2 [id="[$e|2]", label="spawn tic_loop/0.0 args nil"];
+	n_2 -> n_3 [id="[$e|0]", label="tic_loop/0.0 ! tac"];
+	n_1 -> n_4 [id="[$e|1]", label="spawn tac_loop/0.0 args nil"];
 }

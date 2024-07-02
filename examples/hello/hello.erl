@@ -1,16 +1,24 @@
 -module(hello).
--export([greet/0, dummy/0]).
+-export([main/0, dummy/1]).
 
-dummy() ->
-    D = spawn(fun() -> receive X -> X end end),
-    D ! hello.
-    % non supportare spawn(fun() -> receive X -> X end end) ! hello.
+main() ->
+    dummy(1),
+    dummy(2).
 
-greet() ->
-    self() ! 1,
-    T = spawn(?MODULE, dummy, []),
-    S = spawn(?MODULE, dummy, []),
-    receive
-        X -> X
+dummy(N) ->
+    case N of
+        1 ->
+            M = 3 * N,
+            sendrecv(M),
+            stop;
+        _ ->
+            G = 5 * N,
+            sendrecv(G),
+            dummy(N - 1)
     end.
- 
+
+sendrecv(N) ->
+    self() ! N,
+    receive
+        _ -> stop
+    end.

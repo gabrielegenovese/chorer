@@ -3,9 +3,9 @@ digraph dummy_1 {
 	n_0 [label="dummy_1", shape="plaintext"];
 	n_1 [id="1", shape=circle, label="1"];
 	n_0 -> n_1 [arrowhead=none];
-	n_2 [id="2", shape=circle, label="2"];
-	n_3 [id="3", shape=doublecircle, label="3"];
+	n_2 [id="3", shape=doublecircle, label="3"];
+	n_3 [id="2", shape=circle, label="2"];
 
-	n_2 -> n_3 [id="[$e|0]", label="0#receive Str"];
-	n_1 -> n_2 [id="[$e|1]", label="Pid ! {pid_self,integer}"];
+	n_3 -> n_2 [id="[$e|0]", label="0#receive Str"];
+	n_1 -> n_3 [id="[$e|1]", label="Pid ! {pid_self,integer}"];
 }

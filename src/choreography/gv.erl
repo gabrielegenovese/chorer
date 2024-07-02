@@ -8,7 +8,7 @@
 -include("../share/common_data.hrl").
 
 %%% API
--export([generate/1]).
+-export([generate/0]).
 
 %%% Record used in this module
 -record(message, {from, data}).
@@ -19,18 +19,20 @@
 
 %%% @doc
 %%% Generate the glabal view from an entrypoint and save it in a specified folder.
-generate(EntryPoint) ->
-    MainGraph = share:get_localview(EntryPoint),
+generate() ->
+    EntryPoint = settings:get(entrypoint),
+    MainGraph = db:get_localview(EntryPoint),
     case MainGraph of
         not_found ->
             io:fwrite("Error: entrypoint for global view not found ~p~n", [EntryPoint]),
             error;
         _ ->
-            % io:fwrite("Creating the globalview starting from ~p~n", [EntryPoint]),
+            io:fwrite("[GV] Creating the globalview starting from ~p~n", [EntryPoint]),
             G = create_globalview(EntryPoint),
             MinG = fsa:minimize(G),
             Data = #localview{graph = G, min_graph = MinG},
-            share:save_graph(Data, EntryPoint, global),
+            share:save_graph(Data, EntryPoint, global, false),
+            io:fwrite("Finished!~n"),
             finished
     end.
 
@@ -42,7 +44,7 @@ generate(EntryPoint) ->
 create_globalview(Name) ->
     RetG = digraph:new(),
     VNew = share:add_vertex(RetG),
-    N = share:inc_spawn_counter(Name),
+    N = db:inc_spawn_counter(Name),
     MainProcPid = spawn(actor_emul, proc_loop, [#actor_info{fun_name = Name, id = N}]),
     PidKey = share:atol(Name) ++ ?NSEQSEP ++ integer_to_list(N),
     ProcPidMap = #{share:ltoa(PidKey) => MainProcPid},
@@ -319,6 +321,7 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     % IsArg = is_substring(SLabel, "arg"),
     IsSpawn = is_substring(SLabel, "spawn"),
     IsSend = is_substring(SLabel, "!"),
+    IsEps = is_substring(SLabel, "ɛ"),
     if
         % IsArg ->
         %     actor_emul:use_proc_transition(ProcPid, Edge),
@@ -331,6 +334,9 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             {NewBData, true};
         IsSend ->
             manage_send(SLabel, BData, ProcName, ProcPid, Edge);
+        IsEps ->
+            actor_emul:use_proc_transition(ProcPid, Edge),
+            {BData, true};
         true ->
             {BData, false}
     end.
@@ -377,7 +383,7 @@ format_spawn_label(SLabel, EmulProcName, FunSpawned) ->
 
 %%% TODO: refactor
 get_local_vars(ProcId, Label, FunSName) ->
-    EM = share:get_edgedata(element(1, remove_id_from_proc(ProcId))),
+    EM = db:get_lv_edge_additonal_info(element(1, remove_id_from_proc(ProcId))),
     InputData = maps:get(Label, EM, []),
     % io:fwrite("[GV] EmulProcName ~p Label ~p Input ~p~n", [FunSName, Label, EM]),
     % add input data to local vars
@@ -417,7 +423,7 @@ manage_send(SendLabel, Data, ProcName, ProcPid, Edge) ->
     ProcPidMap = Data#branch.proc_pid_m,
     DataSent = get_data_from_send_label(SendLabel),
     ProcSentTemp = share:ltoa(get_proc_from_send_label(SendLabel)),
-    IsVar = share:is_erlvar(ProcSentTemp),
+    IsVar = share:is_erlang_variable(ProcSentTemp),
     ProcSentName =
         case IsVar of
             true -> check_vars(ProcPid, ProcSentTemp);
@@ -573,7 +579,7 @@ check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
     MessageS = share:atol(Message),
     [FirstPtmtChar | RestPtmt] = PatternMatching,
     [FirstMessChar | RestMess] = MessageS,
-    IsFirstCharUpperCase = share:is_erlvar(PatternMatching),
+    IsFirstCharUpperCase = share:is_erlang_variable(PatternMatching),
     if
         % MessageS =:= 'undefined' ->
         %     {true, []};
@@ -678,20 +684,20 @@ create_gv_state(ProcPid, Proc1, V2, Proc2, PV2) ->
     maps:fold(
         fun(Name, Pid, AccList) ->
             RealName = share:remove_counter(Name),
-            LV = share:get_localview(RealName),
-            MG = LV#localview.min_graph,
+            LV = db:get_localview(RealName),
+            Graph = LV#localview.graph,
             Data = actor_emul:get_proc_data(Pid),
             MessageQueue = Data#actor_info.message_queue,
             EL =
                 case Name of
                     Proc1 ->
-                        {_, L} = digraph:vertex(MG, V2),
+                        {_, L} = digraph:vertex(Graph, V2),
                         {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
                     Proc2 ->
-                        {_, L} = digraph:vertex(MG, PV2),
+                        {_, L} = digraph:vertex(Graph, PV2),
                         {Proc2, share:if_final_get_n(L), sets:from_list(MessageQueue)};
                     N ->
-                        {_, L} = digraph:vertex(MG, Data#actor_info.current_state),
+                        {_, L} = digraph:vertex(Graph, Data#actor_info.current_state),
                         {N, share:if_final_get_n(L), sets:from_list(MessageQueue)}
                 end,
             sets:add_element(EL, AccList)

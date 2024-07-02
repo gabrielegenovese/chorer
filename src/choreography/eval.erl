@@ -32,7 +32,8 @@
 
 %%% @doc
 %%% Evaluate the clauses of a function.
-function_list(ContList, Data) ->
+%%% The counter is used to eval in order the pattern matching.
+function_list(ContentList, Data) ->
     element(
         1,
         lists:foldl(
@@ -46,6 +47,7 @@ function_list(ContList, Data) ->
                                 Content,
                                 Pattern,
                                 Guard,
+                                %%% start the evaluation from the starting point
                                 AccData#localview{last_vertex = 1},
                                 "arg",
                                 Counter
@@ -57,7 +59,7 @@ function_list(ContList, Data) ->
                 end
             end,
             {Data, 0},
-            ContList
+            ContentList
         )
     ).
 
@@ -112,7 +114,6 @@ receive_pm(PMList, Data) ->
 operation(Symbol, LeftContent, RightContent, Data) ->
     case Symbol of
         '!' -> send(LeftContent, RightContent, Data);
-        %%% TODO: implement other basic operation
         _ -> share:warning("operation not yet implemented", Symbol, Data)
     end.
 
@@ -165,7 +166,7 @@ list(HeadList, TailList, Data) ->
     simple_type(list, NewVal, NDT).
 
 %%% @doc
-%%% Evaluate a map. TODO
+%%% Evaluate a map.
 map(Val, Data) ->
     share:warning("TODO map evaluation", Val, Data).
 
@@ -198,8 +199,7 @@ variable(VarName, Data) ->
 %%%===================================================================
 
 decide_label(Base, Label) ->
-    [{_, Settings}] = ets:lookup(?DBMANAGER, settings),
-    MoreInfo = Settings#setting.more_info_lv,
+    MoreInfo = settings:get(more_info_lv),
     ToWriteL =
         if
             Base =:= "receive" ->
@@ -276,11 +276,14 @@ call_by_atom(Name, ArgList, Data) ->
         _ -> generic_call(Name, ArgList, Data)
     end.
 
-%%% TODO: What to do with argument lists? Put them in the #localview.edge_additional_info?
-recursive(_ArgList, Data) ->
+recursive(ArgList, Data) ->
     % io:fwrite("[RECURSIVE] from vertex ~p~n", [Data#localview.last_vertex]),
-    digraph:add_edge(Data#localview.graph, Data#localview.last_vertex, 1, 'ɛ'),
-    Data#localview{last_vertex = ?UNDEFINED}.
+    LV = Data#localview.last_vertex,
+    NA = Data#localview.edge_additional_info,
+    E = digraph:add_edge(Data#localview.graph, LV, 1, 'ɛ'),
+    %%% TODO: add recursion eval in actor_emul
+    NewNA = maps:put(E, {recursion, ArgList}, NA),
+    Data#localview{last_vertex = ?UNDEFINED, edge_additional_info = NewNA}.
 
 spawn_call(ArgList, Data) ->
     case ArgList of
@@ -296,7 +299,7 @@ spawn_one(Content, Data) ->
     VarFound = NewData#localview.ret_var,
     Id = VarFound#variable.value,
     lv:create_localview(Id, true),
-    C = share:inc_spawn_counter(Id),
+    C = db:inc_spawn_counter(Id),
     S = Id ++ ?NSEQSEP ++ integer_to_list(C),
     RetData = add_vertex_edge("spawn " ++ S, NewData),
     RetVar = #variable{type = pid, value = S},
@@ -313,9 +316,10 @@ spawn_three(Name, ArgList, Data) ->
     RetData = add_vertex_edge(Label, ND),
     RetData#localview{ret_var = #variable{type = pid, value = ProcId}}.
 
-%%% Naming convention: Name/Arity.SequentialNumber
+%%% Naming convention for process: Name/Arity.SequentialNumber
+%%% Naming convention for spawn label: spawn ProcName args ArgList
 format_spawn_label(Name, NewDataRetVar) ->
-    C = share:inc_spawn_counter(Name),
+    C = db:inc_spawn_counter(Name),
     Arity = length(NewDataRetVar#variable.value),
     ProcId = share:merge_fun_ar(Name, Arity) ++ ?NSEQSEP ++ integer_to_list(C),
     Label = "spawn " ++ ProcId ++ " args " ++ var_to_string(NewDataRetVar),
@@ -342,8 +346,7 @@ register_call(ArgList, Data) ->
                 _ -> ?UNDEFINED
             end
     end,
-    %%% ignoring returing value
-    Data.
+    simple_type(atom, true, Data).
 
 generic_call(Name, ArgList, Data) ->
     % TODO: how to evaluate argument list?
@@ -506,7 +509,7 @@ merge_graph(MainG, GToAdd, VLast) ->
     maps:get(lists:max(maps:keys(VEquiMap)), VEquiMap).
 
 get_function_graph(FuncName) ->
-    FunAst = share:get_fun_ast(FuncName),
+    FunAst = db:get_fun_ast(FuncName),
     case FunAst of
         not_found -> no_graph;
         _ -> lv:create_localview(FuncName, false)

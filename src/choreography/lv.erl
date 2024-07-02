@@ -16,7 +16,7 @@
 
 %%% @doc
 %%% A localview is generated for each possible actor.
-%%% `md:extract` must be used before this function.
+%%% `md:extract' must be used before this function.
 generate() ->
     ActorList = get_actors(),
     lists:foreach(
@@ -33,14 +33,13 @@ get_actors() ->
     ActorList.
 
 create_localview(ActorName, Save) ->
-    [{_, Settings}] = ets:lookup(?DBMANAGER, settings),
     RetLV =
         case does_actor_exist(ActorName) of
             false ->
                 io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]),
                 no_graph;
             ActorAst ->
-                LV = share:get_localview(ActorName),
+                LV = db:get_localview(ActorName),
                 case LV of
                     not_found ->
                         io:fwrite("[LV] Creating a localview for ~p~n", [ActorName]),
@@ -58,14 +57,15 @@ create_localview(ActorName, Save) ->
                         L
                 end
         end,
-    case Save or Settings#setting.save_all of
-        true -> share:save_graph(RetLV, ActorName, local);
+    SaveMinimize = settings:get(minimize),
+    case Save or settings:get(save_all) of
+        true -> share:save_graph(RetLV, ActorName, local, SaveMinimize);
         false -> done
     end,
     RetLV.
 
 does_actor_exist(ActorName) ->
-    ActorAst = share:get_fun_ast(share:atol(ActorName)),
+    ActorAst = db:get_fun_ast(share:atol(ActorName)),
     case ActorAst of
         not_found -> false;
         A -> A
