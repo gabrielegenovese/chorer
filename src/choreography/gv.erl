@@ -680,6 +680,12 @@ complex_add_vertex_recv(Proc1, CurrVertex, Proc2, EdgeInfo, Data, Label) ->
             end
     end.
 
+%%% Creation of a new state for the global view
+%%% A global state is the set of the states of all the processes.
+%%% The state of a processes is a triple with:
+%%% - its name;
+%%% - its state;
+%%% - its message queue.
 create_gv_state(ProcPid, Proc1, V2, Proc2, PV2) ->
     maps:fold(
         fun(Name, Pid, AccList) ->

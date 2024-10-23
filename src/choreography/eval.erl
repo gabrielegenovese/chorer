@@ -283,7 +283,9 @@ recursive(ArgList, Data) ->
     E = digraph:add_edge(Data#localview.graph, LV, 1, 'ɛ'),
     %%% TODO: add recursion eval in actor_emul
     NewNA = maps:put(E, {recursion, ArgList}, NA),
-    Data#localview{last_vertex = ?UNDEFINED, edge_additional_info = NewNA}.
+    %%% TODO: what to do with last_vertex? update with 1 or nothing? now it just lose all the information after the call
+    % overapprox: return variable is unkwown
+    Data#localview{last_vertex = ?UNDEFINED, ret_var = ?ANYDATA, edge_additional_info = NewNA}.
 
 spawn_call(ArgList, Data) ->
     case ArgList of
