@@ -58,8 +58,18 @@ function_list(ContentList, Data) ->
                             Counter + 1
                         };
                     false ->
-                        share:warning("[WARNING] the argument don't match", Pattern, Data),
-                        {Data, Counter + 1}
+                        {
+                            clause(
+                                Content,
+                                Pattern,
+                                Guard,
+                                %%% start the evaluation from the starting point
+                                AccData#localview{last_vertex = 1},
+                                "arg",
+                                Counter
+                            ),
+                            Counter + 1
+                        }
                 end
             end,
             {Data, 0},
@@ -99,7 +109,6 @@ check_msg_comp(PatVar, ParVar) ->
         _ ->
             {false, []}
     end.
-
 
 get_all_var(Pattern) ->
     lists:filter(

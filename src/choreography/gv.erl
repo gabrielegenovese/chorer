@@ -223,7 +223,8 @@ eval_proc_branch(ProcName, ProcPid, Data) ->
             check_and_set_global_final_state(Data),
             {Data, false, []};
         (ELLength =:= 0) and (Mode =:= filtered) ->
-            {Data#branch{proc_pid_m = #{}}, false, []};
+            % dead process, what to do? stop him? deleate him from proc_pid_m?
+            {Data, false, []};
         ELLength =:= 1 ->
             E = share:first(EdgeList),
             EI = actor_emul:get_proc_edge_info(ProcPid, E),

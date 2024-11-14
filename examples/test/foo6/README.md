@@ -15,4 +15,12 @@ Features:
 
 ## Results
 
-Correct LV. Wrong GV.
+| File                    | state                                                   |
+| ----------------------- | ------------------------------------------------------- |
+| client_1_local_view     | ok                                                      |
+| client_gen_2_local_view | in the loop there should be only `S`?                   |
+| server_0_local_view     | ok                                                      |
+| test_0_local_view       | ok                                                      |
+| global view             | random spawn, don't understend how last loop is created |
+
+Debug global
