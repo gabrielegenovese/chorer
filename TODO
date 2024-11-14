@@ -17,38 +17,9 @@
 Nella add global state fare andare avanti i processi spawnati! dare errore ma comunque provare a produrre qualcosa
 (fare un test con due processi paralleli, uno che registra un processo e uno che invia un messaggio a quello registrato)
 
-### value propagation:
-
-creare graph generico
-
-fare valutazione con argument fatta così
-se chiamata ricorsiva rifare valutazione con nuovi arguments
-(valutazione della ricorsione da fare qua perché se avviene durante la
-costruzione del grafo può essere parziale, essendo un particolare tipo di visita)
-(particolare attenzione all'esempio barber dove due funzioni si chiamano
-a vicenda e quindi il tool entra in un loop infinito)
-
-pseudo codice:
-```erlang
-funcall(FunName, Parameters) ->
-    GenericG = get_lv(FunName),
-    EvalG = eval(GenericG, Parameters),
-    merge(GPadre, EvalG)
-eval(G, P) ->
-    %super pseudo codice
-    RetG = graph:new
-    while continue
-    G, P = eval(RetG, G, P) %continua a valutare se c'è una chiamata ricorsiva con dati valutabili
-```
-problemi:
-    come fare eval?
-    nel merge come attaccare con anche le additional_info?
-
-la creazione di una lv deve essere paramentrizzata
-
 ### fsa minimize
 
-prima: nella gv fare la valutazione del ptmt su i dati passati nella additional_info e non
+prima: nella gv fare la valutazione del ptmt su i dati passati nella additional_info
 
 - usare nella gv le versioni non minimizzate delle lv
 - chiedere all'utente se salvare la totale o la minimizzata
@@ -67,3 +38,8 @@ preserve orders of messages in gv
 mutual recursion will diverge (we needs to at least detect it -> keep a trace of the function call and stop)
 
 controllare minimizzazione e informazioni negli edge (attaccarli agli id e non alle label, come? si uniscono le informazioni in fase minimizzazione)
+
+x prox volta
+tabella dei simboli con le funzioni poi variabili
+missmatch sulla ricezione nella coreografia globale
+? quando non conosco a chi inviare un dato

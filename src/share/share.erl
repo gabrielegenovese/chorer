@@ -26,6 +26,8 @@
     if_final_get_n/1,
     remove_counter/1,
     show_global_state/0,
+    unpack/1,
+    and_rec/1,
     atol/1,
     ltoa/1
 ]).
@@ -157,6 +159,25 @@ show_global_state() ->
         [],
         StateM
     ).
+
+unpack(D) when D =:= [] -> D;
+unpack(D) when is_list(D) ->
+    [H | _] = D,
+    H;
+unpack(D) ->
+    D.
+
+%%% Custom recursive and operation
+and_rec([]) ->
+    {true, []};
+and_rec([{B, L} | T]) ->
+    case B of
+        true ->
+            {A, LL} = and_rec(T),
+            {A, L ++ LL};
+        false ->
+            {B, []}
+    end.
 
 %%%===================================================================
 %%% Internal Functions

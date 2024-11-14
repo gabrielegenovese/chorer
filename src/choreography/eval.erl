@@ -34,33 +34,82 @@
 %%% Evaluate the clauses of a function.
 %%% The counter is used to eval in order the pattern matching.
 function_list(ContentList, Data) ->
+    Param = Data#localview.param,
     element(
         1,
         lists:foldl(
             fun(FunctionBody, {AccData, Counter}) ->
-                case FunctionBody of
-                    {clause, _, Pattern, Guard, Content} ->
-                        % io:fwrite("Clause ~p~n", [Vars]),
-                        ets:insert(?ARGUMENTS, {Data#localview.fun_name, Pattern}),
+                {clause, _, Pattern, Guard, Content} = FunctionBody,
+                ets:insert(?ARGUMENTS, {Data#localview.fun_name, Pattern}),
+                NewData = lv:eval_codeline(Pattern, AccData),
+                {Cond, VarList} = check_matching(NewData#localview.ret_var#variable.value, Param),
+                case Cond of
+                    true ->
                         {
                             clause(
                                 Content,
                                 Pattern,
                                 Guard,
                                 %%% start the evaluation from the starting point
-                                AccData#localview{last_vertex = 1},
+                                AccData#localview{last_vertex = 1, local_vars = VarList},
                                 "arg",
                                 Counter
                             ),
                             Counter + 1
                         };
-                    C ->
-                        share:warning("should be a clause but it's", C, {?UNDEFINED, Counter + 1})
+                    false ->
+                        share:warning("[WARNING] the argument don't match", Pattern, Data),
+                        {Data, Counter + 1}
                 end
             end,
             {Data, 0},
             ContentList
         )
+    ).
+
+check_matching(Pattern, Params) ->
+    case share:unpack(Params) of
+        ?ANYDATA ->
+            {true, get_all_var(Pattern)};
+        _ ->
+            EnumPtmt = lists:enumerate(Pattern),
+            EnumParam = lists:enumerate(Params),
+            BoolList = [
+                check_msg_comp(DataPtmt, DataMess)
+             || {IndexPtmt, DataPtmt} <- EnumPtmt,
+                {IndexMess, DataMess} <- EnumParam,
+                IndexPtmt =:= IndexMess
+            ],
+            share:and_rec(BoolList)
+    end.
+
+check_msg_comp(PatVar, ParVar) ->
+    PatType = PatVar#variable.type,
+    ParType = ParVar#variable.type,
+    PatValue = PatVar#variable.value,
+    ParValue = ParVar#variable.value,
+    case PatType of
+        var ->
+            {true, [PatVar#variable{type = ParType, value = ParValue}]};
+        _ when PatType =:= ParType ->
+            case PatValue =:= ParValue of
+                true -> {true, []};
+                false -> {false, []}
+            end;
+        _ ->
+            {false, []}
+    end.
+
+
+get_all_var(Pattern) ->
+    lists:filter(
+        fun(P) ->
+            case P#variable.type of
+                var -> true;
+                _ -> false
+            end
+        end,
+        Pattern
     ).
 
 %%% @doc
@@ -76,9 +125,10 @@ clause(Code, Pattern, Guards, Data, BaseLabel, Counter) ->
             guards_to_string(Guards),
     FinalLabel = decide_label(BaseLabel, TempLabel),
     NewData = add_vertex_edge(FinalLabel, Data),
+    NewVar = EvalVarList#variable.value,
     lists:foldl(
         fun(Line, AccData) -> lv:eval_codeline(Line, AccData) end,
-        NewData#localview{local_vars = LocalV ++ EvalVarList#variable.value},
+        NewData#localview{local_vars = LocalV ++ NewVar},
         Code
     ).
 
@@ -189,7 +239,7 @@ variable(VarName, Data) ->
     Var = share:find_var(Data#localview.local_vars, VarName),
     RetV =
         case Var of
-            not_found -> #variable{name = VarName};
+            not_found -> #variable{type = var, name = VarName};
             V -> V
         end,
     Data#localview{ret_var = RetV}.
@@ -300,7 +350,7 @@ spawn_one(Content, Data) ->
     NewData = lv:eval_codeline(Content, Data),
     VarFound = NewData#localview.ret_var,
     Id = VarFound#variable.value,
-    lv:create_localview(Id, true),
+    lv:create_localview(Id, [], true),
     C = db:inc_spawn_counter(Id),
     S = Id ++ ?NSEQSEP ++ integer_to_list(C),
     RetData = add_vertex_edge("spawn " ++ S, NewData),
@@ -352,11 +402,9 @@ register_call(ArgList, Data) ->
 
 generic_call(Name, ArgList, Data) ->
     % TODO: how to evaluate argument list?
-    _NewData = lv:eval_codeline(ArgList, Data),
-    % io:fwrite("ARG LIST ~p~n", [ArgList]),
-    % io:fwrite("RET VAR ~p~n", [NewData#localview.ret_var#variable.value]),
+    NewData = lv:eval_codeline(ArgList, Data),
     NameString = share:merge_fun_ar(Name, length(ArgList)),
-    case get_function_graph(NameString) of
+    case get_function_graph(NameString, NewData#localview.ret_var#variable.value) of
         no_graph ->
             share:warning("couldn't parse function", Name, Data#localview{ret_var = #variable{}});
         NewD ->
@@ -388,7 +436,7 @@ call_by_var(VarName, ArgList, Data) ->
             Id = VarFound#variable.value,
             %%% TODO: eval args
             _ND = lv:eval_codeline(ArgList, Data),
-            NewData = lv:create_localview(Id, false),
+            NewData = lv:create_localview(Id, [], false),
             NewG = NewData#localview.graph,
             NewRet = NewData#localview.ret_var,
             NewLastV = merge_graph(G, NewG, VLast),
@@ -442,13 +490,19 @@ var_to_string(Var) ->
     case Var of
         [] ->
             "";
+        ?ANYDATA ->
+            "_";
         V ->
-            case V#variable.type of
+            Vname = V#variable.name,
+            Vvalue = V#variable.value,
+            Vtype = V#variable.type,
+            case Vtype of
                 ?ANYDATA ->
-                    share:atol(V#variable.name);
+                    share:atol(Vname);
                 Type ->
                     SType = share:atol(Type),
-                    case V#variable.value of
+                    case Vvalue of
+                        ?ANYDATA when Type =:= var -> share:atol(Vname);
                         ?ANYDATA ->
                             SType;
                         Val ->
@@ -459,8 +513,9 @@ var_to_string(Var) ->
                                 "atom" -> share:atol(Val);
                                 "list" -> format_list(Val, fun var_to_string/1);
                                 "tuple" -> format_tuple(Val, fun var_to_string/1);
-                                "pid" -> share:atol(V#variable.value);
-                                S -> share:atol(S)
+                                "var" -> share:atol(Val);
+                                "pid" -> share:atol(Val);
+                                _ -> SType
                             end
                     end
             end
@@ -510,11 +565,11 @@ merge_graph(MainG, GToAdd, VLast) ->
     % return last added vertex, which is the max number in the key list
     maps:get(lists:max(maps:keys(VEquiMap)), VEquiMap).
 
-get_function_graph(FuncName) ->
+get_function_graph(FuncName, Arguments) ->
     FunAst = db:get_fun_ast(FuncName),
     case FunAst of
         not_found -> no_graph;
-        _ -> lv:create_localview(FuncName, false)
+        _ -> lv:create_localview(FuncName, Arguments, false)
     end.
 
 %%% Evaluate Pattern Matching's list of clauses: evaluate every branch alone, then

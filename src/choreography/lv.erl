@@ -8,7 +8,7 @@
 -include("../share/common_data.hrl").
 
 %%% API
--export([generate/0, create_localview/2, eval_codeline/2]).
+-export([generate/0, create_localview/3, eval_codeline/2]).
 
 %%%===================================================================
 %%% API
@@ -20,7 +20,7 @@
 generate() ->
     ActorList = get_actors(),
     lists:foreach(
-        fun(Actor) -> create_localview(Actor, true) end,
+        fun(Actor) -> create_localview(Actor, ?ANYDATA, true) end,
         ActorList
     ).
 
@@ -32,7 +32,7 @@ get_actors() ->
     [{_, ActorList}] = ets:lookup(?DBMANAGER, ?ACTORLIST),
     ActorList.
 
-create_localview(ActorName, Save) ->
+create_localview(ActorName, StartingVars, SaveToFile) ->
     RetLV =
         case does_actor_exist(ActorName) of
             false ->
@@ -43,7 +43,9 @@ create_localview(ActorName, Save) ->
                 case LV of
                     not_found ->
                         io:fwrite("[LV] Creating a localview for ~p~n", [ActorName]),
-                        BaseData = #localview{fun_name = ActorName, fun_ast = ActorAst},
+                        BaseData = #localview{
+                            fun_name = ActorName, fun_ast = ActorAst, param = StartingVars
+                        },
                         share:add_vertex(BaseData#localview.graph),
                         LVData = eval_codeline(BaseData#localview.fun_ast, BaseData),
                         G = LVData#localview.graph,
@@ -57,9 +59,9 @@ create_localview(ActorName, Save) ->
                         L
                 end
         end,
-    SaveMinimize = settings:get(minimize),
-    case Save or settings:get(save_all) of
-        true -> share:save_graph(RetLV, ActorName, local, SaveMinimize);
+    SaveToFileMinimize = settings:get(minimize),
+    case SaveToFile or settings:get(save_all) of
+        true -> share:save_graph(RetLV, ActorName, local, SaveToFileMinimize);
         false -> done
     end,
     RetLV.

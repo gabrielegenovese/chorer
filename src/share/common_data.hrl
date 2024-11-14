@@ -38,6 +38,7 @@
     min_graph = digraph:new(),
     last_vertex = 1,
     local_vars = [],
+    param = ?UNDEFINED,
     ret_var = #variable{},
     % additional info about the edges
     % key: label, value: depends on the edge

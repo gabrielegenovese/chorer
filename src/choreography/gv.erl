@@ -443,14 +443,17 @@ manage_send(SendLabel, Data, ProcName, ProcPid, Edge) ->
     end.
 
 check_send_to_not_existing_proc(Proc, ProcName) ->
-    S1 = string:split(share:atol(Proc), ?ARITYSEP),
+    SProc = share:atol(Proc),
+    Check = lists:member(?ARITYSEP, SProc),
+    S1 = string:split(SProc, ?ARITYSEP),
     case S1 of
-        [_Name | T] ->
+        [_Name | T] when Check ->
+            % io:fwrite("[CHECK] Name ~p~n", [Name]),
             S2 = string:split(share:atol(T), ?NSEQSEP),
             case S2 of
                 [_Arity | _Seq] ->
                     io:fwrite(
-                        "We detected a bug in your code: ~p is a process ID but the process didn't start yet.~n" ++
+                        "[WARNING] ~p is a process ID but the process didn't start yet.~n" ++
                             "The process ~p should start before ~p.~n",
                         [Proc, Proc, ProcName]
                     );
@@ -617,7 +620,7 @@ check_tuple(ProcPid, CallingProc, RestPtmt, RestMess) ->
         {IndexMess, DataMess} <- EnumMess,
         IndexPtmt =:= IndexMess
     ],
-    and_rec(BoolList).
+    share:and_rec(BoolList).
 
 %%% Register a actor's variable
 register_var(Data) ->
@@ -631,18 +634,6 @@ register_var(Data) ->
 check_pid_self(Data, ProcId) ->
     % io:fwrite("[C]Data ~p proc id ~p~n", [Data, ProcId]),
     lists:flatten(string:replace(share:atol(Data), "pid_self", share:atol(ProcId))).
-
-%%% Custom recursive and operation
-and_rec([]) ->
-    {true, []};
-and_rec([{B, L} | T]) ->
-    case B of
-        true ->
-            {A, LL} = and_rec(T),
-            {A, L ++ LL};
-        false ->
-            {B, []}
-    end.
 
 %%% Add a vertex to the global view, with some checks for recusive edges
 
