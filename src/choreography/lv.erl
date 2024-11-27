@@ -74,7 +74,7 @@ does_actor_exist(ActorName) ->
 eval_codeline(CodeLine, Data) ->
     debug_print(CodeLine),
     case CodeLine of
-        {function, _, DefinitionList} -> eval:function_list(DefinitionList, Data);
+        {function, _, DefinitionList} -> eval:function_patterns(DefinitionList, Data);
         % Do NOT uncomment: this should never match
         % {clause, _, Vars, Guard, Content} -> eval:clause(Content, Vars, Guard, Data, "");
         {match, _, RightContent, LeftContent} -> eval:match(RightContent, LeftContent, Data);

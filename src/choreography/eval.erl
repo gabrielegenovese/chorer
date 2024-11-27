@@ -9,8 +9,8 @@
 
 %%% API
 -export([
-    function_list/2,
-    clause/6,
+    function_patterns/2,
+    clause/5,
     match/3,
     case_pm/3,
     if_pm/2,
@@ -32,7 +32,9 @@
 
 %%% @doc
 %%% Evaluate the clauses of a function.
-function_list(ContList, Data) ->
+function_patterns(ContList, Data) ->
+    LV = #localview{},
+    share:add_vertex(LV#localview.graph),
     element(
         1,
         lists:foldl(
@@ -41,43 +43,44 @@ function_list(ContList, Data) ->
                     {clause, _, Pattern, Guard, Content} ->
                         % io:fwrite("Clause ~p~n", [Vars]),
                         ets:insert(?ARGUMENTS, {Data#localview.fun_name, Pattern}),
-                        {
-                            clause(
-                                Content,
-                                Pattern,
-                                Guard,
-                                AccData#localview{last_vertex = 1},
-                                "arg",
-                                Counter
-                            ),
-                            Counter + 1
-                        };
+                        LVClause = clause(Content, Pattern, Guard, "arg", Counter),
+                        LastV = merge_graph(AccData#localview.graph, LVClause#localview.graph, 1),
+                        {AccData#localview{last_vertex = LastV}, Counter + 1};
                     C ->
                         share:warning("should be a clause but it's", C, {?UNDEFINED, Counter + 1})
                 end
             end,
-            {Data, 0},
+            {LV, 0},
             ContList
         )
     ).
 
 %%% @doc
 %%% Evaluate a single clause (might be from `case', `receive' or `if').
-clause(Code, Pattern, Guards, Data, BaseLabel, Counter) ->
+clause(Exprs, Pattern, Guards, BaseLabel, Counter) ->
     % io:fwrite("[CLAUSE] Code ~p~n Vars ~p~n Guards ~p~n", [Code, Pattern, Guards]),
-    LocalV = Data#localview.local_vars,
-    TempData = lv:eval_codeline(Pattern, Data),
+    LocalV = #localview{},
+    share:add_vertex(LocalV#localview.graph),
+    TempData = lv:eval_codeline(Pattern, LocalV),
     % should always be a list
     EvalVarList = TempData#localview.ret_var,
     TempLabel =
         integer_to_list(Counter) ++ ?PMSEQSEP ++ BaseLabel ++ " " ++ var_to_string(EvalVarList) ++
             guards_to_string(Guards),
     FinalLabel = decide_label(BaseLabel, TempLabel),
-    NewData = add_vertex_edge(FinalLabel, Data),
+    NewData = add_vertex_edge(FinalLabel, LocalV),
     lists:foldl(
-        fun(Line, AccData) -> lv:eval_codeline(Line, AccData) end,
-        NewData#localview{local_vars = LocalV ++ EvalVarList#variable.value},
-        Code
+        fun(Line, AccData) ->
+            TMPLV = #localview{},
+            share:add_vertex(TMPLV#localview.graph),
+            EvalLV = lv:eval_codeline(Line, TMPLV),
+            NewLV = merge_graph(
+                AccData#localview.graph, EvalLV#localview.graph, AccData#localview.last_vertex
+            ),
+            AccData#localview{last_vertex = NewLV, ret_var = EvalLV#localview.ret_var}
+        end,
+        NewData#localview{local_vars = EvalVarList#variable.value},
+        Exprs
     ).
 
 %%% @doc
@@ -104,8 +107,14 @@ if_pm(PMList, Data) ->
 
 %%% @doc
 %%% Evaluate a `receive' expression.
-receive_pm(PMList, Data) ->
-    pattern_matching(PMList, "receive", Data).
+receive_pm(PMList, _Data) ->
+    LV = #localview{},
+    G = LV#localview.graph,
+    share:add_vertex(G),
+    {VLastList, NewLV, _} = explore_pm(PMList, "receive", LV),
+    VRet = share:add_vertex(G),
+    add_edges_recursive(G, VLastList, VRet, 'ɛ', 1),
+    NewLV#localview{last_vertex = VRet}.
 
 %%% @doc
 %%% Evaluate an operation.
@@ -406,6 +415,8 @@ rand_package(FunName, Data) ->
     end.
 
 send(Destination, MessageContent, Data) ->
+    LocalV = #localview{},
+    share:add_vertex(LocalV#localview.graph),
     TempData = lv:eval_codeline(Destination, Data),
     VarProcName = TempData#localview.ret_var,
     ProcName = get_pid(VarProcName),
@@ -415,7 +426,7 @@ send(Destination, MessageContent, Data) ->
     DataSent = var_to_string(VarDataSent),
     SLabel = format_send_local_label(ProcName, DataSent),
     EM = NewData#localview.edge_additional_info,
-    add_vertex_edge(SLabel, NewData#localview{
+    add_vertex_edge(SLabel, LocalV#localview{
         edge_additional_info = maps:put(SLabel, {VarProcName, VarDataSent}, EM)
     }).
 
@@ -491,19 +502,26 @@ merge_graph(MainG, GToAdd, VLast) ->
         VertexGToAdd
     ),
     % link the first new state created to the main graph
-    digraph:add_edge(MainG, VLast, maps:get(1, VEquiMap), 'ɛ'),
-    % Add all the edges
-    EdgesGToAdd = digraph:edges(GToAdd),
-    lists:foreach(
-        fun(Item) ->
-            {Item, V1, V2, Label} = digraph:edge(GToAdd, Item),
-            %%% We use the map to rebuild the exact same edge but in G1
-            digraph:add_edge(MainG, maps:get(V1, VEquiMap), maps:get(V2, VEquiMap), Label)
-        end,
-        EdgesGToAdd
-    ),
-    % return last added vertex, which is the max number in the key list
-    maps:get(lists:max(maps:keys(VEquiMap)), VEquiMap).
+    VEq = maps:get(1, VEquiMap, not_found),
+    case VEq of
+        not_found ->
+            io:fwrite("not found~n"),
+            VLast;
+        _ ->
+            digraph:add_edge(MainG, VLast, maps:get(1, VEquiMap), 'ɛ'),
+            % Add all the edges
+            EdgesGToAdd = digraph:edges(GToAdd),
+            lists:foreach(
+                fun(Item) ->
+                    {Item, V1, V2, Label} = digraph:edge(GToAdd, Item),
+                    %%% We use the map to rebuild the exact same edge but in G1
+                    digraph:add_edge(MainG, maps:get(V1, VEquiMap), maps:get(V2, VEquiMap), Label)
+                end,
+                EdgesGToAdd
+            ),
+            % return last added vertex, which is the max number in the key list
+            maps:get(lists:max(maps:keys(VEquiMap)), VEquiMap)
+    end.
 
 get_function_graph(FuncName) ->
     FunAst = share:get_fun_ast(FuncName),
@@ -524,21 +542,23 @@ pattern_matching(PMList, Label, Data) ->
 
 %%% Explore every pm's branch and returns the list of last added vertex
 explore_pm(PMList, Base, Data) ->
-    element(
-        1,
-        lists:foldl(
-            fun(CodeLine, {AddedVertexList, Couter}) ->
-                case CodeLine of
-                    {clause, _, Vars, Guard, Content} ->
-                        VDataRet = clause(Content, Vars, Guard, Data, Base, Couter),
-                        {AddedVertexList ++ [VDataRet#localview.last_vertex], Couter + 1};
-                    C ->
-                        share:warning("Should be clause but it's", C, {AddedVertexList, Couter})
-                end
-            end,
-            {[], 0},
-            PMList
-        )
+    lists:foldl(
+        fun(CodeLine, {AddedVertexList, AccData, Couter}) ->
+            case CodeLine of
+                {clause, _, Vars, Guard, Content} ->
+                    VDataRet = clause(Content, Vars, Guard, Base, Couter),
+                    LastV = merge_graph(AccData#localview.graph, VDataRet#localview.graph, 1),
+                    {
+                        AddedVertexList ++ [VDataRet#localview.last_vertex],
+                        AccData#localview{last_vertex = LastV},
+                        Couter + 1
+                    };
+                C ->
+                    share:warning("Should be clause but it's", C, {AddedVertexList, Couter})
+            end
+        end,
+        {[], Data, 0},
+        PMList
     ).
 
 add_vertex_edge(Label, Data) ->

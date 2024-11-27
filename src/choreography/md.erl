@@ -19,7 +19,8 @@
 %%% Extract the metadata: the AST (abstract syntax tree) for each function
 %%% and all the Actor List.
 extract(InputFile) ->
-    gen_fun_ast_and_exported(parse_file(InputFile)).
+    Ast = parse_file(InputFile),
+    gen_fun_ast_and_exported(Ast).
 
 %%% @doc
 %%% Return the AST of the file localted in Path.
@@ -53,3 +54,4 @@ gen_fun_ast_and_exported(Ast) ->
             Ast
         ),
     ets:insert(?DBMANAGER, {?ACTORLIST, ActorList}).
+
