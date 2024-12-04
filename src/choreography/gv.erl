@@ -144,7 +144,7 @@ manage_matched(BranchData, ProcName, Message, AccList, EdgesFound) ->
             NewPid = maps:get(ProcName, NewMap),
             ProcFrom = Message#message.from,
             MessData = Message#message.data,
-            PidFrom = maps:get(ProcFrom, NewMap),
+            PidFrom = maps:get(ProcFrom, NewMap, no_proc),
             Label = format_send_label(ProcFrom, ProcName, MessData),
             % io:fwrite("~n~n[RECV2] LABEL ~ts~n~n", [Label]),
             ProcFromData = actor_emul:get_proc_data(PidFrom),
@@ -252,9 +252,11 @@ eval_proc_branch(ProcName, ProcPid, Data) ->
                     check_and_set_global_final_state(Data),
                     {Data, false, []};
                 (ELLength =:= 0) and (Mode =:= filtered) ->
-                    Map = Data#branch.proc_pid_m,
-                    ProcPid ! stop,
-                    {Data#branch{proc_pid_m = maps:remove(ProcName, Map)}, false, []};
+                    % DONT REMOVE, bad idea
+                    % Map = Data#branch.proc_pid_m,
+                    % ProcPid ! stop,
+                    % {Data#branch{proc_pid_m = maps:remove(ProcName, Map)}, false, []};
+                    {Data, false, []};
                 ELLength =:= 1 ->
                     E = share:first(EdgeList),
                     EI = actor_emul:get_proc_edge_info(ProcPid, E),

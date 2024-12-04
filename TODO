@@ -46,3 +46,12 @@ missmatch sulla ricezione nella coreografia globale
 
 
 se dichiaro come partecipante non posso usarlo come funziona normale (dare warning).
+
+## Label global view
+
+Migliorare le label della global view:
+- visualizzare meglio i dati inviati
+- usare le additional info
+
+## Mettere come opzione la history dei messaggi
+Inserire un config file?
