@@ -31,7 +31,7 @@ generate() ->
             G = create_globalview(EntryPoint),
             MinG = fsa:minimize(G),
             Data = #localview{graph = G, min_graph = MinG},
-            share:save_graph(Data, EntryPoint, global, false),
+            share:save_graph(Data, EntryPoint, global, true),
             io:fwrite("Finished!~n"),
             finished
     end.
@@ -144,7 +144,7 @@ manage_matched(BranchData, ProcName, Message, AccList, EdgesFound) ->
             NewPid = maps:get(ProcName, NewMap),
             ProcFrom = Message#message.from,
             MessData = Message#message.data,
-            PidFrom = maps:get(ProcFrom, NewMap),
+            PidFrom = maps:get(ProcFrom, NewMap, no_proc),
             Label = format_send_label(ProcFrom, ProcName, MessData),
             % io:fwrite("~n~n[RECV2] LABEL ~ts~n~n", [Label]),
             ProcFromData = actor_emul:get_proc_data(PidFrom),
@@ -252,9 +252,11 @@ eval_proc_branch(ProcName, ProcPid, Data) ->
                     check_and_set_global_final_state(Data),
                     {Data, false, []};
                 (ELLength =:= 0) and (Mode =:= filtered) ->
-                    Map = Data#branch.proc_pid_m,
-                    ProcPid ! stop,
-                    {Data#branch{proc_pid_m = maps:remove(ProcName, Map)}, false, []};
+                    % DONT REMOVE, bad idea
+                    % Map = Data#branch.proc_pid_m,
+                    % ProcPid ! stop,
+                    % {Data#branch{proc_pid_m = maps:remove(ProcName, Map)}, false, []};
+                    {Data, false, []};
                 ELLength =:= 1 ->
                     E = share:first(EdgeList),
                     EI = actor_emul:get_proc_edge_info(ProcPid, E),
@@ -777,21 +779,21 @@ create_gv_state(ProcPid, Proc1, V2, Proc2, PV2) ->
                 ?UNDEFINED ->
                     AccList;
                 Data ->
-                    % MessageQueue = Data#actor_info.message_queue,
+                    MessageQueue = Data#actor_info.message_queue,
                     EL =
                         case Name of
                             Proc1 ->
                                 {_, L} = digraph:vertex(Graph, V2),
-                                {Proc1, share:if_final_get_n(L)};
-                            % {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
+                                % {Proc1, share:if_final_get_n(L)};
+                                {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
                             Proc2 ->
                                 {_, L} = digraph:vertex(Graph, PV2),
-                                {Proc2, share:if_final_get_n(L)};
-                            % {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
+                                % {Proc2, share:if_final_get_n(L)};
+                                {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
                             N ->
                                 {_, L} = digraph:vertex(Graph, Data#actor_info.current_state),
-                                {N, share:if_final_get_n(L)}
-                            % {N, share:if_final_get_n(L), sets:from_list(MessageQueue)}
+                                % {N, share:if_final_get_n(L)}
+                                {N, share:if_final_get_n(L), sets:from_list(MessageQueue)}
                         end,
                     sets:add_element(EL, AccList)
             end
