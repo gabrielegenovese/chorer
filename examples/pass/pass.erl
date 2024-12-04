@@ -3,7 +3,8 @@
 
 a(D) ->
     receive
-        D -> done
+        D -> done;
+        _ -> done
     end.
 
 main() ->
