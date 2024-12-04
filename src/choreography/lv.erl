@@ -19,8 +19,14 @@
 %%% `md:extract' must be used before this function.
 generate() ->
     ActorList = get_actors(),
-    lists:foreach(
-        fun(Actor) -> create_localview(Actor, ?ANYDATA, true) end,
+    lists:foldl(
+        fun(Actor, Acc) ->
+            case create_localview(Actor, ?ANYDATA, true) of
+                no_graph -> false;
+                _ -> Acc
+            end
+        end,
+        true,
         ActorList
     ).
 
@@ -36,7 +42,11 @@ create_localview(ActorName, StartingVars, SaveToFile) ->
     RetLV =
         case does_actor_exist(ActorName) of
             false ->
-                io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]),
+                io:fwrite(
+                    "Critical error: Actor ~p's AST not found. Check the export attribute.~n", [
+                        ActorName
+                    ]
+                ),
                 no_graph;
             ActorAst ->
                 LV = db:get_localview(ActorName),
@@ -98,7 +108,7 @@ eval_codeline(CodeLine, Data) ->
         % attention: don't set this to eval:list([], [], Data) otherwise infinite loop
         [] -> eval:simple_type(list, [], Data);
         [H | T] -> eval:list(H, T, Data);
-        _ -> share:warning("couldn't parse code line", CodeLine, Data)
+        _ -> share:warning("LV", "couldn't parse code line", CodeLine, Data, line)
     end.
 
 debug_print(CodeLine) ->

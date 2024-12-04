@@ -185,4 +185,5 @@ send_recv(P, Data) ->
     P ! Data,
     receive
         D -> D
+    after 2000 -> ?UNDEFINED
     end.

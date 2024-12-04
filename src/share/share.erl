@@ -15,7 +15,8 @@
     del_vertex/2,
     is_erlang_variable/1,
     is_uppercase/1,
-    warning/3,
+    warning/4,
+    warning/5,
     error/3,
     get_base_label/2,
     merge_fun_ar/2,
@@ -81,9 +82,12 @@ is_erlang_variable(Name) ->
 is_uppercase(Char) when (is_list(Char)) and (length(Char) =:= 1) ->
     (Char >= "A") and (Char =< "Z").
 
-warning(String, Content, RetData) ->
+warning(Package, String, Content, RetData) ->
+    io:fwrite("[~s] WARNING: " ++ String ++ " ~p~n", [Package, Content]),
+    RetData#localview{ret_var = #variable{}}.
+warning(Package, String, Content, RetData, line) ->
     [{_, Line}] = ets:lookup(?CLINE, line),
-    io:fwrite("[LV] WARNING on line ~p: " ++ String ++ " ~p~n", [Line, Content]),
+    io:fwrite("[~s] WARNING on line ~p: " ++ String ++ " ~p~n", [Package, Line, Content]),
     RetData#localview{ret_var = #variable{}}.
 
 error(String, Content, RetData) ->

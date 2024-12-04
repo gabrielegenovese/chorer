@@ -42,6 +42,9 @@ generate(InputFile, EntryPoint, OutDir, Minimize) ->
     Settings = settings:new_settings(InputFile, EntryPoint, OutDir, Minimize),
     db:init(Settings),
     md:extract(),
-    lv:generate(),
-    gv:generate(),
+    NoError = lv:generate(),
+    case NoError of
+        true -> gv:generate();
+        false -> done
+    end,
     db:close().

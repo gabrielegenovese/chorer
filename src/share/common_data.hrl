@@ -27,7 +27,7 @@
 
 -record(variable, {
     type = ?ANYDATA,
-    name = unknown,
+    name = ?UNDEFINED,
     value = ?ANYDATA
 }).
 
