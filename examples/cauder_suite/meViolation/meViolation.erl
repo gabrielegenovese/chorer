@@ -3,23 +3,27 @@
 %may lead to final value 1 instead of 2 under some schedulings
 
 -module(meViolation).
--export([main/0, var/1, incr/1]).
+-export([main/0, var/2, incr/1]).
 
 main() ->
-    VPid = spawn(?MODULE, var, [0]),
-    VPid ! {w, 1},
-    spawn(?MODULE, incr, [VPid]).
+    VPid = spawn(?MODULE, var, [0, 0]),
+    IPid = spawn(?MODULE, incr, [VPid]),
+    VPid ! {r, [self(), IPid]},
+    receive
+        X -> VPid ! {w, X + 1}
+    end.
 
-var(Val) ->
+var(Val, Count) ->
     io:format("Variable value:~b~n", [Val]),
     receive
-        {w, NewVal} -> var(NewVal);
-        {r, Pid} -> Pid ! Val
-    end,
-    var(Val).
+        {w, NewVal} ->
+            var(NewVal, Count - 1);
+        {r, PidL} when is_list(PidL) ->
+            lists:each(fun(P) -> P ! Val end),
+            var(Val, len(PidL))
+    end.
 
 incr(VPid) ->
-    VPid ! {r, self()},
     receive
         X -> VPid ! {w, X + 1}
     end.

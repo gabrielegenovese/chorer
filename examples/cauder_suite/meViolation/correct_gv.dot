@@ -3,28 +3,32 @@ digraph global {
 	n_0 [label="global", shape="plaintext"];
 	n_1 [id="1", shape=circle, label="1"];
 	n_0 -> n_1 [arrowhead=none];
-	n_1 [id="1", shape=circle, label="1"];
-	n_2 [id="2", shape=circle, label="2"];
-	n_3 [id="3", shape=circle, label="3"];
-	n_4 [id="4", shape=circle, label="4"];
-	n_5 [id="5", shape=circle, label="5"];
-	n_6 [id="6", shape=circle, label="6"];
-	n_7 [id="7", shape=circle, label="7"];
-	n_8 [id="8", shape=circle, label="8"];
-	n_9 [id="9", shape=circle, label="9"];
-	n_10 [id="10", shape=circle, label="10"];
-	n_11 [id="11", shape=circle, label="11"];
+	n_2 [shape=circle, label="2"];
+	n_3 [shape=circle, label="3"];
+	n_4 [shape=circle, label="4"];
+	n_5 [shape=circle, label="5"];
+	n_6 [shape=circle, label="6"];
+	n_7 [shape=circle, label="7"];
+	n_8 [shape=circle, label="8"];
+	n_9 [shape=circle, label="9"];
+	n_10 [shape=circle, label="10"];
+	n_11 [shape=circle, label="11"];
+	n_12 [shape=circle, label="12"];
+	n_13 [shape=circle, label="13"];
 
-	n_1 -> n_2 [label="incr/1.0→var/1.0:{r,pid_self}"];
-	n_1 -> n_3 [label="main/0.0→var/1.0:{w,1}"];
-	n_2 -> n_4 [label="main/0.0→var/1.0:{w,1}"];
-	n_2 -> n_5 [label="var/1.0→incr/1.0:0"];
-	n_3 -> n_6 [label="incr/1.0→var/1.0:{r,pid_self}"];
-	n_4 -> n_7 [label="var/1.0→incr/1.0:0"];
-	n_5 -> n_7 [label="main/0.0→var/1.0:{w,1}"];
-	n_5 -> n_8 [label="incr/1.0→var/1.0:{w,1}"];
-	n_6 -> n_9 [label="var/1.0→incr/1.0:1"];
-	n_7 -> n_10 [label="incr/1.0→var/1.0:{w,1}"];
-	n_8 -> n_10 [label="main/0.0→var/1.0:{w,1}"];
-	n_9 -> n_11 [label="incr/1.0→var/1.0:{w,2}"];
+	n_1 -> n_2 [label="main→var:{r,[pid_self,incr]}"]
+	n_2 -> n_3 [label="var→incr:Val"]
+	n_2 -> n_4 [label="var→main:Val"]
+	n_3 -> n_5  [label="var→main:Val"]
+	n_3 -> n_6 [label="incr→var:any"]
+	n_4 -> n_5 [label="var→incr:Val"]
+	n_4 -> n_7 [label="incr→main:any"]
+	n_5 -> n_8 [label="incr→main:any"]
+	n_5 -> n_9 [label="incr→var:any"]
+	n_6 -> n_10 [label="var→main:Val"]
+	n_7 -> n_11 [label="var→incr:Val"]
+	n_11 -> n_12 [label="incr→var:any"]
+	n_10 -> n_12 [label="main→var:any"]
+	n_9 -> n_13 [label="main→var:any"]
+	n_8 -> n_13 [label="incr→var:any"]
 }
