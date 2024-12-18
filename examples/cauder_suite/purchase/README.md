@@ -10,7 +10,7 @@
 
 Features:
 
-- Complex program that shows mutual exclusion violation
+- Complex program that shows an error of a miss-wrote parameter
 
 ## Results
 
