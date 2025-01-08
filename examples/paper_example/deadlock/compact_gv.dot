@@ -1,5 +1,4 @@
 digraph global {
-	rankdir="LR";
 	n_0 [label="global", shape="plaintext"];
 	n_1 [id="1", shape=circle, label="1"];
 	n_0 -> n_1 [arrowhead=none];
@@ -20,17 +19,17 @@ digraph global {
 	n_1 -> n_2 [label="philo0→fork0:req"];
 	n_2 -> n_3 [label="philo0→fork1:req"];
 	n_3 -> n_4 [label="philo0→fork{0,1}:release"];
-	n_4 -> n_5 [label="philo1→fork0:req"];
-	n_5 -> n_6 [label="philo1→fork1:req"];
+	n_4 -> n_5 [label="philo1→fork1:req"];
+	n_5 -> n_6 [label="philo1→fork0:req"];
 	n_6 -> n_7 [label="philo1→fork{0,1}:release"];
 	
-	n_1 -> n_8 [label="philo1→fork0:req"];
-	n_8 -> n_9 [label="philo1→fork1:req"];
+	n_1 -> n_8 [label="philo1→fork1:req"];
+	n_8 -> n_9 [label="philo1→fork0:req"];
 	n_9 -> n_10 [label="philo1→fork{0,1}:release"];
 	n_10 -> n_11 [label="philo0→fork0:req"];
 	n_11 -> n_12 [label="philo0→fork1:req"];
 	n_12 -> n_13 [label="philo0→fork{0,1}:release"];
 	
 	n_2 -> n_14 [label="philo1→fork1:req"];
-	n_8 -> n_14 [label="philo0→fork1:req"];
+	n_8 -> n_14 [label="philo0→fork0:req"];
 }
