@@ -20,7 +20,7 @@ var(Val, Count) ->
             var(NewVal, Count - 1);
         {r, PidL} when is_list(PidL) ->
             lists:each(fun(P) -> P ! Val end),
-            var(Val, len(PidL))
+            var(Val, length(PidL))
     end.
 
 incr(VPid) ->
