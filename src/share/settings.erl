@@ -9,7 +9,7 @@
 %%% API
 -export([
     new_settings/2,
-    new_settings/4,
+    new_settings/5,
     get/1
 ]).
 
@@ -20,7 +20,8 @@
     inputfile,
     entrypoint,
     % optional
-    minimize = false,
+    minimizeLocal = false,
+    minimizeGlobal = false,
     output_dir = "./",
     %%% not in input
     more_info_lv = false,
@@ -38,12 +39,13 @@ new_settings(InputFile, EntryPoint) ->
 
 %%% @doc
 %%% Create a new seggings record with some optional data.
-new_settings(InputFile, EntryPoint, OutDir, Minimize) ->
+new_settings(InputFile, EntryPoint, OutDir, MinimizeL, MinimizeG) ->
     #setting{
         inputfile = InputFile,
         entrypoint = EntryPoint,
         output_dir = OutDir,
-        minimize = Minimize
+        minimizeLocal = MinimizeL,
+        minimizeGlobal = MinimizeG
     }.
 
 %%% @doc
@@ -54,7 +56,8 @@ get(What) ->
     case What of
         inputfile -> Settings#setting.inputfile;
         entrypoint -> Settings#setting.entrypoint;
-        minimize -> Settings#setting.minimize;
+        minimizeL -> Settings#setting.minimizeLocal;
+        minimizeG -> Settings#setting.minimizeGlobal;
         output_dir -> Settings#setting.output_dir;
         more_info_lv -> Settings#setting.more_info_lv;
         save_all -> Settings#setting.save_all;
@@ -66,5 +69,5 @@ get(What) ->
 %%%===================================================================
 
 get_settings() ->
-    [{_, Settings}] = ets:lookup(?DBMANAGER, settings),
+    [{_, Settings}] = ets:lookup(?DBMANAGER, ?SETTINGS),
     Settings.

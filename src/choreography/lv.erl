@@ -69,7 +69,7 @@ create_localview(ActorName, StartingVars, SaveToFile) ->
                         L
                 end
         end,
-    SaveToFileMinimize = settings:get(minimize),
+    SaveToFileMinimize = settings:get(minimizeL),
     case SaveToFile or settings:get(save_all) of
         true -> share:save_graph(RetLV, ActorName, local, SaveToFileMinimize);
         false -> done
