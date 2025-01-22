@@ -3,7 +3,7 @@ import os
 # import time
 
 test_list = [
-    ("./examples/hello/hello.erl", "greet/0", "examples/hello"),
+    ("./examples/hello/hello.erl", "main/0", "examples/hello"),
     ("./examples/async/simple.erl","main/0","examples/async"),
     ("./examples/ticktackstop/tictacstop.erl","start/0","examples/ticktackstop"),
     ("./examples/ticktackloop/tictacloop.erl","start/0","examples/ticktackloop"),

@@ -148,7 +148,7 @@ match(RightContent, LeftContent, Data) ->
         {var, _, VarName} -> match_with_var(VarName, LeftContent, Data);
         {tuple, _, VarList} -> match_with_tuple(VarList, LeftContent, Data);
         {cons, _, List} -> match_with_list(List, Data);
-        R -> share:warning("LV", "[MATCH] couldn't understand line", R, Data, line)
+        R -> log:warning("LV", "[MATCH] couldn't understand line", R, Data, line)
     end.
 
 %%% @doc
@@ -175,7 +175,7 @@ operation(Symbol, LeftContent, RightContent, Data) ->
         '!' ->
             send(LeftContent, RightContent, Data);
         _ ->
-            share:warning(
+            log:warning(
                 "LV",
                 "operation not yet implemented",
                 Symbol,
@@ -193,7 +193,7 @@ function_call(Function, ArgList, Data) ->
         {atom, _, Name} -> call_by_atom(Name, ArgList, Data);
         {var, _, VarName} -> call_by_var(VarName, ArgList, Data);
         {remote, _, Package, FunName} -> call_by_package(Package, FunName, ArgList, Data);
-        F -> share:warning("LV", "couldn't recognize function call pattern", F, Data, line)
+        F -> log:warning("LV", "couldn't recognize function call pattern", F, Data, line)
     end.
 
 %%% @doc
@@ -206,7 +206,7 @@ anon_function(Content, Line, Data) ->
             ets:insert(?FUNAST, {Id, {function, Line, A}}),
             simple_type(function, Id, Data);
         _ ->
-            share:warning("LV", "not recognized content in anon_function", Content, Data, line)
+            log:warning("LV", "not recognized content in anon_function", Content, Data, line)
     end.
 
 %%% @doc
@@ -237,7 +237,7 @@ list(HeadList, TailList, Data) ->
 %%% @doc
 %%% Evaluate a map.
 map(Val, Data) ->
-    share:warning("LV", "TODO map evaluation", Val, Data, line).
+    log:warning("LV", "TODO map evaluation", Val, Data, line).
 
 %%% @doc
 %%% Evaluate a tuple.
@@ -326,11 +326,11 @@ match_with_tuple(VarList, LeftContent, Data) ->
                 ret_var = #variable{type = tuple, value = RetVar},
                 local_vars = L ++ RetVar
             },
-            share:warning("LV", "right content is a tuple but left content is", Var, ND, line)
+            log:warning("LV", "right content is a tuple but left content is", Var, ND, line)
     end.
 
 match_with_list(List, Data) ->
-    share:warning("LV", "[MATCH] TODO match with list", List, Data, line).
+    log:warning("LV", "[MATCH] TODO match with list", List, Data, line).
 
 call_by_atom(Name, ArgList, Data) ->
     FunName = Data#localview.fun_name,
@@ -365,7 +365,7 @@ spawn_call(ArgList, Data) ->
         %%% TODO: check and implement package
         [_Package, {atom, _, Name}, SpArgList] -> spawn_three(Name, SpArgList, Data);
         %%% TODO: spawn with 2/4 argument
-        _ -> share:warning("LV", "couldn't recognize spawn call pattern", ArgList, Data, line)
+        _ -> log:warning("LV", "couldn't recognize spawn call pattern", ArgList, Data, line)
     end.
 
 spawn_one(Content, Data) ->
@@ -400,7 +400,7 @@ format_spawn_label(Name, NewDataRetVar) ->
     {Label, ProcId}.
 
 spawn_monitor_call(ArgList, Data) ->
-    share:warning("LV", "spawn_monitor not yet implemted. Arguments =", ArgList, Data, line).
+    log:warning("LV", "spawn_monitor not yet implemted. Arguments =", ArgList, Data, line).
 
 self_call(Data) ->
     RetVar = #variable{type = pid, value = "pid_self"},
@@ -428,7 +428,7 @@ generic_call(Name, ArgList, Data) ->
     NameString = share:merge_fun_ar(Name, length(ArgList)),
     case get_function_graph(NameString, NewData#localview.ret_var#variable.value) of
         no_graph ->
-            share:warning(
+            log:warning(
                 "LV", "couldn't parse function", Name, Data#localview{ret_var = #variable{}}, line
             );
         NewD ->
@@ -455,7 +455,7 @@ call_by_var(VarName, ArgList, Data) ->
     VarFound = share:find_var(LocalVarL, VarName),
     case VarFound of
         not_found ->
-            share:warning("LV", "variable not found in call_by_var with name", VarName, Data, line);
+            log:warning("LV", "variable not found in call_by_var with name", VarName, Data, line);
         _ ->
             Id = VarFound#variable.value,
             %%% TODO: eval args
@@ -473,13 +473,13 @@ call_by_package(Package, FunName, _ArgList, Data) ->
     case Pack of
         rand -> rand_package(Name, Data);
         %%% TODO: find the package and the function, create the local view of it, attach it to the current lv
-        _ -> share:warning("LV", "package not yet implemented:", Pack, Data, line)
+        _ -> log:warning("LV", "package not yet implemented:", Pack, Data, line)
     end.
 
 rand_package(FunName, Data) ->
     case FunName of
         uniform -> simple_type(integer, ?ANYDATA, Data);
-        _ -> share:warning("LV", "rand's function not yet implemented:", FunName, Data, line)
+        _ -> log:warning("LV", "rand's function not yet implemented:", FunName, Data, line)
     end.
 
 send(Destination, MessageContent, Data) ->
@@ -596,7 +596,7 @@ get_function_graph(FuncName, Arguments) ->
     FunAst = db:get_fun_ast(FuncName),
     case FunAst of
         not_found ->
-            share:warning("LV", "No AST found for", FuncName, #localview{}),
+            log:warning("LV", "No AST found for", FuncName, #localview{}),
             no_graph;
         _ ->
             lv:create_localview(FuncName, Arguments, false)
@@ -623,7 +623,7 @@ explore_pm(PMList, Base, Data) ->
                         VDataRet = clause(Content, Vars, Guard, Data, Base, Couter),
                         {AddedVertexList ++ [VDataRet#localview.last_vertex], Couter + 1};
                     C ->
-                        share:warning(
+                        log:warning(
                             "LV", "Should be clause but it's", C, {AddedVertexList, Couter}, line
                         )
                 end

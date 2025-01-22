@@ -12,16 +12,12 @@ seats(Num) ->
     receive
         {sell, Pid1} ->
             Pid1 ! {booked, Num},
-            seats(Num - 1);
-        _ ->
-            done
+            seats(Num - 1)
     end.
 
 agent(Pid2) ->
     Pid2 ! {sell, self()},
     receive
         {booked, _} ->
-            agent(Pid2);
-        _ ->
-            stop
+            agent(Pid2)
     end.

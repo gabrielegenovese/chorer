@@ -170,8 +170,8 @@ check_recursion(G, VCurr, VNew, LocalVars) ->
     From = share:if_final_get_n(FromLabel),
     case To =< From of
         true ->
-            % io:fwrite("[EMUL] RESET LOCALV IN ~p from ~p to ~p~n", [
-            %     ProcName, FromLabel, ToLabel
+            % io:fwrite("[EMUL] RESET LOCALV from ~p to ~p~n", [
+            %     FromLabel, ToLabel
             % ]),
             % LocalVars;
             sets:new();

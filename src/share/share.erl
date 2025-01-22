@@ -15,9 +15,6 @@
     del_vertex/2,
     is_erlang_variable/1,
     is_uppercase/1,
-    warning/4,
-    warning/5,
-    error/3,
     get_base_label/2,
     merge_fun_ar/2,
     should_minimize/1,
@@ -81,18 +78,6 @@ is_erlang_variable(Name) ->
 %%% If the input character is uppercase return true, otherwise false.
 is_uppercase(Char) when (is_list(Char)) and (length(Char) =:= 1) ->
     (Char >= "A") and (Char =< "Z").
-
-warning(Package, String, Content, RetData) ->
-    io:fwrite("[~s] WARNING: " ++ String ++ " ~p~n", [Package, Content]),
-    RetData#localview{ret_var = #variable{}}.
-warning(Package, String, Content, RetData, line) ->
-    [{_, Line}] = ets:lookup(?CLINE, line),
-    io:fwrite("[~s] WARNING on line ~p: " ++ String ++ " ~p~n", [Package, Line, Content]),
-    RetData#localview{ret_var = #variable{}}.
-
-error(String, Content, RetData) ->
-    io:fwrite("ERROR: ~p ~p~n", [String, Content]),
-    RetData.
 
 get_base_label(SetPm, Label) ->
     case SetPm of

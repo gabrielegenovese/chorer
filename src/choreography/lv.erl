@@ -61,6 +61,7 @@ create_localview(ActorName, StartingVars, SaveToFile) ->
                         G = LVData#localview.graph,
                         % this operation MUST be before the minimize
                         set_final_state(G),
+                        fsa:rename_states(G),
                         MinG = fsa:minimize(G),
                         NewLV = LVData#localview{min_graph = MinG},
                         ets:insert(?LOCALVIEW, {ActorName, NewLV}),
@@ -108,7 +109,7 @@ eval_codeline(CodeLine, Data) ->
         % attention: don't set this to eval:list([], [], Data) otherwise infinite loop
         [] -> eval:simple_type(list, [], Data);
         [H | T] -> eval:list(H, T, Data);
-        _ -> share:warning("LV", "couldn't parse code line", CodeLine, Data, line)
+        _ -> log:warning("LV", "couldn't parse code line", CodeLine, Data, line)
     end.
 
 debug_print(CodeLine) ->

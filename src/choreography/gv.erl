@@ -24,15 +24,15 @@ generate() ->
     MainGraph = db:get_localview(EntryPoint),
     case MainGraph of
         not_found ->
-            io:fwrite("Error: entrypoint for global view not found ~p~n", [EntryPoint]),
+            log:error("entrypoint for global view not found ~p~n", [EntryPoint]),
             error;
         _ ->
-            io:fwrite("[GV] Creating the globalview starting from ~p~n", [EntryPoint]),
+            log:info("[GV] Creating the globalview starting from ~p~n", [EntryPoint]),
             G = create_globalview(EntryPoint),
             MinG = fsa:minimize(G),
             Data = #localview{graph = G, min_graph = MinG},
             share:save_graph(Data, EntryPoint, global, settings:get(minimizeG)),
-            io:fwrite("Finished!~n"),
+            log:info("Finished!~n", []),
             finished
     end.
 
@@ -69,10 +69,10 @@ new_message(F, D) ->
 progress_all(GlobalViewGraph, []) ->
     GlobalViewGraph;
 progress_all(GlobalViewGraph, BranchList) when is_list(BranchList) ->
-    % io:fwrite("Branch to eval ~p~n", [length(BranchList)]),
+    % log:debug("Branch to eval ~p~n", [length(BranchList)]),
     NewBranchList = lists:foldl(
         fun(Item, AccList) ->
-            % io:fwrite("Eval branch~n"),
+            % io:debug("Eval branch~n"),
             AccList ++ progress_branch(Item)
         end,
         [],
@@ -137,26 +137,28 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
 
 manage_matched(BranchData, ProcName, Message, AccList, EdgesFound) ->
     lists:foldl(
-        fun(EdgeFound, SecondAccList) ->
+        fun(EdgeFound, SecAccList) ->
             DupData = dup_branch(BranchData),
             % io:fwrite("[RECV1] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
             NewMap = DupData#branch.proc_pid_m,
-            NewPid = maps:get(ProcName, NewMap),
+            NewPid = maps:get(ProcName, NewMap, no_proc),
             ProcFrom = Message#message.from,
             MessData = Message#message.data,
             PidFrom = maps:get(ProcFrom, NewMap, no_proc),
             Label = format_send_label(ProcFrom, ProcName, MessData),
-            % io:fwrite("~n~n[RECV2] LABEL ~ts~n~n", [Label]),
+            % io:fwrite("[RECV2] LABEL ~ts~n~n", [Label]),
             ProcFromData = actor_emul:get_proc_data(PidFrom),
             case ProcFromData of
                 ?UNDEFINED ->
-                    SecondAccList;
+                    log:warning("GV", "Proc data not found from", ProcFrom, SecAccList);
                 _ ->
                     CurrProcFromVertex = ProcFromData#actor_info.current_state,
                     EToInfo = actor_emul:get_proc_edge_info(NewPid, EdgeFound),
                     case EToInfo of
+                        false ->
+                            log:warning("GV", "[MGM] Edge info not found:", EdgeFound, SecAccList);
                         ?UNDEFINED ->
-                            share:warning("GV", "[MGM] Process not found", ProcName, SecondAccList);
+                            log:warning("GV", "[MGM] Proc not found:", ProcName, SecAccList);
                         _ ->
                             actor_emul:del_proc_mess_queue(NewPid, Message),
                             {LastVertex, Added} = complex_add_vertex_recv(
@@ -165,8 +167,8 @@ manage_matched(BranchData, ProcName, Message, AccList, EdgesFound) ->
                             %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
                             actor_emul:use_proc_transition(NewPid, EdgeFound),
                             case Added of
-                                true -> SecondAccList ++ [DupData#branch{last_vertex = LastVertex}];
-                                false -> SecondAccList
+                                true -> SecAccList ++ [DupData#branch{last_vertex = LastVertex}];
+                                false -> SecAccList
                             end
                     end
             end
@@ -214,7 +216,7 @@ remove_id_from_proc(ProcId) ->
     Split = string:split(share:atol(ProcId), ?NSEQSEP),
     case Split of
         [_ | []] ->
-            io:fwrite("Error: should have an id ~p", [ProcId]),
+            log:error("should have an id ~p", [ProcId]),
             {ProcId, 0};
         [Name | N] ->
             {share:ltoa(Name), N}
@@ -244,7 +246,7 @@ eval_proc_branch(ProcName, ProcPid, Data) ->
     Edges = actor_emul:get_proc_edges(ProcPid),
     case Edges of
         ?UNDEFINED ->
-            share:warning("GV", "[EVAL-] Process not found", ProcName, {Data, false, []});
+            log:warning("GV", "[EVAL-] Process not found", ProcName, {Data, false, []});
         {Mode, EdgeList} ->
             ELLength = length(EdgeList),
             if
@@ -262,7 +264,7 @@ eval_proc_branch(ProcName, ProcPid, Data) ->
                     EI = actor_emul:get_proc_edge_info(ProcPid, E),
                     case EI of
                         ?UNDEFINED ->
-                            share:warning("GV", "Process not found", ProcName, {Data, false, []});
+                            log:warning("GV", "Process not found", ProcName, {Data, false, []});
                         _ ->
                             {D, B} = eval_edge(EI, ProcName, ProcPid, Data),
                             {D, B, []}
@@ -289,8 +291,7 @@ is_global_final_state(Data) ->
                     Edges = actor_emul:get_proc_edges(ProcPid),
                     case Edges of
                         ?UNDEFINED ->
-                            io:fwrite("[WARNING][GV-FINAL] Process not found ~p~n", [Name]),
-                            Acc;
+                            log:warning("GV", "Process not found ~p~n", [Name], Acc);
                         {Mode, _} ->
                             case Mode =/= final_state of
                                 true -> false;
@@ -323,7 +324,7 @@ manage_more_edges(ProcName, ProcPid, Data) ->
     Edges = actor_emul:get_proc_edges(ProcPid),
     case Edges of
         ?UNDEFINED ->
-            share:warning("GV", "Process not found", ProcName, {Data, false, []});
+            log:warning("GV", "Process not found", ProcName, {Data, false, []});
         {_, EdgeList} ->
             case is_one_edgerecv(ProcPid, EdgeList) of
                 true ->
@@ -337,7 +338,7 @@ manage_more_edges(ProcName, ProcPid, Data) ->
                             EdgeInfo = actor_emul:get_proc_edge_info(NewProcPid, SingleEdge),
                             case EdgeInfo of
                                 ?UNDEFINED ->
-                                    share:warning(
+                                    log:warning(
                                         "GV", "Process not found", ProcName, {Data, false, []}
                                     );
                                 _ ->
@@ -372,7 +373,7 @@ is_one_edgerecv(ProcPid, EL) ->
         fun(E, A) ->
             EdgeInfo = actor_emul:get_proc_edge_info(ProcPid, E),
             case EdgeInfo of
-                ?UNDEFINED -> share:warning("GV", "Process not found", ProcPid, A);
+                ?UNDEFINED -> log:warning("GV", "Process not found", ProcPid, A);
                 {E, _, _, Label} -> A or is_substring(share:atol(Label), "receive")
             end
         end,
@@ -397,7 +398,7 @@ eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
             EdgeInfo = actor_emul:get_proc_edge_info(ProcPid, Edge),
             case EdgeInfo of
                 ?UNDEFINED ->
-                    share:warning("GV", "Process not found", ProcPid, {BData, false});
+                    log:warning("GV", "Process not found", ProcPid, {BData, false});
                 _ ->
                     {VNew, NewM} = add_spawn_to_global(EdgeInfo, SLabel, ProcName, BData),
                     NewBData = BData#branch{last_vertex = VNew, proc_pid_m = NewM},
@@ -464,12 +465,12 @@ get_local_vars(ProcId, Label, FunSName) ->
             [];
         _ ->
             [{_, Input}] = ets:lookup(?ARGUMENTS, share:atol(FunSName)),
-            % io:fwrite("[GV] for fun ~p found ~p~n", [atol(FunSName), Input]),
+            % io:fwrite("[GV] for fun ~p found ~p~n", [share:atol(FunSName), Input]),
             {LL, Remain} = lists:foldl(
                 fun({var, _, Name}, {A, In}) ->
                     case In of
                         [] ->
-                            io:fwrite("ERROR: list should NOT be empty but there is ~p~n", Name),
+                            log:error("list should NOT be empty but there is ~p~n", Name),
                             {A ++ [#variable{name = Name}], []};
                         [H | T] ->
                             case H#variable.value of
@@ -485,7 +486,7 @@ get_local_vars(ProcId, Label, FunSName) ->
             ),
             case Remain =:= [] of
                 true -> done;
-                false -> io:fwrite("ERROR: list should be empty but there is ~p~n", Remain)
+                false -> log:error("list should be empty but there is ~p~n", Remain)
             end,
             LL
     end.
@@ -504,7 +505,7 @@ manage_send(SendLabel, Data, ProcName, ProcPid, Edge) ->
     ProcSentPid = maps:get(share:ltoa(ProcSentName), ProcPidMap, no_pid),
     case ProcSentPid of
         no_pid ->
-            io:fwrite("[SEND-ERR] no pid found for: var ~p pid ~p~n", [ProcSentTemp, ProcSentName]),
+            log:warning("GV", "no pid found, var/pid", [ProcSentTemp, ProcSentName], done),
             check_send_to_not_existing_proc(ProcSentName, ProcName),
             {Data, false};
         P ->
@@ -524,10 +525,12 @@ check_send_to_not_existing_proc(Proc, ProcName) ->
             S2 = string:split(share:atol(T), ?NSEQSEP),
             case S2 of
                 [_Arity | _Seq] ->
-                    io:fwrite(
+                    log:warning(
+                        "GV",
                         "[WARNING] ~p is a process ID but the process didn't start yet.~n" ++
                             "The process ~p should start before ~p.~n",
-                        [Proc, Proc, ProcName]
+                        [Proc, Proc, ProcName],
+                        done
                     );
                 _ ->
                     done
@@ -542,12 +545,11 @@ manage_recv(ProcPid, Message) ->
     Edges = actor_emul:get_proc_edges(ProcPid),
     case Edges of
         ?UNDEFINED ->
-            share:warning("GV", "Process not found", ProcPid, ?UNDEFINED);
+            log:warning("GV", "Process not found", ProcPid, ?UNDEFINED);
         {_, EdgeList} ->
             %%% TODO: change to all when false branch is ready
             IsRecvList = is_one_edgerecv(ProcPid, EdgeList),
-            %io:fwrite("IsRECV ~p EL ~p~n", [IsRecv, EL]),
-            From = Message#message.from,
+            % io:fwrite("IsRECV ~p EL ~p~n", [IsRecv, EL]),
             case IsRecvList of
                 false ->
                     % TODO: manage when is not ONLY a receive edge, like:
@@ -573,29 +575,41 @@ manage_recv(ProcPid, Message) ->
                     ?UNDEFINED;
                 true ->
                     OrderedEdges = custom_sort_edges(ProcPid, EdgeList),
-                    % over-approximation: select all edges that match
-                    EdgesChoosen = lists:foldl(
-                        fun(Edge, RetEdges) ->
-                            EdgeInfo = actor_emul:get_proc_edge_info(ProcPid, Edge),
-                            case EdgeInfo of
-                                ?UNDEFINED ->
-                                    share:warning("GV", "Process not found", ProcPid, RetEdges);
-                                {_, _, _, ELabel} ->
-                                    IsCompatible = is_pm_msg_compatible(
-                                        ProcPid, From, ELabel, Message
-                                    ),
-                                    case IsCompatible of
-                                        true -> RetEdges ++ [Edge];
-                                        false -> RetEdges
-                                    end
-                            end
-                        end,
-                        [],
-                        OrderedEdges
-                    ),
-                    EdgesChoosen
+                    case is_any(Message) of
+                        %   over-approximation: select all edges that match
+                        true -> OrderedEdges;
+                        false -> check_compatibility_with_stop(ProcPid, OrderedEdges, Message)
+                    end
             end
     end.
+
+check_compatibility_with_stop(ProcPid, OrderedEdges, Message) ->
+    From = Message#message.from,
+    {_, EdgeChoosen} = lists:foldl(
+        fun(Edge, {AlreadyFound, RetEdge}) ->
+            case AlreadyFound of
+                true ->
+                    {AlreadyFound, RetEdge};
+                false ->
+                    EdgeInfo = actor_emul:get_proc_edge_info(ProcPid, Edge),
+                    case EdgeInfo of
+                        ?UNDEFINED ->
+                            log:warning(
+                                "GV", "Process not found", ProcPid, RetEdge
+                            );
+                        {_, _, _, ELabel} ->
+                            IsCompatible = is_pm_msg_compatible(ProcPid, From, ELabel, Message),
+                            case IsCompatible of
+                                true -> {true, Edge};
+                                false -> {AlreadyFound, RetEdge}
+                            end
+                    end
+            end
+        end,
+        {false, ?UNDEFINED},
+        OrderedEdges
+    ),
+    [EdgeChoosen].
 
 custom_sort_edges(ProcPid, EL) ->
     SepE =
@@ -604,7 +618,7 @@ custom_sort_edges(ProcPid, EL) ->
                 EdgeInfo = actor_emul:get_proc_edge_info(ProcPid, E),
                 case EdgeInfo of
                     ?UNDEFINED ->
-                        share:warning("GV", "Process not found", ProcPid, L);
+                        log:warning("GV", "Process not found", ProcPid, L);
                     {_, _, _, ELabel} ->
                         Label = share:atol(ELabel),
                         Cond = is_list(string:find(Label, "receive")),
@@ -689,6 +703,11 @@ check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
         true ->
             {false, []}
     end.
+
+is_any(M) ->
+    AnyS = share:atol(?ANYDATA),
+    MessS = share:atol(M#message.data),
+    MessS =:= AnyS.
 
 %%% AGGIORNARE COMPATIBILITA':
 %% se sono sicuro che fa match, genero e non vado a vedere altro
