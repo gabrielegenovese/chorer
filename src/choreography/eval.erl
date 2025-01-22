@@ -355,6 +355,8 @@ recursive(ArgList, Data) ->
     % generic_call(share:remove_last(share:remove_last((Data#localview.fun_name))), ArgList, Data).
     %%% TODO: what to do with last_vertex? update with 1 or nothing? now it just lose all the information after the call
     % overapprox: return variable is unkwown
+    % putting last_vertex = ?UNDEFINED the evaluation is stopped after an recursive call
+    % Data#localview{ret_var = ?ANYDATA, edge_additional_info = NewNA}.
     Data#localview{last_vertex = ?UNDEFINED, ret_var = ?ANYDATA, edge_additional_info = NewNA}.
 
 spawn_call(ArgList, Data) ->

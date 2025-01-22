@@ -673,11 +673,11 @@ check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
     [FirstPtmtChar | RestPtmt] = PatternMatching,
     [FirstMessChar | RestMess] = MessageS,
     IsFirstCharUpperCase = share:is_erlang_variable(PatternMatching),
-    % AnyS = share:atol(?ANYDATA),
+    AnyS = share:atol(?ANYDATA),
     if
         % over-approximation
-        % MessageS =:= AnyS ->
-        %     {true, []};
+        MessageS =:= AnyS ->
+            {true, []};
         ([FirstPtmtChar] =:= "{") and ([FirstMessChar] =:= "{") ->
             check_tuple(ProcPid, CallingProc, RestPtmt, RestMess);
         PatternMatching =:= MessageS ->
@@ -788,8 +788,8 @@ create_gv_state(ProcPid, Proc1, V2, Proc2, PV2) ->
                                 {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
                             Proc2 ->
                                 {_, L} = digraph:vertex(Graph, PV2),
-                                {Proc2, share:if_final_get_n(L)};
-                            % {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
+                                % {Proc2, share:if_final_get_n(L)};
+                                {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
                             N ->
                                 {_, L} = digraph:vertex(Graph, Data#actor_info.current_state),
                                 % {N, share:if_final_get_n(L)}

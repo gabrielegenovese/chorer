@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-./_build/default/bin/chorer ./examples/test/foo6/foo6.erl test0 examples/test/foo6
+./_build/default/bin/chorer ./examples/test/foo6/foo6.erl test/0 examples/test/foo6
 ```
 
 ## Description

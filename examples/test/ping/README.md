@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-./_build/default/bin/chorer ./examples/test/ping/ping.erl start0 examples/test/ping
+./_build/default/bin/chorer ./examples/test/ping/ping.erl start/0 examples/test/ping
 ```
 
 ## Description
@@ -15,4 +15,4 @@ Features:
 
 ## Results
 
-Wrong LV and GV
+Good LV, good GV (with overapprox).
