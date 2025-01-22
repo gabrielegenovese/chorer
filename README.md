@@ -15,6 +15,8 @@ Use `rebar3` to run the program from the command line or to compile it.
 # ./_build/default/bin/chorer ./path/to/your/program.erl main/0 path/to/folder
 ```
 
+> A fourth and fifth optional parameter are used to specify if the the local view or the global view should be minimized. Default values are `true` for the local view and `false` for the global view.
+
 or
 
 ```erlang

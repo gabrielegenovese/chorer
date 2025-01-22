@@ -1,0 +1,10 @@
+digraph client_gen_2 {
+	rankdir="LR";
+	n_0 [label="client_gen_2", shape="plaintext"];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="2", shape=doublecircle, label="2"];
+
+	n_1 -> n_1 [id="[$e|5]", label="spawn client/1.1 args [server/0.0]"];
+	n_1 -> n_2 [id="[$e|0]", label="spawn client/1.0 args [S]"];
+}

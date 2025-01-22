@@ -8,7 +8,7 @@
 -include("../share/common_data.hrl").
 
 %%% API
--export([generate/0, create_localview/2, eval_codeline/2]).
+-export([generate/0, create_localview/3, eval_codeline/2]).
 
 %%%===================================================================
 %%% API
@@ -19,8 +19,14 @@
 %%% `md:extract' must be used before this function.
 generate() ->
     ActorList = get_actors(),
-    lists:foreach(
-        fun(Actor) -> create_localview(Actor, true) end,
+    lists:foldl(
+        fun(Actor, Acc) ->
+            case create_localview(Actor, ?ANYDATA, true) of
+                no_graph -> false;
+                _ -> Acc
+            end
+        end,
+        true,
         ActorList
     ).
 
@@ -32,24 +38,30 @@ get_actors() ->
     [{_, ActorList}] = ets:lookup(?DBMANAGER, ?ACTORLIST),
     ActorList.
 
-create_localview(ActorName, Save) ->
-    [{_, Settings}] = ets:lookup(?DBMANAGER, settings),
+create_localview(ActorName, StartingVars, SaveToFile) ->
     RetLV =
         case does_actor_exist(ActorName) of
             false ->
-                io:fwrite("Error: Actor ~p's AST not found~n", [ActorName]),
+                io:fwrite(
+                    "Critical error: Actor ~p's AST not found. Check the export attribute.~n", [
+                        ActorName
+                    ]
+                ),
                 no_graph;
             ActorAst ->
-                LV = share:get_localview(ActorName),
+                LV = db:get_localview(ActorName),
                 case LV of
                     not_found ->
                         io:fwrite("[LV] Creating a localview for ~p~n", [ActorName]),
-                        BaseData = #localview{fun_name = ActorName, fun_ast = ActorAst},
+                        BaseData = #localview{
+                            fun_name = ActorName, fun_ast = ActorAst, param = StartingVars
+                        },
                         share:add_vertex(BaseData#localview.graph),
                         LVData = eval_codeline(BaseData#localview.fun_ast, BaseData),
                         G = LVData#localview.graph,
                         % this operation MUST be before the minimize
                         set_final_state(G),
+                        fsa:rename_states(G),
                         MinG = fsa:minimize(G),
                         NewLV = LVData#localview{min_graph = MinG},
                         ets:insert(?LOCALVIEW, {ActorName, NewLV}),
@@ -58,14 +70,15 @@ create_localview(ActorName, Save) ->
                         L
                 end
         end,
-    case Save or Settings#setting.save_all of
-        true -> share:save_graph(RetLV, ActorName, local);
+    SaveToFileMinimize = settings:get(minimizeL),
+    case SaveToFile or settings:get(save_all) of
+        true -> share:save_graph(RetLV, ActorName, local, SaveToFileMinimize);
         false -> done
     end,
     RetLV.
 
 does_actor_exist(ActorName) ->
-    ActorAst = share:get_fun_ast(share:atol(ActorName)),
+    ActorAst = db:get_fun_ast(share:atol(ActorName)),
     case ActorAst of
         not_found -> false;
         A -> A
@@ -96,7 +109,7 @@ eval_codeline(CodeLine, Data) ->
         % attention: don't set this to eval:list([], [], Data) otherwise infinite loop
         [] -> eval:simple_type(list, [], Data);
         [H | T] -> eval:list(H, T, Data);
-        _ -> share:warning("couldn't parse code line", CodeLine, Data)
+        _ -> log:warning("LV", "couldn't parse code line", CodeLine, Data, line)
     end.
 
 debug_print(CodeLine) ->

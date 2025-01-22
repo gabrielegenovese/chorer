@@ -32,33 +32,93 @@
 
 %%% @doc
 %%% Evaluate the clauses of a function.
-function_list(ContList, Data) ->
+%%% The counter is used to eval in order the pattern matching.
+function_list(ContentList, Data) ->
+    Param = Data#localview.param,
     element(
         1,
         lists:foldl(
             fun(FunctionBody, {AccData, Counter}) ->
-                case FunctionBody of
-                    {clause, _, Pattern, Guard, Content} ->
-                        % io:fwrite("Clause ~p~n", [Vars]),
-                        ets:insert(?ARGUMENTS, {Data#localview.fun_name, Pattern}),
+                {clause, _, Pattern, Guard, Content} = FunctionBody,
+                ets:insert(?ARGUMENTS, {Data#localview.fun_name, Pattern}),
+                NewData = lv:eval_codeline(Pattern, AccData),
+                {Cond, VarList} = check_matching(NewData#localview.ret_var#variable.value, Param),
+                case Cond of
+                    true ->
                         {
                             clause(
                                 Content,
                                 Pattern,
                                 Guard,
-                                AccData#localview{last_vertex = 1},
+                                %%% start the evaluation from the starting point
+                                AccData#localview{last_vertex = 1, local_vars = VarList},
                                 "arg",
                                 Counter
                             ),
                             Counter + 1
                         };
-                    C ->
-                        share:warning("should be a clause but it's", C, {?UNDEFINED, Counter + 1})
+                    false ->
+                        {
+                            clause(
+                                Content,
+                                Pattern,
+                                Guard,
+                                %%% start the evaluation from the starting point
+                                AccData#localview{last_vertex = 1},
+                                "arg",
+                                Counter
+                            ),
+                            Counter + 1
+                        }
                 end
             end,
             {Data, 0},
-            ContList
+            ContentList
         )
+    ).
+
+check_matching(Pattern, Params) ->
+    case share:unpack(Params) of
+        ?ANYDATA ->
+            {true, get_all_var(Pattern)};
+        _ ->
+            EnumPtmt = lists:enumerate(Pattern),
+            EnumParam = lists:enumerate(Params),
+            BoolList = [
+                check_msg_comp(DataPtmt, DataMess)
+             || {IndexPtmt, DataPtmt} <- EnumPtmt,
+                {IndexMess, DataMess} <- EnumParam,
+                IndexPtmt =:= IndexMess
+            ],
+            share:and_rec(BoolList)
+    end.
+
+check_msg_comp(PatVar, ParVar) ->
+    PatType = PatVar#variable.type,
+    ParType = ParVar#variable.type,
+    PatValue = PatVar#variable.value,
+    ParValue = ParVar#variable.value,
+    case PatType of
+        var ->
+            {true, [PatVar#variable{type = ParType, value = ParValue}]};
+        _ when PatType =:= ParType ->
+            case PatValue =:= ParValue of
+                true -> {true, []};
+                false -> {false, []}
+            end;
+        _ ->
+            {false, []}
+    end.
+
+get_all_var(Pattern) ->
+    lists:filter(
+        fun(P) ->
+            case P#variable.type of
+                var -> true;
+                _ -> false
+            end
+        end,
+        Pattern
     ).
 
 %%% @doc
@@ -74,9 +134,10 @@ clause(Code, Pattern, Guards, Data, BaseLabel, Counter) ->
             guards_to_string(Guards),
     FinalLabel = decide_label(BaseLabel, TempLabel),
     NewData = add_vertex_edge(FinalLabel, Data),
+    NewVar = EvalVarList#variable.value,
     lists:foldl(
         fun(Line, AccData) -> lv:eval_codeline(Line, AccData) end,
-        NewData#localview{local_vars = LocalV ++ EvalVarList#variable.value},
+        NewData#localview{local_vars = LocalV ++ NewVar},
         Code
     ).
 
@@ -87,7 +148,7 @@ match(RightContent, LeftContent, Data) ->
         {var, _, VarName} -> match_with_var(VarName, LeftContent, Data);
         {tuple, _, VarList} -> match_with_tuple(VarList, LeftContent, Data);
         {cons, _, List} -> match_with_list(List, Data);
-        R -> share:warning("[MATCH] couldn't understand line", R, Data)
+        R -> log:warning("LV", "[MATCH] couldn't understand line", R, Data, line)
     end.
 
 %%% @doc
@@ -111,9 +172,18 @@ receive_pm(PMList, Data) ->
 %%% Evaluate an operation.
 operation(Symbol, LeftContent, RightContent, Data) ->
     case Symbol of
-        '!' -> send(LeftContent, RightContent, Data);
-        %%% TODO: implement other basic operation
-        _ -> share:warning("operation not yet implemented", Symbol, Data)
+        '!' ->
+            send(LeftContent, RightContent, Data);
+        _ ->
+            log:warning(
+                "LV",
+                "operation not yet implemented",
+                Symbol,
+                Data#localview{
+                    ret_var = #variable{}
+                },
+                line
+            )
     end.
 
 %%% @doc
@@ -123,7 +193,7 @@ function_call(Function, ArgList, Data) ->
         {atom, _, Name} -> call_by_atom(Name, ArgList, Data);
         {var, _, VarName} -> call_by_var(VarName, ArgList, Data);
         {remote, _, Package, FunName} -> call_by_package(Package, FunName, ArgList, Data);
-        F -> share:warning("couldn't recognize function call pattern", F, Data)
+        F -> log:warning("LV", "couldn't recognize function call pattern", F, Data, line)
     end.
 
 %%% @doc
@@ -136,7 +206,7 @@ anon_function(Content, Line, Data) ->
             ets:insert(?FUNAST, {Id, {function, Line, A}}),
             simple_type(function, Id, Data);
         _ ->
-            share:warning("not recognized content in anon_function", Content, Data)
+            log:warning("LV", "not recognized content in anon_function", Content, Data, line)
     end.
 
 %%% @doc
@@ -165,9 +235,9 @@ list(HeadList, TailList, Data) ->
     simple_type(list, NewVal, NDT).
 
 %%% @doc
-%%% Evaluate a map. TODO
+%%% Evaluate a map.
 map(Val, Data) ->
-    share:warning("TODO map evaluation", Val, Data).
+    log:warning("LV", "TODO map evaluation", Val, Data, line).
 
 %%% @doc
 %%% Evaluate a tuple.
@@ -188,7 +258,7 @@ variable(VarName, Data) ->
     Var = share:find_var(Data#localview.local_vars, VarName),
     RetV =
         case Var of
-            not_found -> #variable{name = VarName};
+            not_found -> #variable{type = var, name = VarName};
             V -> V
         end,
     Data#localview{ret_var = RetV}.
@@ -198,8 +268,7 @@ variable(VarName, Data) ->
 %%%===================================================================
 
 decide_label(Base, Label) ->
-    [{_, Settings}] = ets:lookup(?DBMANAGER, settings),
-    MoreInfo = Settings#setting.more_info_lv,
+    MoreInfo = settings:get(more_info_lv),
     ToWriteL =
         if
             Base =:= "receive" ->
@@ -257,11 +326,11 @@ match_with_tuple(VarList, LeftContent, Data) ->
                 ret_var = #variable{type = tuple, value = RetVar},
                 local_vars = L ++ RetVar
             },
-            share:warning("right content is a tuple but left content is", Var, ND)
+            log:warning("LV", "right content is a tuple but left content is", Var, ND, line)
     end.
 
 match_with_list(List, Data) ->
-    share:warning("[MATCH] TODO match with list", List, Data).
+    log:warning("LV", "[MATCH] TODO match with list", List, Data, line).
 
 call_by_atom(Name, ArgList, Data) ->
     FunName = Data#localview.fun_name,
@@ -276,11 +345,19 @@ call_by_atom(Name, ArgList, Data) ->
         _ -> generic_call(Name, ArgList, Data)
     end.
 
-%%% TODO: What to do with argument lists? Put them in the #localview.edge_additional_info?
-recursive(_ArgList, Data) ->
+recursive(ArgList, Data) ->
     % io:fwrite("[RECURSIVE] from vertex ~p~n", [Data#localview.last_vertex]),
-    digraph:add_edge(Data#localview.graph, Data#localview.last_vertex, 1, 'ɛ'),
-    Data#localview{last_vertex = ?UNDEFINED}.
+    LV = Data#localview.last_vertex,
+    NA = Data#localview.edge_additional_info,
+    E = digraph:add_edge(Data#localview.graph, LV, 1, 'ɛ'),
+    %%% TODO: add recursion eval in actor_emul
+    NewNA = maps:put(E, {recursion, ArgList}, NA),
+    % generic_call(share:remove_last(share:remove_last((Data#localview.fun_name))), ArgList, Data).
+    %%% TODO: what to do with last_vertex? update with 1 or nothing? now it just lose all the information after the call
+    % overapprox: return variable is unkwown
+    % putting last_vertex = ?UNDEFINED the evaluation is stopped after an recursive call
+    % Data#localview{ret_var = ?ANYDATA, edge_additional_info = NewNA}.
+    Data#localview{last_vertex = ?UNDEFINED, ret_var = ?ANYDATA, edge_additional_info = NewNA}.
 
 spawn_call(ArgList, Data) ->
     case ArgList of
@@ -288,15 +365,15 @@ spawn_call(ArgList, Data) ->
         %%% TODO: check and implement package
         [_Package, {atom, _, Name}, SpArgList] -> spawn_three(Name, SpArgList, Data);
         %%% TODO: spawn with 2/4 argument
-        _ -> share:warning("couldn't recognize spawn call pattern", ArgList, Data)
+        _ -> log:warning("LV", "couldn't recognize spawn call pattern", ArgList, Data, line)
     end.
 
 spawn_one(Content, Data) ->
     NewData = lv:eval_codeline(Content, Data),
     VarFound = NewData#localview.ret_var,
     Id = VarFound#variable.value,
-    lv:create_localview(Id, true),
-    C = share:inc_spawn_counter(Id),
+    lv:create_localview(Id, [], true),
+    C = db:inc_spawn_counter(Id),
     S = Id ++ ?NSEQSEP ++ integer_to_list(C),
     RetData = add_vertex_edge("spawn " ++ S, NewData),
     RetVar = #variable{type = pid, value = S},
@@ -313,16 +390,17 @@ spawn_three(Name, ArgList, Data) ->
     RetData = add_vertex_edge(Label, ND),
     RetData#localview{ret_var = #variable{type = pid, value = ProcId}}.
 
-%%% Naming convention: Name/Arity.SequentialNumber
+%%% Naming convention for process: Name/Arity.SequentialNumber
+%%% Naming convention for spawn label: spawn ProcName args ArgList
 format_spawn_label(Name, NewDataRetVar) ->
-    C = share:inc_spawn_counter(Name),
+    C = db:inc_spawn_counter(Name),
     Arity = length(NewDataRetVar#variable.value),
     ProcId = share:merge_fun_ar(Name, Arity) ++ ?NSEQSEP ++ integer_to_list(C),
     Label = "spawn " ++ ProcId ++ " args " ++ var_to_string(NewDataRetVar),
     {Label, ProcId}.
 
 spawn_monitor_call(ArgList, Data) ->
-    share:warning("spawn_monitor not yet implemted. Arguments =", ArgList, Data).
+    log:warning("LV", "spawn_monitor not yet implemted. Arguments =", ArgList, Data, line).
 
 self_call(Data) ->
     RetVar = #variable{type = pid, value = "pid_self"},
@@ -342,18 +420,17 @@ register_call(ArgList, Data) ->
                 _ -> ?UNDEFINED
             end
     end,
-    %%% ignoring returing value
-    Data.
+    simple_type(atom, true, Data).
 
 generic_call(Name, ArgList, Data) ->
     % TODO: how to evaluate argument list?
-    _NewData = lv:eval_codeline(ArgList, Data),
-    % io:fwrite("ARG LIST ~p~n", [ArgList]),
-    % io:fwrite("RET VAR ~p~n", [NewData#localview.ret_var#variable.value]),
+    NewData = lv:eval_codeline(ArgList, Data),
     NameString = share:merge_fun_ar(Name, length(ArgList)),
-    case get_function_graph(NameString) of
+    case get_function_graph(NameString, NewData#localview.ret_var#variable.value) of
         no_graph ->
-            share:warning("couldn't parse function", Name, Data#localview{ret_var = #variable{}});
+            log:warning(
+                "LV", "couldn't parse function", Name, Data#localview{ret_var = #variable{}}, line
+            );
         NewD ->
             G = Data#localview.graph,
             LastV = Data#localview.last_vertex,
@@ -378,12 +455,12 @@ call_by_var(VarName, ArgList, Data) ->
     VarFound = share:find_var(LocalVarL, VarName),
     case VarFound of
         not_found ->
-            share:warning("variable not found in call_by_var with name", VarName, Data);
+            log:warning("LV", "variable not found in call_by_var with name", VarName, Data, line);
         _ ->
             Id = VarFound#variable.value,
             %%% TODO: eval args
             _ND = lv:eval_codeline(ArgList, Data),
-            NewData = lv:create_localview(Id, false),
+            NewData = lv:create_localview(Id, [], false),
             NewG = NewData#localview.graph,
             NewRet = NewData#localview.ret_var,
             NewLastV = merge_graph(G, NewG, VLast),
@@ -396,13 +473,13 @@ call_by_package(Package, FunName, _ArgList, Data) ->
     case Pack of
         rand -> rand_package(Name, Data);
         %%% TODO: find the package and the function, create the local view of it, attach it to the current lv
-        _ -> share:warning("package not yet implemented:", Pack, Data)
+        _ -> log:warning("LV", "package not yet implemented:", Pack, Data, line)
     end.
 
 rand_package(FunName, Data) ->
     case FunName of
         uniform -> simple_type(integer, ?ANYDATA, Data);
-        _ -> share:warning("rand's function not yet implemented:", FunName, Data)
+        _ -> log:warning("LV", "rand's function not yet implemented:", FunName, Data, line)
     end.
 
 send(Destination, MessageContent, Data) ->
@@ -437,13 +514,22 @@ var_to_string(Var) ->
     case Var of
         [] ->
             "";
+        ?ANYDATA ->
+            "_";
         V ->
-            case V#variable.type of
+            Vname = V#variable.name,
+            Vvalue = V#variable.value,
+            Vtype = V#variable.type,
+            case Vtype of
                 ?ANYDATA ->
-                    share:atol(V#variable.name);
+                    case Vname of
+                        ?UNDEFINED -> share:atol(?ANYDATA);
+                        _ -> share:atol(Vname)
+                    end;
                 Type ->
                     SType = share:atol(Type),
-                    case V#variable.value of
+                    case Vvalue of
+                        ?ANYDATA when Type =:= var -> share:atol(Vname);
                         ?ANYDATA ->
                             SType;
                         Val ->
@@ -454,8 +540,9 @@ var_to_string(Var) ->
                                 "atom" -> share:atol(Val);
                                 "list" -> format_list(Val, fun var_to_string/1);
                                 "tuple" -> format_tuple(Val, fun var_to_string/1);
-                                "pid" -> share:atol(V#variable.value);
-                                S -> share:atol(S)
+                                "var" -> share:atol(Val);
+                                "pid" -> share:atol(Val);
+                                _ -> SType
                             end
                     end
             end
@@ -505,11 +592,14 @@ merge_graph(MainG, GToAdd, VLast) ->
     % return last added vertex, which is the max number in the key list
     maps:get(lists:max(maps:keys(VEquiMap)), VEquiMap).
 
-get_function_graph(FuncName) ->
-    FunAst = share:get_fun_ast(FuncName),
+get_function_graph(FuncName, Arguments) ->
+    FunAst = db:get_fun_ast(FuncName),
     case FunAst of
-        not_found -> no_graph;
-        _ -> lv:create_localview(FuncName, false)
+        not_found ->
+            log:warning("LV", "No AST found for", FuncName, #localview{}),
+            no_graph;
+        _ ->
+            lv:create_localview(FuncName, Arguments, false)
     end.
 
 %%% Evaluate Pattern Matching's list of clauses: evaluate every branch alone, then
@@ -533,7 +623,9 @@ explore_pm(PMList, Base, Data) ->
                         VDataRet = clause(Content, Vars, Guard, Data, Base, Couter),
                         {AddedVertexList ++ [VDataRet#localview.last_vertex], Couter + 1};
                     C ->
-                        share:warning("Should be clause but it's", C, {AddedVertexList, Couter})
+                        log:warning(
+                            "LV", "Should be clause but it's", C, {AddedVertexList, Couter}, line
+                        )
                 end
             end,
             {[], 0},

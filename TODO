@@ -2,10 +2,9 @@
 
 ## List
 
-- fare valutazione degli argomenti quando viene chiamata una funzione
-- aggiungere tutto nella label così si dà feedback all'utente e comunque usare le additional info nelle gv
+- aggiungere tutto neldàla label così si  feedback all'utente e comunque usare le additional info nelle gv
 - unbounded send (*stella di klene nei cicli di send)
-- fare il filtro solo sulle send e azzerarlo quando avviene una receive (tutte le receive e tutti i processi) -> fatto ma implementando la unvounded send dovrei poter eliminare questa cosa
+- fare il filtro solo sulle send e azzerarlo quando avviene una receive (tutte le receive e tutti i processi) -> fatto ma implementando la unbounded send dovrei poter eliminare questa cosa
 - lasciare numerini nelle lv -> fare check nelle gv quando si ripassa dalla stessa spawn
 - dividere localview data from wip_lv data
 - se c'è un loop che cambia variabili -> perdere la variabile (unknown) così alla secoda receive matcha più (o tutte) branch (hello.erl example)
@@ -17,44 +16,19 @@
 Nella add global state fare andare avanti i processi spawnati! dare errore ma comunque provare a produrre qualcosa
 (fare un test con due processi paralleli, uno che registra un processo e uno che invia un messaggio a quello registrato)
 
-### value propagation:
-
-creare graph generico
-
-fare valutazione con argument fatta così
-se chiamata ricorsiva rifare valutazione con nuovi arguments
-(valutazione della ricorsione da fare qua perché se avviene durante la
-costruzione del grafo può essere parziale, essendo un particolare tipo di visita)
-(particolare attenzione all'esempio barber dove due funzioni si chiamano
-a vicenda e quindi il tool entra in un loop infinito)
-
-pseudo codice:
-```erlang
-funcall(FunName, Parameters) ->
-    GenericG = get_lv(FunName),
-    EvalG = eval(GenericG, Parameters),
-    merge(GPadre, EvalG)
-eval(G, P) ->
-    %super pseudo codice
-    RetG = graph:new
-    while continue
-    G, P = eval(RetG, G, P) %continua a valutare se c'è una chiamata ricorsiva con dati valutabili
-```
-problemi:
-    come fare eval?
-    nel merge come attaccare con anche le additional_info?
-
-la creazione di una lv deve essere paramentrizzata
-
 ### fsa minimize
 
-prima: nella gv fare la valutazione del ptmt su i dati passati nella additional_info e non
+prima: nella gv fare la valutazione del ptmt su i dati passati nella additional_info
 
 - usare nella gv le versioni non minimizzate delle lv
 - chiedere all'utente se salvare la totale o la minimizzata
 
 -> aggiungere valutazione nella gv di tutti i possibili edge
 
+## fix mutual recurtion
+
+aggiungere una stack di chiamate alla struct wip_lv
+se si aggiungono le variabili locali si implementa anche una sorta di scope  
 
 ## Notes 8/5
 
@@ -63,3 +37,24 @@ preserve orders of messages in gv
 mutual recursion will diverge (we needs to at least detect it -> keep a trace of the function call and stop)
 
 controllare minimizzazione e informazioni negli edge (attaccarli agli id e non alle label, come? si uniscono le informazioni in fase minimizzazione)
+
+x prox volta
+tabella dei simboli con le funzioni poi variabili
+missmatch sulla ricezione nella coreografia globale
+? quando non conosco a chi inviare un dato
+
+se dichiaro come partecipante non posso usarlo come funziona normale (dare warning).
+
+## Label global view
+
+Migliorare le label della global view:
+- visualizzare meglio i dati inviati
+- usare le additional info
+
+## Mettere come opzione la history dei messaggi
+Inserire un config file?
+
+
+fare il sito come https://soter.mpi-sws.org/
+se non vengono fatte overapprossimazioni -> allora abbiamo una coreografia esatta
+se abbiamo fatto delle overapprossiamzioni -> allora non siamo sicuri di niente

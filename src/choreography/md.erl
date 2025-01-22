@@ -9,7 +9,7 @@
 -include("../share/common_data.hrl").
 
 %%% API
--export([extract/1, parse_file/1]).
+-export([extract/0, parse_file/1]).
 
 %%%===================================================================
 %%% API
@@ -18,7 +18,8 @@
 %%% @doc
 %%% Extract the metadata: the AST (abstract syntax tree) for each function
 %%% and all the Actor List.
-extract(InputFile) ->
+extract() ->
+    InputFile = settings:get(inputfile),
     gen_fun_ast_and_exported(parse_file(InputFile)).
 
 %%% @doc

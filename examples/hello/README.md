@@ -3,7 +3,7 @@
 ## Use
 
 ```bash
-./_build/default/bin/chorer ./examples/hello/hello.erl greet/0 examples/hello
+./_build/default/bin/chorer ./examples/hello/hello.erl main/0 examples/hello
 ```
 
 ## Description

@@ -1,19 +1,19 @@
 digraph incrementer_2 {
 	rankdir="LR";
 	n_0 [label="incrementer_2", shape="plaintext"];
-	n_1 [id="5", shape=doublecircle, label="7"];
-	n_2 [id="6", shape=circle, label="5"];
-	n_3 [id="1", shape=circle, label="1"];
-	n_0 -> n_3 [arrowhead=none];
-	n_4 [id="2", shape=circle, label="2"];
-	n_5 [id="4", shape=circle, label="6"];
-	n_6 [id="7", shape=circle, label="3"];
-	n_7 [id="3", shape=circle, label="4"];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="7", shape=circle, label="3"];
+	n_3 [id="4", shape=circle, label="6"];
+	n_4 [id="6", shape=circle, label="5"];
+	n_5 [id="3", shape=circle, label="4"];
+	n_6 [id="2", shape=circle, label="2"];
+	n_7 [id="5", shape=doublecircle, label="7"];
 
-	n_3 -> n_4 [id="[$e|1]", label="MePid ! {request,pid_self}"];
-	n_4 -> n_6 [id="[$e|2]", label="0#receive answer"];
-	n_5 -> n_1 [id="[$e|0]", label="MePid ! {release}"];
-	n_6 -> n_7 [id="[$e|3]", label="XPid ! {read,pid_self}"];
-	n_2 -> n_5 [id="[$e|5]", label="XPid ! {write,unknown}"];
-	n_7 -> n_2 [id="[$e|4]", label="0#receive X"];
+	n_6 -> n_2 [id="[$e|2]", label="0#receive answer"];
+	n_4 -> n_3 [id="[$e|5]", label="XPid ! {write,any}"];
+	n_3 -> n_7 [id="[$e|0]", label="MePid ! {release}"];
+	n_2 -> n_5 [id="[$e|3]", label="XPid ! {read,pid_self}"];
+	n_1 -> n_6 [id="[$e|1]", label="MePid ! {request,pid_self}"];
+	n_5 -> n_4 [id="[$e|4]", label="0#receive X"];
 }

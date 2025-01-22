@@ -9,7 +9,7 @@
 -include("common_data.hrl").
 
 %%% API
--export([minimize/1]).
+-export([minimize/1, rename_states/1]).
 
 %%%===================================================================
 %%% API

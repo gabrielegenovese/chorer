@@ -1,21 +1,21 @@
 digraph main_0 {
 	rankdir="LR";
 	n_0 [label="main_0", shape="plaintext"];
-	n_1 [id="5", shape=circle, label="6"];
-	n_2 [id="10", shape=circle, label="3"];
-	n_3 [id="1", shape=circle, label="1"];
-	n_0 -> n_3 [arrowhead=none];
-	n_4 [id="9", shape=circle, label="5"];
+	n_1 [id="9", shape=circle, label="5"];
+	n_2 [id="1", shape=circle, label="1"];
+	n_0 -> n_2 [arrowhead=none];
+	n_3 [id="4", shape=circle, label="4"];
+	n_4 [id="3", shape=doublecircle, label="7"];
 	n_5 [id="2", shape=circle, label="2"];
-	n_6 [id="4", shape=circle, label="4"];
-	n_7 [id="3", shape=doublecircle, label="7"];
+	n_6 [id="10", shape=circle, label="3"];
+	n_7 [id="5", shape=circle, label="6"];
 
-	n_3 -> n_5 [id="[$e|2]", label="spawn dummy/1.0 args [pid_self]"];
-	n_2 -> n_6 [id="[$e|3]", label="spawn dummy/1.2 args [pid_self]"];
-	n_1 -> n_7 [id="[$e|9]", label="dummy/1.1 ! 'Ciao B'"];
-	n_6 -> n_4 [id="[$e|4]", label="spawn dummy/1.3 args [pid_self]"];
-	n_5 -> n_2 [id="[$e|0]", label="spawn dummy/1.1 args [pid_self]"];
-	n_1 -> n_7 [id="[$e|10]", label="dummy/1.2 ! 'Ciao C'"];
-	n_1 -> n_7 [id="[$e|5]", label="dummy/1.0 ! 'Ciao A'"];
-	n_4 -> n_1 [id="[$e|1]", label="0#receive {Process,_}"];
+	n_7 -> n_4 [id="[$e|12]", label="dummy/1.2 ! 'Ciao C'"];
+	n_5 -> n_6 [id="[$e|0]", label="spawn dummy/1.1 args [pid_self]"];
+	n_7 -> n_4 [id="[$e|5]", label="dummy/1.0 ! 'Ciao A'"];
+	n_1 -> n_7 [id="[$e|1]", label="0#receive {Process,_}"];
+	n_2 -> n_5 [id="[$e|2]", label="spawn dummy/1.0 args [pid_self]"];
+	n_7 -> n_4 [id="[$e|11]", label="dummy/1.1 ! 'Ciao B'"];
+	n_3 -> n_1 [id="[$e|4]", label="spawn dummy/1.3 args [pid_self]"];
+	n_6 -> n_3 [id="[$e|3]", label="spawn dummy/1.2 args [pid_self]"];
 }

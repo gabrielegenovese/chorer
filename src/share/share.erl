@@ -13,24 +13,19 @@
     save_graph_to_file/4,
     add_vertex/1,
     del_vertex/2,
-    is_erlvar/1,
+    is_erlang_variable/1,
     is_uppercase/1,
-    get_fun_ast/1,
-    get_localview/1,
-    get_graph/1,
-    get_edgedata/1,
-    warning/3,
-    error/3,
     get_base_label/2,
     merge_fun_ar/2,
     should_minimize/1,
-    save_graph/3,
+    save_graph/4,
     remove_last/1,
     find_var/2,
     if_final_get_n/1,
-    inc_spawn_counter/1,
     remove_counter/1,
     show_global_state/0,
+    unpack/1,
+    and_rec/1,
     atol/1,
     ltoa/1
 ]).
@@ -74,7 +69,7 @@ del_vertex(G, V) ->
 %%% @doc
 %%% Return true if first letter's atom is uppercase (it's a variable in erlang),
 %%% otherwise false.
-is_erlvar(Name) ->
+is_erlang_variable(Name) ->
     SName = atol(Name),
     [FirstChar | _] = SName,
     is_uppercase([FirstChar]).
@@ -83,55 +78,6 @@ is_erlvar(Name) ->
 %%% If the input character is uppercase return true, otherwise false.
 is_uppercase(Char) when (is_list(Char)) and (length(Char) =:= 1) ->
     (Char >= "A") and (Char =< "Z").
-
-get_fun_ast(FunName) ->
-    Ast = ets:lookup(?FUNAST, atol(FunName)),
-    case Ast of
-        [] ->
-            % io:fwrite("[S] Not Found in funast ~p~n", [FunName]),
-            not_found;
-        [{_, A}] ->
-            A
-    end.
-
-get_localview(FunName) ->
-    Ast = ets:lookup(?LOCALVIEW, atol(FunName)),
-    case Ast of
-        [] ->
-            % io:fwrite("[S] Not Found in localview ~p~n", [FunName]),
-            not_found;
-        [{_, A}] ->
-            A
-    end.
-
-get_graph(FunName) ->
-    Ast = ets:lookup(?LOCALVIEW, atol(FunName)),
-    case Ast of
-        [] ->
-            io:fwrite("[S] Not Found in graph ~p~n", [FunName]),
-            not_found;
-        [{_, A}] ->
-            A#localview.graph
-    end.
-
-get_edgedata(FunName) ->
-    Ast = ets:lookup(?LOCALVIEW, atol(FunName)),
-    case Ast of
-        [] ->
-            io:fwrite("[S] Not Found in edgedata ~p~n", [FunName]),
-            not_found;
-        [{_, A}] ->
-            A#localview.edge_additional_info
-    end.
-
-warning(String, Content, RetData) ->
-    [{_, Line}] = ets:lookup(?CLINE, line),
-    io:fwrite("[LV] WARNING on line ~p: " ++ String ++ " ~p~n", [Line, Content]),
-    RetData#localview{ret_var = #variable{}}.
-
-error(String, Content, RetData) ->
-    io:fwrite("ERROR: ~p ~p~n", [String, Content]),
-    RetData.
 
 get_base_label(SetPm, Label) ->
     case SetPm of
@@ -162,17 +108,11 @@ should_minimize(S) ->
         _ -> true
     end.
 
-save_graph(Data, FunName, Mode) ->
-    [{_, Settings}] = ets:lookup(?DBMANAGER, settings),
-    OutputDir = Settings#setting.output_dir,
-    Minimize =
-        case Mode of
-            global -> false;
-            _ -> true
-        end,
-    % Minimize = should_minimize(atol(FunName) ++ " " ++ atol(Mode)),
+save_graph(Data, FunName, Mode, SaveMinimize) ->
+    OutputDir = settings:get(output_dir),
+    % SaveMinimize = should_minimize(atol(FunName) ++ " " ++ atol(Mode)),
     ToSaveG =
-        case Minimize of
+        case SaveMinimize of
             true -> Data#localview.min_graph;
             false -> Data#localview.graph
         end,
@@ -201,15 +141,6 @@ find_var(Data, Name) ->
     LL = Data#localview.local_vars,
     find_var(LL, Name).
 
-inc_spawn_counter(Name) ->
-    Ret =
-        case ets:lookup(?SPAWNC, share:ltoa(Name)) of
-            [] -> 0;
-            [{_, N}] -> N
-        end,
-    ets:insert(?SPAWNC, {Name, Ret + 1}),
-    Ret.
-
 show_global_state() ->
     [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
     maps:fold(
@@ -217,6 +148,25 @@ show_global_state() ->
         [],
         StateM
     ).
+
+unpack(D) when D =:= [] -> D;
+unpack(D) when is_list(D) ->
+    [H | _] = D,
+    H;
+unpack(D) ->
+    D.
+
+%%% Custom recursive and operation
+and_rec([]) ->
+    {true, []};
+and_rec([{B, L} | T]) ->
+    case B of
+        true ->
+            {A, LL} = and_rec(T),
+            {A, L ++ LL};
+        false ->
+            {B, []}
+    end.
 
 %%%===================================================================
 %%% Internal Functions

@@ -1,0 +1,9 @@
+digraph global {
+	rankdir="LR";
+	n_0 [label="global", shape="plaintext"];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="5", shape=doublecircle, label="5"];
+
+	n_1 -> n_1 [id="[$e|8]", label="main/0.0→main/0.0:N"];
+}
