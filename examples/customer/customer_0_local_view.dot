@@ -8,10 +8,10 @@ digraph customer_0 {
 	n_4 [id="2", shape=circle, label="3"];
 	n_5 [id="5", shape=circle, label="2"];
 
-	n_3 -> n_2 [id="[$e|6]", label="0#receive accepted"];
-	n_5 -> n_1 [id="[$e|9]", label="store/0.0 ! more"];
 	n_5 -> n_4 [id="[$e|1]", label="store/0.0 ! buy"];
+	n_5 -> n_1 [id="[$e|9]", label="store/0.0 ! more"];
+	n_3 -> n_2 [id="[$e|6]", label="0#receive accepted"];
+	n_4 -> n_3 [id="[$e|5]", label="store/0.0 ! payment"];
 	n_1 -> n_5 [id="[$e|2]", label="store/0.0 ! item"];
 	n_3 -> n_4 [id="[$e|8]", label="1#receive reject"];
-	n_4 -> n_3 [id="[$e|5]", label="store/0.0 ! payment"];
 }
