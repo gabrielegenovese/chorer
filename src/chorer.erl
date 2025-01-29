@@ -30,13 +30,26 @@ cli() ->
         arguments => [
             #{name => input, type => string, help => "Erlang soure file"},
             #{name => entrypoint, type => {atom, unsafe}, help => "Entrypoint of the program"},
-            #{name => output, type => string, default => ?DEFOUTPUT, help => "Output directory for the generated dot files"},
-            #{name => minl, type => boolean, default => ?DEFMINL, help => "Minimize the localviews"},
-            #{name => ming, type => boolean, default => ?DEFMING, help => "Minimize the globalviews"}
+            #{
+                name => output,
+                type => string,
+                default => ?DEFOUTPUT,
+                help => "Output directory for the generated dot files"
+            },
+            #{
+                name => minl,
+                type => boolean,
+                default => ?DEFMINL,
+                help => "Minimize the localviews"
+            },
+            #{
+                name => ming,
+                type => boolean,
+                default => ?DEFMING,
+                help => "Minimize the globalviews"
+            }
         ],
-        help=> """
-        Extract a choreography automata of an Erlang program.
-        """,
+        help => "Extract a choreography automata of an Erlang program.",
         handler =>
             fun(
                 #{
@@ -51,14 +64,13 @@ cli() ->
             end
     }.
 
-
 %%% @doc
 %%% Used within the Erlang shell (call generate/5).
 -spec generate(InputFile, EntryPoint) -> atom() when
     InputFile :: string(),
     EntryPoint :: atom().
 generate(InputFile, EntryPoint) ->
-        generate(InputFile, EntryPoint, ?DEFOUTPUT, ?DEFMINL, ?DEFMINL).
+    generate(InputFile, EntryPoint, ?DEFOUTPUT, ?DEFMINL, ?DEFMINL).
 
 %%% @doc
 %%% Generate the localviews and the globalview specifing the output directory.
