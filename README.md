@@ -8,16 +8,25 @@ The project requires `erlang` and `rebar3` to run.
 
 ## Usage
 
-Use `rebar3` to run the program from the command line or to compile it.
+Use `rebar3` to compile it and run the binary:
 
 ```erlang
 # rebar3 escriptize
-# ./_build/default/bin/chorer ./path/to/your/program.erl main/0 path/to/folder
+# ./_build/default/bin/chorer
+Usage:
+  chorer <input> <entrypoint> <output> <minl> <ming>
+
+Extract a choreography automata of an Erlang program.
+
+Arguments:
+  input      Erlang soure file (string)
+  entrypoint Entrypoint of the program (atom)
+  output     Output directory for the generated dot files (string), default: .
+  minl       Minimize the localviews , default: true
+  ming       Minimize the globalviews , default: false
 ```
 
-> A fourth and fifth optional parameter are used to specify if the the local view or the global view should be minimized. Default values are `true` for the local view and `false` for the global view.
-
-or
+Otherwise, use it with the Erlang shell:
 
 ```erlang
 # rebar3 shell
@@ -27,11 +36,11 @@ finished
 
 ### Output
 
-The tool will create a DOT file for each actor's local view and a DOT file for the global view in the specified folder. To visualize the Choreography Automatas copy and paste the `.dot` files' content in a [DOT viewer](https://dreampuf.github.io/GraphvizOnline).
+The tool will create a DOT file for each actor's local view and a DOT file for the global view in the specified folder. To visualize the Choreography Automata copy and paste the `.dot` files' content in a [DOT viewer](https://dreampuf.github.io/GraphvizOnline).
 
 ## Documentation
 
-The documentation of the project is aviable at this [link](https://gabrielegenovese.github.io/chorer/). You can also generete it with
+The documentation of the project is available at this [link](https://gabrielegenovese.github.io/chorer/). You can also generate it with
 
 ```erlang
 # rebar3 ex_doc --output docs

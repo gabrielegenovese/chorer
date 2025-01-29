@@ -96,7 +96,7 @@ generate_possible_branches(NewBranchData, BaseBranchList) ->
     %%% is receiving a message before the other procesess
     maps:fold(
         fun(Name, Pid, AccList) ->
-            % io:fwrite("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
+            % log:debug("[PROGSB] Name ~p MQ ~p~n", [Name, MessageQueue]),
             case actor_emul:get_proc_mess_queue(Pid) of
                 ?UNDEFINED -> AccList;
                 MessageQueue -> gen_branch_foreach_mess(NewBranchData, MessageQueue, Name, AccList)
@@ -139,14 +139,14 @@ manage_matched(BranchData, ProcName, Message, AccList, EdgesFound) ->
     lists:foldl(
         fun(EdgeFound, SecAccList) ->
             DupData = dup_branch(BranchData),
-            % io:fwrite("[RECV1] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
+            % log:debug("[RECV1] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
             NewMap = DupData#branch.proc_pid_m,
             NewPid = maps:get(ProcName, NewMap, no_proc),
             ProcFrom = Message#message.from,
             MessData = Message#message.data,
             PidFrom = maps:get(ProcFrom, NewMap, no_proc),
             Label = format_send_label(ProcFrom, ProcName, MessData),
-            % io:fwrite("[RECV2] LABEL ~ts~n~n", [Label]),
+            % log:debug("[RECV2] LABEL ~ts~n~n", [Label]),
             ProcFromData = actor_emul:get_proc_data(PidFrom),
             case ProcFromData of
                 ?UNDEFINED ->
@@ -384,7 +384,7 @@ is_one_edgerecv(ProcPid, EL) ->
 %%% Evaluate a transition from an actor
 eval_edge(EdgeInfo, ProcName, ProcPid, BData) ->
     {Edge, _, _, PLabel} = EdgeInfo,
-    % io:fwrite("Proc ~p eval label ~p~n", [ProcName, PLabel]),
+    % log:debug("Proc ~p eval label ~p~n", [ProcName, PLabel]),
     SLabel = share:atol(PLabel),
     % IsArg = is_substring(SLabel, "arg"),
     IsSpawn = is_substring(SLabel, "spawn"),
@@ -431,12 +431,12 @@ add_spawn_to_global(EInfo, SLabel, EmulProcName, Data) ->
     % get spawn argument and add them to the local variables of the actor
     LocalList = get_local_vars(EmulProcName, SLabel, FunSName),
     lists:foreach(fun(Var) -> actor_emul:add_proc_spawnvars(FuncPid, Var) end, LocalList),
-    % io:fwrite("LocalList ~p~n", [LocalList]),
+    % log:debug("LocalList ~p~n", [LocalList]),
     % create the edge on the global graph
     VNew = share:add_vertex(Data#branch.graph),
     [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
     AggrGState = create_gv_state(NewMap, share:ltoa(FunSpawned), 1, EmulProcName, PV),
-    % io:fwrite("SPAWN AGGR ~p~n", [AggrGState]),
+    % log:debug("SPAWN AGGR ~p~n", [AggrGState]),
     ets:insert(?DBMANAGER, {global_state, maps:put(VNew, AggrGState, StateM)}),
     NewLabel = format_spawn_label(SLabel, EmulProcName, FunSpawned),
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
@@ -458,14 +458,14 @@ format_spawn_label(SLabel, EmulProcName, FunSpawned) ->
 get_local_vars(ProcId, Label, FunSName) ->
     EM = db:get_lv_edge_additonal_info(element(1, remove_id_from_proc(ProcId))),
     InputData = maps:get(Label, EM, []),
-    % io:fwrite("[GV] EmulProcName ~p Label ~p Input ~p~n", [FunSName, Label, EM]),
+    % log:debug("[GV] EmulProcName ~p Label ~p Input ~p~n", [FunSName, Label, EM]),
     % add input data to local vars
     case InputData of
         [] ->
             [];
         _ ->
             [{_, Input}] = ets:lookup(?ARGUMENTS, share:atol(FunSName)),
-            % io:fwrite("[GV] for fun ~p found ~p~n", [share:atol(FunSName), Input]),
+            % log:debug("[GV] for fun ~p found ~p~n", [share:atol(FunSName), Input]),
             {LL, Remain} = lists:foldl(
                 fun({var, _, Name}, {A, In}) ->
                     case In of
@@ -521,7 +521,7 @@ check_send_to_not_existing_proc(Proc, ProcName) ->
     S1 = string:split(SProc, ?ARITYSEP),
     case S1 of
         [_Name | T] when Check ->
-            % io:fwrite("[CHECK] Name ~p~n", [Name]),
+            % log:debug("[CHECK] Name ~p~n", [Name]),
             S2 = string:split(share:atol(T), ?NSEQSEP),
             case S2 of
                 [_Arity | _Seq] ->
@@ -549,7 +549,7 @@ manage_recv(ProcPid, Message) ->
         {_, EdgeList} ->
             %%% TODO: change to all when false branch is ready
             IsRecvList = is_one_edgerecv(ProcPid, EdgeList),
-            % io:fwrite("IsRECV ~p EL ~p~n", [IsRecv, EL]),
+            % log:debug("IsRECV ~p EL ~p~n", [IsRecv, EL]),
             case IsRecvList of
                 false ->
                     % TODO: manage when is not ONLY a receive edge, like:
@@ -635,7 +635,7 @@ custom_sort_edges(ProcPid, EL) ->
             EL
         ),
     Sort = lists:sort(fun({N1, _, _}, {N2, _, _}) -> N1 < N2 end, SepE),
-    % io:fwrite("sorted ~p~n", [Sort]),
+    % log:debug("sorted ~p~n", [Sort]),
     [E || {_, _, E} <- Sort].
 
 %%% Find the actor id from a variable's list, given the variable name
@@ -645,14 +645,14 @@ check_vars(ProcPid, VarName) ->
         ?UNDEFINED ->
             VarName;
         _ ->
-            % io:fwrite("Find var ~p in ~p pid ~p~n", [VarName, ProcLocalVars, ProcPid]),
+            % log:debug("Find var ~p in ~p pid ~p~n", [VarName, ProcLocalVars, ProcPid]),
             VarValue = share:find_var(ProcLocalVars, VarName),
-            % io:fwrite("Found ~p~n", [VarValue]),
+            % log:debug("Found ~p~n", [VarValue]),
             case VarValue of
                 not_found ->
                     VarName;
                 V ->
-                    % io:fwrite("Found ~p~n", [V#variable.type]),
+                    % log:debug("Found ~p~n", [V#variable.type]),
                     case V#variable.type of
                         "pid" -> V#variable.value;
                         pid -> V#variable.value;
@@ -674,7 +674,7 @@ is_pm_msg_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
     {IsCompatible, ToRegisterList} = check_msg_comp(
         ProcPid, CallingProc, PatternMS, Message#message.data
     ),
-    % io:fwrite("Reg List ~p~n", [ToRegisterList]),
+    % log:debug("Reg List ~p~n", [ToRegisterList]),
     lists:foreach(
         fun(Item) -> register_var(Item) end,
         ToRegisterList
@@ -738,12 +738,12 @@ register_var(Data) ->
     {ProcPid, Name, Value} = Data,
     %%% type = pid to change, for now it's ok like this because I only focus on pid exchange
     V = #variable{name = share:ltoa(Name), type = pid, value = share:ltoa(Value)},
-    % io:fwrite("Added Var ~p~n", [V]),
+    % log:debug("Added Var ~p~n", [V]),
     actor_emul:add_proc_localvars(ProcPid, V).
 
 %%% Substitute pif_self to pid_ProcId
 check_pid_self(Data, ProcId) ->
-    % io:fwrite("[C]Data ~p proc id ~p~n", [Data, ProcId]),
+    % log:debug("[C]Data ~p proc id ~p~n", [Data, ProcId]),
     lists:flatten(string:replace(share:atol(Data), "pid_self", share:atol(ProcId))).
 
 %%% Add a vertex to the global view, with some checks for recusive edges
@@ -753,26 +753,26 @@ check_pid_self(Data, ProcId) ->
 complex_add_vertex_recv(Proc1, CurrVertex, Proc2, EdgeInfo, Data, Label) ->
     ProcPid = Data#branch.proc_pid_m,
     [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
-    % io:fwrite("stateM ~p~n", [StateM]),
-    % io:fwrite("Label ~p~n", [share:ltoa(Label)]),
+    % log:debug("stateM ~p~n", [StateM]),
+    % log:debug("Label ~p~n", [share:ltoa(Label)]),
     VLast = Data#branch.last_vertex,
     G = Data#branch.graph,
     {_, _PV1, PV2, _} = EdgeInfo,
     EL = digraph:out_edges(G, VLast),
     SameL = check_same_label(G, EL, VLast, Label),
-    % io:fwrite("~n~n[COMPLEX] new check~n", []),
+    % log:debug("~n~n[COMPLEX] new check~n", []),
     AggregateGlobalState = create_gv_state(ProcPid, Proc1, CurrVertex, Proc2, PV2),
     case check_if_exist(StateM, AggregateGlobalState) of
         nomatch ->
             VNew = share:add_vertex(G),
             digraph:add_edge(G, VLast, VNew, Label),
-            % io:fwrite("[DEBUG] Adding new global state ~p~n", [VNew]),
+            % log:debug("[DEBUG] Adding new global state ~p~n", [VNew]),
             NewM = maps:put(VNew, AggregateGlobalState, StateM),
             ets:insert(?DBMANAGER, {global_state, NewM}),
             empty_filter_all_proc(Data#branch.proc_pid_m),
             {VNew, true};
         VFound ->
-            % io:fwrite("[EXTERNFOUND] ~p~n", [VFound]),
+            % log:debug("[EXTERNFOUND] ~p~n", [VFound]),
             case SameL of
                 nomatch ->
                     digraph:add_edge(G, VLast, VFound, Label),
@@ -828,10 +828,10 @@ check_if_exist(StateM, AggregateGlobalState) ->
                 Acc =:= nomatch ->
                     %%% Check if the set has the same elements
                     Cond = Value =:= AggregateGlobalState,
-                    % io:fwrite("[SUB] ~p~n", [Cond]),
+                    % log:debug("[SUB] ~p~n", [Cond]),
                     case Cond of
                         true ->
-                            % io:fwrite("[FOUND] FOUND n ~p ~n", [Key]),
+                            % log:debug("[FOUND] FOUND n ~p ~n", [Key]),
                             Key;
                         false ->
                             Acc
