@@ -30,8 +30,9 @@ Otherwise, use it with the Erlang shell:
 
 ```erlang
 # rebar3 shell
-1> chorer:generate("./examples/ticktack/tictacstop.erl", "start/0").
-finished
+1> chorer:generate("./examples/ticktack/tictacstop.erl", start/0).
+...
+[INFO] Finished!
 ```
 
 ### Output
