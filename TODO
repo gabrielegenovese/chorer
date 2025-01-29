@@ -58,3 +58,5 @@ Inserire un config file?
 fare il sito come https://soter.mpi-sws.org/
 se non vengono fatte overapprossimazioni -> allora abbiamo una coreografia esatta
 se abbiamo fatto delle overapprossiamzioni -> allora non siamo sicuri di niente
+
+idea: aggiungere transizione erronea verso un nuovo stato.
