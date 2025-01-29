@@ -9,8 +9,12 @@
 -module(chorer).
 -include("share/common_data.hrl").
 
+-define(DEFOUTPUT, ".").
+-define(DEFMINL, true).
+-define(DEFMING, false).
+
 %%% API
--export([main/1, generate/5]).
+-export([main/1, generate/2, generate/5]).
 
 %%%===================================================================
 %%% API
@@ -26,9 +30,9 @@ cli() ->
         arguments => [
             #{name => input, type => string, help => "Erlang soure file"},
             #{name => entrypoint, type => {atom, unsafe}, help => "Entrypoint of the program"},
-            #{name => output, type => string, default => ".", help => "Output directory for the generated dot files"},
-            #{name => minl, type => boolean, default => true, help => "Minimize the localviews"},
-            #{name => ming, type => boolean, default => false, help => "Minimize the globalviews"}
+            #{name => output, type => string, default => ?DEFOUTPUT, help => "Output directory for the generated dot files"},
+            #{name => minl, type => boolean, default => ?DEFMINL, help => "Minimize the localviews"},
+            #{name => ming, type => boolean, default => ?DEFMING, help => "Minimize the globalviews"}
         ],
         help=> """
         Extract a choreography automata of an Erlang program.
@@ -46,6 +50,15 @@ cli() ->
                 generate(InputFile, EntryPoint, OutputDir, MinL, MinG)
             end
     }.
+
+
+%%% @doc
+%%% Used within the Erlang shell (call generate/5).
+-spec generate(InputFile, EntryPoint) -> atom() when
+    InputFile :: string(),
+    EntryPoint :: atom().
+generate(InputFile, EntryPoint) ->
+        generate(InputFile, EntryPoint, ?DEFOUTPUT, ?DEFMINL, ?DEFMINL).
 
 %%% @doc
 %%% Generate the localviews and the globalview specifing the output directory.
