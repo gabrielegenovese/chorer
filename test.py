@@ -3,6 +3,8 @@ import os
 # import time
 
 test_list = [
+    ("./examples/account/account.erl", "main/0", "examples/account", "true", "true"),
+    ("./examples/dining/dining.erl", "main/0", "examples/dining", "true", "true"),
     ("./examples/hello/hello.erl", "main/0", "examples/hello", "true", "true"),
     ("./examples/async/simple.erl","main/0","examples/async", "true", "true"),
     ("./examples/ticktackstop/tictacstop.erl","start/0","examples/ticktackstop", "true", "true"),

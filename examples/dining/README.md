@@ -10,7 +10,7 @@
 
 Features:
 
-- Show a deadlock
+- Show a deadlock in red
 
 ## Results
 

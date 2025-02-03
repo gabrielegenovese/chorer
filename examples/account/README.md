@@ -1,4 +1,4 @@
-# Dining example
+# Bank account example
 
 ## Use
 
@@ -10,8 +10,8 @@
 
 Features:
 
-- Show a deadlock
+- Show a race condition (an execution that is read-read-set-set)
 
 ## Results
 
-Good both LV and GV also with minimize.
+Good both LV and GV.
