@@ -72,7 +72,7 @@ progress_all(GlobalViewGraph, BranchList) when is_list(BranchList) ->
     % log:debug("Branch to eval ~p~n", [length(BranchList)]),
     NewBranchList = lists:foldl(
         fun(Item, AccList) ->
-            % io:debug("Eval branch~n"),
+            % log:debug("Eval branch~n", []),
             AccList ++ progress_branch(Item)
         end,
         [],
@@ -137,7 +137,8 @@ gen_branch_foreach_mess(BranchData, MessageQueue, ProcName, BaseBranchList) ->
 
 manage_matched(BranchData, ProcName, Message, AccList, EdgesFound) ->
     lists:foldl(
-        fun(EdgeFound, SecAccList) ->
+        fun(EdgeFoundReg, SecAccList) ->
+            {EdgeFound, ToRegVars} = EdgeFoundReg,
             DupData = dup_branch(BranchData),
             % log:debug("[RECV1] Mess ~p Edge choose ~p~n", [Message, EdgeFound]),
             NewMap = DupData#branch.proc_pid_m,
@@ -163,6 +164,11 @@ manage_matched(BranchData, ProcName, Message, AccList, EdgesFound) ->
                             actor_emul:del_proc_mess_queue(NewPid, Message),
                             {LastVertex, Added} = complex_add_vertex_recv(
                                 ProcFrom, CurrProcFromVertex, ProcName, EToInfo, DupData, Label
+                            ),
+                            %%& Register all new variable
+                            lists:foreach(
+                                fun(Item) -> register_var(Item, NewPid) end,
+                                ToRegVars
                             ),
                             %%% NOTE: the last operation MUST be the use_proc_transition, otherwise the final graph might be wrong
                             actor_emul:use_proc_transition(NewPid, EdgeFound),
@@ -545,7 +551,7 @@ manage_recv(ProcPid, Message) ->
     Edges = actor_emul:get_proc_edges(ProcPid),
     case Edges of
         ?UNDEFINED ->
-            log:warning("GV", "Process not found", ProcPid, ?UNDEFINED);
+            log:warning("GV", "Process not found", ProcPid, []);
         {_, EdgeList} ->
             %%% TODO: change to all when false branch is ready
             IsRecvList = is_one_edgerecv(ProcPid, EdgeList),
@@ -572,7 +578,7 @@ manage_recv(ProcPid, Message) ->
                     % ),
                     % [H | T] = NewL,
                     % {H, T, NOp};
-                    ?UNDEFINED;
+                    [];
                 true ->
                     OrderedEdges = custom_sort_edges(ProcPid, EdgeList),
                     case is_any(Message) of
@@ -585,12 +591,10 @@ manage_recv(ProcPid, Message) ->
 
 check_compatibility_with_stop(ProcPid, OrderedEdges, Message) ->
     From = Message#message.from,
-    {_, EdgeChoosen} = lists:foldl(
-        fun(Edge, {AlreadyFound, RetEdge}) ->
-            case AlreadyFound of
-                true ->
-                    {AlreadyFound, RetEdge};
-                false ->
+    RetData = lists:foldl(
+        fun(Edge, RetEdge) ->
+            case RetEdge of
+                ?UNDEFINED ->
                     EdgeInfo = actor_emul:get_proc_edge_info(ProcPid, Edge),
                     case EdgeInfo of
                         ?UNDEFINED ->
@@ -600,16 +604,21 @@ check_compatibility_with_stop(ProcPid, OrderedEdges, Message) ->
                         {_, _, _, ELabel} ->
                             IsCompatible = is_pm_msg_compatible(ProcPid, From, ELabel, Message),
                             case IsCompatible of
-                                true -> {true, Edge};
-                                false -> {AlreadyFound, RetEdge}
+                                {true, RegList} -> {true, {Edge, RegList}};
+                                {false, _} -> RetEdge
                             end
-                    end
+                    end;
+                _ ->
+                    RetEdge
             end
         end,
-        {false, ?UNDEFINED},
+        ?UNDEFINED,
         OrderedEdges
     ),
-    [EdgeChoosen].
+    case RetData of
+        ?UNDEFINED -> [];
+        _ -> [element(2, RetData)]
+    end.
 
 custom_sort_edges(ProcPid, EL) ->
     SepE =
@@ -670,16 +679,7 @@ is_pm_msg_compatible(ProcPid, CallingProc, PatternMatching, Message) ->
     %% removing receive
     [_ | PM] = string:split(share:atol(PatternMatching), "receive "),
     PatternMS = lists:flatten(PM),
-    %% check pm
-    {IsCompatible, ToRegisterList} = check_msg_comp(
-        ProcPid, CallingProc, PatternMS, Message#message.data
-    ),
-    % log:debug("Reg List ~p~n", [ToRegisterList]),
-    lists:foreach(
-        fun(Item) -> register_var(Item) end,
-        ToRegisterList
-    ),
-    IsCompatible.
+    check_msg_comp(ProcPid, CallingProc, PatternMS, Message#message.data).
 
 %%% Check if a pattern metching match a message
 check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
@@ -697,7 +697,17 @@ check_msg_comp(ProcPid, CallingProc, PatternMatching, Message) ->
         PatternMatching =:= MessageS ->
             {true, []};
         IsFirstCharUpperCase ->
-            {true, [{ProcPid, share:ltoa(PatternMatching), check_pid_self(Message, CallingProc)}]};
+            case does_var_exist(ProcPid, PatternMatching) of
+                false ->
+                    {true, [
+                        {ProcPid, share:ltoa(PatternMatching), check_pid_self(Message, CallingProc)}
+                    ]};
+                Var ->
+                    case share:atol(Var#variable.value) =:= check_pid_self(Message, CallingProc) of
+                        true -> {true, []};
+                        false -> {false, []}
+                    end
+            end;
         [FirstPtmtChar] =:= "_" ->
             {true, []};
         true ->
@@ -708,6 +718,17 @@ is_any(M) ->
     AnyS = share:atol(?ANYDATA),
     MessS = share:atol(M#message.data),
     MessS =:= AnyS.
+
+does_var_exist(ProcPid, PatternMatching) ->
+    LocalVars = actor_emul:get_proc_localvars(ProcPid),
+    VarValue = share:find_var(LocalVars, share:ltoa(PatternMatching)),
+    case VarValue of
+        not_found ->
+            % log:debug("Var ~p not found ~p~n", [PatternMatching, LocalVars]),
+            false;
+        V ->
+            V
+    end.
 
 %%% AGGIORNARE COMPATIBILITA':
 %% se sono sicuro che fa match, genero e non vado a vedere altro
@@ -725,20 +746,22 @@ check_tuple(ProcPid, CallingProc, RestPtmt, RestMess) ->
     EnumPtmt = lists:enumerate(ContentPtmtList),
     ContentMessList = string:split(ContentMess, ",", all),
     EnumMess = lists:enumerate(ContentMessList),
+    % log:debug("ptmt ~p  ~p~n",[EnumPtmt, EnumMess]),
     BoolList = [
         check_msg_comp(ProcPid, CallingProc, DataPtmt, DataMess)
      || {IndexPtmt, DataPtmt} <- EnumPtmt,
         {IndexMess, DataMess} <- EnumMess,
         IndexPtmt =:= IndexMess
     ],
+    % log:debug("bool ~p~n", [BoolList]),
     share:and_rec(BoolList).
 
 %%% Register a actor's variable
-register_var(Data) ->
-    {ProcPid, Name, Value} = Data,
+register_var(Data, ProcPid) ->
+    {_, Name, Value} = Data,
     %%% type = pid to change, for now it's ok like this because I only focus on pid exchange
     V = #variable{name = share:ltoa(Name), type = pid, value = share:ltoa(Value)},
-    % log:debug("Added Var ~p~n", [V]),
+    % log:debug("Added Var ~p to ~p~n", [V, ProcPid]),
     actor_emul:add_proc_localvars(ProcPid, V).
 
 %%% Substitute pif_self to pid_ProcId

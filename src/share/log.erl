@@ -19,7 +19,7 @@ info(String, Content) ->
     io:fwrite("[INFO] " ++ String, Content).
 
 debug(String, Content) ->
-    io:debug("[INFO] " ++ String, Content).
+    io:fwrite("[INFO] " ++ String, Content).
 
 warning(Package, String, Content, RetData) ->
     io:fwrite("[WARNING][~s] " ++ String ++ " ~p~n", [Package, Content]),

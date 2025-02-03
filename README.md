@@ -10,9 +10,9 @@ The project requires `erlang` and `rebar3` to run.
 
 Use `rebar3` to compile it and run the binary:
 
-```erlang
-# rebar3 escriptize
-# ./_build/default/bin/chorer
+```
+> rebar3 escriptize
+> ./_build/default/bin/chorer
 Usage:
   chorer <input> <entrypoint> <output> <minl> <ming>
 
@@ -29,7 +29,7 @@ Arguments:
 Otherwise, use it with the Erlang shell:
 
 ```erlang
-# rebar3 shell
+$ rebar3 shell
 1> chorer:generate("./examples/ticktack/tictacstop.erl", start/0).
 ...
 [INFO] Finished!
