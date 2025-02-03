@@ -32,7 +32,7 @@
     Serialized :: unicode:charlist().
 convert(Graph, Name) ->
     Ids = ids(Graph),
-    Vertices = [format_vertex(V, Ids) || V <- vertices(Graph)],
+    Vertices = [format_vertex(Graph, V, Ids) || V <- vertices(Graph)],
     Edges = [format_edge(E, Ids) || E <- edges(Graph)],
     format_string(
         "digraph ~ts {~n"
@@ -71,17 +71,22 @@ vertices(Graph) ->
 edges(Graph) ->
     [digraph:edge(Graph, E) || E <- digraph:edges(Graph)].
 
-format_vertex({V, Label}, Ids) ->
+format_vertex(G, {V, Label}, Ids) ->
     #{V := Id} = Ids,
     {NewLabel, FinalState} = is_final_state(Label),
+    Color =
+        case FinalState of
+            "" -> get_color_label(G, V, Label);
+            _ -> ""
+        end,
     Str =
         case NewLabel =:= 1 of
             true -> "\n\tn_0 -> " ++ Id ++ " [arrowhead=none];";
             false -> ""
         end,
     format_string(
-        "\t~ts [id=~ts, shape=~tscircle, label=\"~tp\"];~s~n",
-        [Id, quoted(V), FinalState, NewLabel, Str]
+        "\t~ts [id=~ts, shape=~tscircle, label=\"~tp\"~s];~s~n",
+        [Id, quoted(V), FinalState, NewLabel, Color, Str]
     ).
 
 format_edge({Edge, V1, V2, Label}, Ids) ->
@@ -102,3 +107,12 @@ format_edge({Edge, V1, V2, Label}, Ids) ->
 
 format_string(Format, ArgList) ->
     lists:flatten(io_lib:format(Format, ArgList)).
+
+get_color_label(G, V, Label) ->
+    case digraph:out_degree(G, V) of
+        0 ->
+            log:error("A deadlock state has been detected: ~p~n", [Label]),
+            ", fillcolor=\"" ++ ?RED ++ "\", style=filled";
+        _ ->
+            ""
+    end.

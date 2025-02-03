@@ -21,7 +21,7 @@ digraph global {
 	n_17 [id="3", shape=circle, label="6"];
 	n_18 [id="12", shape=circle, label="23"];
 	n_19 [id="20", shape=circle, label="28"];
-	n_20 [id="2", shape=circle, label="15"];
+	n_20 [id="2", shape=circle, label="15", fillcolor="#FF0000FF", style=filled];
 	n_21 [id="22", shape=circle, label="7"];
 	n_22 [id="11", shape=circle, label="3"];
 	n_23 [id="15", shape=circle, label="27"];

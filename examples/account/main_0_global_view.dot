@@ -2,7 +2,7 @@ digraph global {
 	rankdir="LR";
 	n_0 [label="global", shape="plaintext"];
 	n_1 [id="14", shape=circle, label="14"];
-	n_2 [id="28", shape=circle, label="28"];
+	n_2 [id="28", shape=circle, label="28", fillcolor="#FF0000FF", style=filled];
 	n_3 [id="9", shape=circle, label="9"];
 	n_4 [id="26", shape=circle, label="26"];
 	n_5 [id="25", shape=circle, label="25"];
@@ -12,7 +12,7 @@ digraph global {
 	n_9 [id="1", shape=circle, label="1"];
 	n_0 -> n_9 [arrowhead=none];
 	n_10 [id="7", shape=circle, label="7"];
-	n_11 [id="27", shape=circle, label="27"];
+	n_11 [id="27", shape=circle, label="27", fillcolor="#FF0000FF", style=filled];
 	n_12 [id="16", shape=circle, label="16"];
 	n_13 [id="19", shape=circle, label="19"];
 	n_14 [id="4", shape=circle, label="4"];

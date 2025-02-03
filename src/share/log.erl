@@ -1,3 +1,8 @@
+%%%===================================================================
+%%% @doc
+%%% Helper module for logging purpose.
+%%% @end
+%%%===================================================================
 -module(log).
 -include("common_data.hrl").
 
@@ -37,7 +42,7 @@ warning(Package, String, Content, RetData, line) ->
     end.
 
 error(String, Content) ->
-    io:fwrite("[ERROR]" ++ String, Content).
+    io:fwrite("[ERROR] " ++ String, Content).
 error(String, Content, RetData) ->
     io:fwrite("[ERROR] ~s ~p~n", [String, Content]),
     RetData.

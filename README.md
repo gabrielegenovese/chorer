@@ -11,8 +11,8 @@ The project requires `erlang` and `rebar3` to run.
 Use `rebar3` to compile it and run the binary:
 
 ```
-> rebar3 escriptize
-> ./_build/default/bin/chorer
+shell> rebar3 escriptize
+shell> ./_build/default/bin/chorer
 Usage:
   chorer <input> <entrypoint> <output> <minl> <ming>
 
@@ -28,8 +28,8 @@ Arguments:
 
 Otherwise, use it with the Erlang shell:
 
-```erlang
-$ rebar3 shell
+```
+shell> rebar3 shell
 1> chorer:generate("./examples/ticktack/tictacstop.erl", start/0).
 ...
 [INFO] Finished!
@@ -43,8 +43,8 @@ The tool will create a DOT file for each actor's local view and a DOT file for t
 
 The documentation of the project is available at this [link](https://gabrielegenovese.github.io/chorer/). You can also generate it with
 
-```erlang
-# rebar3 ex_doc --output docs
+```
+shell> rebar3 ex_doc --output docs
 ```
 
 ## Test
