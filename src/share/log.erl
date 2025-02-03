@@ -8,7 +8,8 @@
     warning/4,
     warning/5,
     error/2,
-    error/3
+    error/3,
+    inspect/1
 ]).
 
 %%%===================================================================
@@ -38,5 +39,8 @@ warning(Package, String, Content, RetData, line) ->
 error(String, Content) ->
     io:fwrite("[ERROR]" ++ String, Content).
 error(String, Content, RetData) ->
-    io:fwrite("ERROR: ~p ~p~n", [String, Content]),
+    io:fwrite("[ERROR] ~s ~p~n", [String, Content]),
     RetData.
+
+inspect(D) ->
+    io:fwrite("~p~n", [D]).

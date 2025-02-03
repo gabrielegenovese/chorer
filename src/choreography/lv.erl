@@ -42,17 +42,15 @@ create_localview(ActorName, StartingVars, SaveToFile) ->
     RetLV =
         case does_actor_exist(ActorName) of
             false ->
-                io:fwrite(
-                    "Critical error: Actor ~p's AST not found. Check the export attribute.~n", [
-                        ActorName
-                    ]
-                ),
+                log:error("[CRITICAL]: ~p's AST not found. Check the export attribute.~n", [
+                    ActorName
+                ]),
                 no_graph;
             ActorAst ->
                 LV = db:get_localview(ActorName),
                 case LV of
                     not_found ->
-                        io:fwrite("[LV] Creating a localview for ~p~n", [ActorName]),
+                        log:info("[LV] Creating a localview for ~p~n", [ActorName]),
                         BaseData = #localview{
                             fun_name = ActorName, fun_ast = ActorAst, param = StartingVars
                         },

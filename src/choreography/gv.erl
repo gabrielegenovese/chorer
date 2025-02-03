@@ -465,36 +465,48 @@ get_local_vars(ProcId, Label, FunSName) ->
     EM = db:get_lv_edge_additonal_info(element(1, remove_id_from_proc(ProcId))),
     InputData = maps:get(Label, EM, []),
     % log:debug("[GV] EmulProcName ~p Label ~p Input ~p~n", [FunSName, Label, EM]),
-    % add input data to local vars
+    % TODO: add input data to local vars
     case InputData of
         [] ->
             [];
         _ ->
-            [{_, Input}] = ets:lookup(?ARGUMENTS, share:atol(FunSName)),
-            % log:debug("[GV] for fun ~p found ~p~n", [share:atol(FunSName), Input]),
-            {LL, Remain} = lists:foldl(
-                fun({var, _, Name}, {A, In}) ->
-                    case In of
-                        [] ->
-                            log:error("list should NOT be empty but there is ~p~n", Name),
-                            {A ++ [#variable{name = Name}], []};
-                        [H | T] ->
-                            case H#variable.value of
-                                "pid_self" ->
-                                    {A ++ [#variable{type = pid, name = Name, value = ProcId}], T};
-                                _ ->
-                                    {A ++ [H#variable{name = Name}], T}
+            case ets:lookup(?ARGUMENTS, share:atol(FunSName)) of
+                [] ->
+                    log:error("Cannot spawn process named", FunSName, []);
+                [{_, Input}] ->
+                    % log:debug("[GV] for fun ~p found ~p~n", [share:atol(FunSName), Input]),
+                    {LL, Remain} = lists:foldl(
+                        fun({var, _, Name}, {A, In}) ->
+                            case In of
+                                [] ->
+                                    log:error("List should NOT be empty but there is ~p~n", Name),
+                                    {A ++ [#variable{name = Name}], []};
+                                [H | T] ->
+                                    case H#variable.value of
+                                        "pid_self" ->
+                                            {
+                                                A ++
+                                                    [
+                                                        #variable{
+                                                            type = pid, name = Name, value = ProcId
+                                                        }
+                                                    ],
+                                                T
+                                            };
+                                        _ ->
+                                            {A ++ [H#variable{name = Name}], T}
+                                    end
                             end
-                    end
-                end,
-                {[], InputData#variable.value},
-                Input
-            ),
-            case Remain =:= [] of
-                true -> done;
-                false -> log:error("list should be empty but there is ~p~n", Remain)
-            end,
-            LL
+                        end,
+                        {[], InputData#variable.value},
+                        Input
+                    ),
+                    case Remain =:= [] of
+                        true -> done;
+                        false -> log:error("list should be empty but there is ~p~n", Remain)
+                    end,
+                    LL
+            end
     end.
 
 %%% Evaluate a send transition of an actor

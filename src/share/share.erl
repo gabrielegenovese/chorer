@@ -8,7 +8,6 @@
 
 %%% API
 -export([
-    inspect/1,
     first/1,
     save_graph_to_file/4,
     add_vertex/1,
@@ -38,9 +37,6 @@
 %%% Pick first element from a list
 first([]) -> [];
 first([H | _]) -> H.
-
-inspect(D) ->
-    io:fwrite("~p~n", [D]).
 
 save_graph_to_file(Graph, Dir, FileName, Type) ->
     StringName = format_name(FileName),
