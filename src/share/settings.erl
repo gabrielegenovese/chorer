@@ -9,7 +9,7 @@
 %%% API
 -export([
     new_settings/2,
-    new_settings/5,
+    new_settings/6,
     get/1
 ]).
 
@@ -22,6 +22,7 @@
     % optional
     minimizeLocal = false,
     minimizeGlobal = false,
+    gstate = true,
     output_dir = "./",
     %%% not in input
     more_info_lv = false,
@@ -39,13 +40,14 @@ new_settings(InputFile, EntryPoint) ->
 
 %%% @doc
 %%% Create a new seggings record with some optional data.
-new_settings(InputFile, EntryPoint, OutDir, MinimizeL, MinimizeG) ->
+new_settings(InputFile, EntryPoint, OutDir, MinimizeL, MinimizeG, GState) ->
     #setting{
         inputfile = InputFile,
         entrypoint = EntryPoint,
         output_dir = OutDir,
         minimizeLocal = MinimizeL,
-        minimizeGlobal = MinimizeG
+        minimizeGlobal = MinimizeG,
+        gstate = GState
     }.
 
 %%% @doc
@@ -61,6 +63,7 @@ get(What) ->
         output_dir -> Settings#setting.output_dir;
         more_info_lv -> Settings#setting.more_info_lv;
         save_all -> Settings#setting.save_all;
+        gstate -> Settings#setting.gstate;
         _ -> not_valid
     end.
 

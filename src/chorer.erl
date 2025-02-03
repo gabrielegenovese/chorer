@@ -9,12 +9,13 @@
 -module(chorer).
 -include("share/common_data.hrl").
 
--define(DEFOUTPUT, ".").
+-define(DEFOUTPUT, "./").
 -define(DEFMINL, true).
 -define(DEFMING, false).
+-define(DEFGSTATE, true).
 
 %%% API
--export([main/1, generate/2, generate/5]).
+-export([main/1, generate/2, generate/6]).
 
 %%%===================================================================
 %%% API
@@ -37,16 +38,22 @@ cli() ->
                 help => "Output directory for the generated dot files"
             },
             #{
-                name => minl,
-                type => boolean,
-                default => ?DEFMINL,
-                help => "Minimize the localviews"
-            },
-            #{
                 name => ming,
                 type => boolean,
                 default => ?DEFMING,
                 help => "Minimize the globalviews"
+            },
+            #{
+                name => gstate,
+                type => boolean,
+                default => ?DEFGSTATE,
+                help => "Global state are formed with previous messages"
+            },
+            #{
+                name => minl,
+                type => boolean,
+                default => ?DEFMINL,
+                help => "Minimize the localviews"
             }
         ],
         help => "Extract a choreography automata of an Erlang program.",
@@ -56,11 +63,12 @@ cli() ->
                     input := InputFile,
                     entrypoint := EntryPoint,
                     output := OutputDir,
-                    minl := MinL,
-                    ming := MinG
+                    ming := MinG,
+                    gstate := GState,
+                    minl := MinL
                 }
             ) ->
-                generate(InputFile, EntryPoint, OutputDir, MinL, MinG)
+                generate(InputFile, EntryPoint, OutputDir, MinG, GState, MinL)
             end
     }.
 
@@ -70,20 +78,21 @@ cli() ->
     InputFile :: string(),
     EntryPoint :: atom().
 generate(InputFile, EntryPoint) ->
-    generate(InputFile, EntryPoint, ?DEFOUTPUT, ?DEFMINL, ?DEFMINL).
+    generate(InputFile, EntryPoint, ?DEFOUTPUT, ?DEFMINL, ?DEFMINL, ?DEFGSTATE).
 
 %%% @doc
 %%% Generate the localviews and the globalview specifing the output directory.
 %%% It initialize the ets tables and generates the localviews and globalview.
--spec generate(InputFile, EntryPoint, OutDir, MinL, MinG) -> atom() when
+-spec generate(InputFile, EntryPoint, OutDir, MinG, GState, MinL) -> atom() when
     InputFile :: string(),
     EntryPoint :: atom(),
     OutDir :: string(),
-    MinL :: boolean(),
-    MinG :: boolean().
-generate(InputFile, EntryPoint, OutDir, MinL, MinG) ->
+    MinG :: boolean(),
+    GState :: boolean(),
+    MinL :: boolean().
+generate(InputFile, EntryPoint, OutDir, MinG, GState, MinL) ->
     io:fwrite("Analysing ~p, entrypoint: ~p, output: ~p~n", [InputFile, EntryPoint, OutDir]),
-    Settings = settings:new_settings(InputFile, EntryPoint, OutDir, MinL, MinG),
+    Settings = settings:new_settings(InputFile, EntryPoint, OutDir, MinL, MinG, GState),
     db:init(Settings),
     md:extract(),
     NoError = lv:generate(),

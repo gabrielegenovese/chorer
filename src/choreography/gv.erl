@@ -833,21 +833,16 @@ create_gv_state(ProcPid, Proc1, V2, Proc2, PV2) ->
                 ?UNDEFINED ->
                     AccList;
                 Data ->
-                    MessageQueue = Data#actor_info.message_queue,
                     EL =
-                        case Name of
-                            Proc1 ->
-                                {_, L} = digraph:vertex(Graph, V2),
-                                % {Proc1, share:if_final_get_n(L)};
-                                {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
-                            Proc2 ->
-                                {_, L} = digraph:vertex(Graph, PV2),
-                                % {Proc2, share:if_final_get_n(L)};
-                                {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
-                            N ->
-                                {_, L} = digraph:vertex(Graph, Data#actor_info.current_state),
-                                % {N, share:if_final_get_n(L)}
-                                {N, share:if_final_get_n(L), sets:from_list(MessageQueue)}
+                        case settings:get(gstate) of
+                            true ->
+                                state_with_previous_messages(
+                                    Data, Graph, Name, Proc1, Proc2, V2, PV2
+                                );
+                            false ->
+                                state_without_previous_messages(
+                                    Data, Graph, Name, Proc1, Proc2, V2, PV2
+                                )
                         end,
                     sets:add_element(EL, AccList)
             end
@@ -855,6 +850,33 @@ create_gv_state(ProcPid, Proc1, V2, Proc2, PV2) ->
         sets:new(),
         ProcPid
     ).
+
+state_with_previous_messages(Data, Graph, Name, Proc1, Proc2, V2, PV2) ->
+    MessageQueue = Data#actor_info.message_queue,
+    case Name of
+        Proc1 ->
+            {_, L} = digraph:vertex(Graph, V2),
+            {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
+        Proc2 ->
+            {_, L} = digraph:vertex(Graph, PV2),
+            {Proc1, share:if_final_get_n(L), sets:from_list(MessageQueue)};
+        N ->
+            {_, L} = digraph:vertex(Graph, Data#actor_info.current_state),
+            {N, share:if_final_get_n(L), sets:from_list(MessageQueue)}
+    end.
+
+state_without_previous_messages(Data, Graph, Name, Proc1, Proc2, V2, PV2) ->
+    case Name of
+        Proc1 ->
+            {_, L} = digraph:vertex(Graph, V2),
+            {Proc1, share:if_final_get_n(L)};
+        Proc2 ->
+            {_, L} = digraph:vertex(Graph, PV2),
+            {Proc2, share:if_final_get_n(L)};
+        N ->
+            {_, L} = digraph:vertex(Graph, Data#actor_info.current_state),
+            {N, share:if_final_get_n(L)}
+    end.
 
 check_if_exist(StateM, AggregateGlobalState) ->
     maps:fold(
