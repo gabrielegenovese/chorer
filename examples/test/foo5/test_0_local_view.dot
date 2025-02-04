@@ -11,11 +11,11 @@ digraph test_0 {
 	n_7 [id="2", shape=circle, label="2"];
 	n_8 [id="5", shape=doublecircle, label="8"];
 
+	n_5 -> n_8 [id="[$e|6]", label="target/0.0 ! m4"];
 	n_6 -> n_3 [id="[$e|0]", label="target/0.0 ! m1"];
 	n_4 -> n_5 [id="[$e|4]", label="proxy/1.1 ! m3"];
-	n_5 -> n_8 [id="[$e|6]", label="target/0.0 ! m4"];
 	n_2 -> n_7 [id="[$e|5]", label="spawn target/0.0 args nil"];
+	n_7 -> n_1 [id="[$e|1]", label="spawn proxy/1.0 args [target/0.0]"];
 	n_3 -> n_4 [id="[$e|3]", label="proxy/1.0 ! m2"];
 	n_1 -> n_6 [id="[$e|2]", label="spawn proxy/1.1 args [target/0.0]"];
-	n_7 -> n_1 [id="[$e|1]", label="spawn proxy/1.0 args [target/0.0]"];
 }

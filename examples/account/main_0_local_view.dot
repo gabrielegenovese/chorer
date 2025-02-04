@@ -8,6 +8,6 @@ digraph main_0 {
 	n_4 [id="2", shape=circle, label="2"];
 
 	n_2 -> n_3 [id="[$e|0]", label="spawn client/1.1 args [account/1.0]"];
-	n_1 -> n_4 [id="[$e|1]", label="spawn account/1.0 args [1]"];
 	n_4 -> n_2 [id="[$e|2]", label="spawn client/1.0 args [account/1.0]"];
+	n_1 -> n_4 [id="[$e|1]", label="spawn account/1.0 args [1]"];
 }

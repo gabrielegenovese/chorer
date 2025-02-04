@@ -1,11 +1,27 @@
 digraph global {
 	rankdir="LR";
 	n_0 [label="global", shape="plaintext"];
-	n_1 [id="1", shape=circle, label="1"];
-	n_0 -> n_1 [arrowhead=none];
-	n_2 [id="2", shape=circle, label="2"];
-	n_3 [id="3", shape=circle, label="3"];
+	n_1 [id="9", shape=circle, label="9"];
+	n_2 [id="8", shape=circle, label="8"];
+	n_3 [id="1", shape=circle, label="1"];
+	n_0 -> n_3 [arrowhead=none];
+	n_4 [id="7", shape=circle, label="7"];
+	n_5 [id="4", shape=circle, label="4"];
+	n_6 [id="6", shape=circle, label="6"];
+	n_7 [id="3", shape=circle, label="3"];
+	n_8 [id="2", shape=circle, label="2"];
+	n_9 [id="11", shape=circle, label="11", fillcolor="#FF0000FF", style=filled];
+	n_10 [id="10", shape=circle, label="10"];
+	n_11 [id="5", shape=circle, label="5"];
 
-	n_2 -> n_3 [id="[$e|1]", label="main/0.0Δconsumer/0.0"];
-	n_1 -> n_2 [id="[$e|0]", label="main/0.0Δproducer/0.0"];
+	n_1 -> n_10 [id="[$e|8]", label="consumer/0.0→producer/0.0:{req,pid_self}"];
+	n_10 -> n_9 [id="[$e|9]", label="producer/0.0→consumer/0.0:item"];
+	n_4 -> n_2 [id="[$e|6]", label="consumer/0.0→producer/0.0:{req,pid_self}"];
+	n_2 -> n_1 [id="[$e|7]", label="producer/0.0→consumer/0.0:item"];
+	n_6 -> n_4 [id="[$e|5]", label="producer/0.0→consumer/0.0:item"];
+	n_5 -> n_11 [id="[$e|3]", label="producer/0.0→consumer/0.0:item"];
+	n_11 -> n_6 [id="[$e|4]", label="consumer/0.0→producer/0.0:{req,pid_self}"];
+	n_8 -> n_7 [id="[$e|1]", label="main/0.0Δconsumer/0.0 args nil"];
+	n_3 -> n_8 [id="[$e|0]", label="main/0.0Δproducer/0.0 args nil"];
+	n_7 -> n_5 [id="[$e|2]", label="consumer/0.0→producer/0.0:{req,pid_self}"];
 }

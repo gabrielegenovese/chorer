@@ -6,8 +6,8 @@ digraph asynchAnd_2 {
 	n_2 [id="3", shape=doublecircle, label="2"];
 	n_3 [id="2", shape=circle, label="3"];
 
+	n_1 -> n_1 [id="[$e|7]", label="0#receive true"];
 	n_1 -> n_2 [id="[$e|5]", label="Out ! true"];
 	n_1 -> n_3 [id="[$e|6]", label="1#receive false"];
 	n_3 -> n_2 [id="[$e|9]", label="Out ! false"];
-	n_1 -> n_1 [id="[$e|7]", label="0#receive true"];
 }

@@ -1,14 +1,14 @@
 digraph main_0 {
 	rankdir="LR";
 	n_0 [label="main_0", shape="plaintext"];
-	n_1 [id="3", shape=circle, label="2"];
-	n_2 [id="5", shape=circle, label="3"];
-	n_3 [id="2", shape=doublecircle, label="4"];
-	n_4 [id="1", shape=circle, label="1"];
-	n_0 -> n_4 [arrowhead=none];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="4", shape=circle, label="3"];
+	n_3 [id="3", shape=doublecircle, label="4"];
+	n_4 [id="2", shape=circle, label="2"];
 
-	n_1 -> n_2 [id="[$e|4]", label="S ! 0"];
-	n_4 -> n_1 [id="[$e|6]", label="spawn foo/0.0 args nil"];
-	n_1 -> n_1 [id="[$e|3]", label="S ! N"];
-	n_2 -> n_3 [id="[$e|5]", label="foo/0.0 ! ok"];
+	n_2 -> n_3 [id="[$e|1]", label="foo/0.0 ! ok"];
+	n_4 -> n_4 [id="[$e|7]", label="foo/0.0 ! 3"];
+	n_4 -> n_2 [id="[$e|3]", label="foo/0.0 ! 0"];
+	n_1 -> n_4 [id="[$e|0]", label="spawn foo/0.0 args nil"];
 }

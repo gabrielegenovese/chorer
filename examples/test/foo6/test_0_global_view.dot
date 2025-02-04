@@ -1,21 +1,24 @@
 digraph global {
 	rankdir="LR";
 	n_0 [label="global", shape="plaintext"];
-	n_1 [id="9", shape=circle, label="4"];
-	n_2 [id="8", shape=circle, label="7"];
+	n_1 [id="9", shape=circle, label="9", fillcolor="#FF0000FF", style=filled];
+	n_2 [id="8", shape=circle, label="8"];
 	n_3 [id="1", shape=circle, label="1"];
 	n_0 -> n_3 [arrowhead=none];
-	n_4 [id="4", shape=circle, label="6"];
-	n_5 [id="3", shape=circle, label="3"];
-	n_6 [id="2", shape=circle, label="2"];
-	n_7 [id="5", shape=circle, label="5"];
+	n_4 [id="7", shape=circle, label="7"];
+	n_5 [id="4", shape=circle, label="4"];
+	n_6 [id="6", shape=circle, label="6"];
+	n_7 [id="3", shape=circle, label="3", fillcolor="#FF0000FF", style=filled];
+	n_8 [id="2", shape=circle, label="2"];
+	n_9 [id="5", shape=circle, label="5"];
 
-	n_2 -> n_5 [id="[$e|9]", label="client/1.1→server/0.0:hello"];
-	n_7 -> n_4 [id="[$e|10]", label="test/0.0Δclient/1.0 args [S]"];
-	n_1 -> n_7 [id="[$e|5]", label="test/0.0Δclient/1.1 args [server/0.0]"];
-	n_1 -> n_4 [id="[$e|2]", label="test/0.0Δclient/1.0 args [S]"];
-	n_3 -> n_6 [id="[$e|0]", label="test/0.0Δserver/0.0 args nil"];
-	n_4 -> n_2 [id="[$e|4]", label="client/1.1→server/0.0:hello"];
-	n_6 -> n_5 [id="[$e|8]", label="test/0.0Δclient/1.0 args [S]"];
-	n_6 -> n_1 [id="[$e|1]", label="test/0.0Δclient/1.1 args [server/0.0]"];
+	n_6 -> n_1 [id="[$e|8]", label="client/1.1→server/0.0:hello"];
+	n_4 -> n_2 [id="[$e|6]", label="test/0.0Δclient/1.0 args [S]"];
+	n_2 -> n_6 [id="[$e|7]", label="client/1.1→server/0.0:hello"];
+	n_5 -> n_4 [id="[$e|5]", label="test/0.0Δclient/1.1 args [server/0.0]"];
+	n_5 -> n_9 [id="[$e|3]", label="test/0.0Δclient/1.0 args [S]"];
+	n_9 -> n_6 [id="[$e|4]", label="client/1.1→server/0.0:hello"];
+	n_8 -> n_7 [id="[$e|1]", label="test/0.0Δclient/1.0 args [S]"];
+	n_3 -> n_8 [id="[$e|0]", label="test/0.0Δserver/0.0 args nil"];
+	n_8 -> n_5 [id="[$e|2]", label="test/0.0Δclient/1.1 args [server/0.0]"];
 }

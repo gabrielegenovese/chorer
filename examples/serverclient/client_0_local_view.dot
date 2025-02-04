@@ -8,7 +8,7 @@ digraph client_0 {
 	n_4 [id="2", shape=doublecircle, label="4"];
 
 	n_1 -> n_3 [id="[$e|2]", label="server/0.0 ! {req,pid_self}"];
-	n_3 -> n_2 [id="[$e|6]", label="0#receive {res,Handle}"];
-	n_2 -> n_2 [id="[$e|5]", label="Handle ! next"];
 	n_2 -> n_4 [id="[$e|3]", label="Handle ! done"];
+	n_2 -> n_2 [id="[$e|5]", label="Handle ! next"];
+	n_3 -> n_2 [id="[$e|6]", label="0#receive {res,Handle}"];
 }

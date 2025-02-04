@@ -1,9 +1,14 @@
 digraph global {
 	rankdir="LR";
 	n_0 [label="global", shape="plaintext"];
-	n_1 [id="2", shape=circle, label="2"];
-	n_2 [id="1", shape=circle, label="1"];
-	n_0 -> n_2 [arrowhead=none];
+	n_1 [id="1", shape=circle, label="1"];
+	n_0 -> n_1 [arrowhead=none];
+	n_2 [id="4", shape=circle, label="4"];
+	n_3 [id="3", shape=circle, label="3", fillcolor="#FF0000FF", style=filled];
+	n_4 [id="2", shape=circle, label="2"];
 
-	n_2 -> n_1 [id="[$e|0]", label="main/0.0Δfoo/0.0 args nil"];
+	n_2 -> n_3 [id="[$e|3]", label="main/0.0→foo/0.0:3"];
+	n_4 -> n_3 [id="[$e|1]", label="main/0.0→foo/0.0:3"];
+	n_1 -> n_4 [id="[$e|0]", label="main/0.0Δfoo/0.0 args nil"];
+	n_4 -> n_2 [id="[$e|2]", label="main/0.0→foo/0.0:3"];
 }

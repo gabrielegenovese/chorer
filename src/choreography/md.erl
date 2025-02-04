@@ -27,6 +27,8 @@ extract() ->
 parse_file(Path) ->
     element(2, epp_dodger:quick_parse_file(Path)).
 
+%%% @doc
+%%% Print some information about the local and global views.
 show_data(InputFile) ->
     TotLine = get_tot_line(InputFile),
     io:fwrite("~nTotal numeber of lines: ~p~n", [TotLine]),
@@ -34,22 +36,12 @@ show_data(InputFile) ->
     lists:foreach(
         fun({FunName, LvMap}) ->
             io:fwrite("Data of ~p localview:~n", [FunName]),
-            maps:foreach(
-                fun(Key, Value) ->
-                    io:fwrite("~p ~p~n", [Key, Value])
-                end,
-                LvMap
-            )
+            print_map(LvMap)
         end,
         LocalViewData
     ),
     io:fwrite("Data of global view: ~n"),
-    maps:foreach(
-        fun(Key, Value) ->
-            io:fwrite("~p ~p~n", [Key, Value])
-        end,
-        GlobalViewMap
-    ).
+    print_map(GlobalViewMap).
 
 %%%===================================================================
 %%% Internal Functions
@@ -118,3 +110,11 @@ get_gv_data() ->
     GvEdges = length(digraph:edges(G)),
     Map = maps:put(num_nodes, GvNodes, #{}),
     maps:put(num_edges, GvEdges, Map).
+
+print_map(Map) ->
+    maps:foreach(
+        fun(Key, Value) ->
+            io:fwrite("~p,~p~n", [Key, Value])
+        end,
+        Map
+    ).
