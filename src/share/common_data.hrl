@@ -13,9 +13,11 @@
 -define(FUNAST, fun_ast).
 -define(ARGUMENTS, args).
 -define(LOCALVIEW, lv).
+-define(GLOBALVIEW, gv).
 -define(REGISTERDB, reg).
 -define(SPAWNCOUNT, spc).
 -define(SETTINGS, settings).
+-define(GLOBALSTATE, global_state).
 
 %%% Separators
 -define(ARITYSEP, "/").

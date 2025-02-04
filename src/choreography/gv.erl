@@ -31,6 +31,7 @@ generate() ->
             G = create_globalview(EntryPoint),
             MinG = fsa:minimize(G),
             Data = #localview{graph = G, min_graph = MinG},
+            db:set(?GLOBALVIEW, Data),
             share:save_graph(Data, EntryPoint, global, settings:get(minimizeG)),
             log:info("Finished!~n", []),
             finished
@@ -48,8 +49,7 @@ create_globalview(Name) ->
     MainProcPid = spawn(actor_emul, proc_loop, [#actor_info{fun_name = Name, id = N}]),
     PidKey = share:atol(Name) ++ ?NSEQSEP ++ integer_to_list(N),
     ProcPidMap = #{share:ltoa(PidKey) => MainProcPid},
-    S = sets:new(),
-    ets:insert(?DBMANAGER, {global_state, #{1 => sets:add_element({share:ltoa(PidKey), 1}, S)}}),
+    db:set(?GLOBALSTATE, #{1 => sets:add_element({share:ltoa(PidKey), 1}, sets:new())}),
     % initialize first branch
     BData = progress_all(RetG, [new_branch(RetG, VNew, ProcPidMap)]),
     % share:show_global_state(),
@@ -440,10 +440,10 @@ add_spawn_to_global(EInfo, SLabel, EmulProcName, Data) ->
     % log:debug("LocalList ~p~n", [LocalList]),
     % create the edge on the global graph
     VNew = share:add_vertex(Data#branch.graph),
-    [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
+    StateM = db:get(?GLOBALSTATE),
     AggrGState = create_gv_state(NewMap, share:ltoa(FunSpawned), 1, EmulProcName, PV),
     % log:debug("SPAWN AGGR ~p~n", [AggrGState]),
-    ets:insert(?DBMANAGER, {global_state, maps:put(VNew, AggrGState, StateM)}),
+    db:set(?GLOBALSTATE, maps:put(VNew, AggrGState, StateM)),
     NewLabel = format_spawn_label(SLabel, EmulProcName, FunSpawned),
     digraph:add_edge(Data#branch.graph, Data#branch.last_vertex, VNew, NewLabel),
     {VNew, NewMap}.
@@ -787,7 +787,7 @@ check_pid_self(Data, ProcId) ->
 %%% TODO: consider message queue also
 complex_add_vertex_recv(Proc1, CurrVertex, Proc2, EdgeInfo, Data, Label) ->
     ProcPid = Data#branch.proc_pid_m,
-    [{_, StateM}] = ets:lookup(?DBMANAGER, global_state),
+    StateM = db:get(?GLOBALSTATE),
     % log:debug("stateM ~p~n", [StateM]),
     % log:debug("Label ~p~n", [share:ltoa(Label)]),
     VLast = Data#branch.last_vertex,
@@ -803,7 +803,7 @@ complex_add_vertex_recv(Proc1, CurrVertex, Proc2, EdgeInfo, Data, Label) ->
             digraph:add_edge(G, VLast, VNew, Label),
             % log:debug("[DEBUG] Adding new global state ~p~n", [VNew]),
             NewM = maps:put(VNew, AggregateGlobalState, StateM),
-            ets:insert(?DBMANAGER, {global_state, NewM}),
+            db:set(?GLOBALSTATE, NewM),
             empty_filter_all_proc(Data#branch.proc_pid_m),
             {VNew, true};
         VFound ->

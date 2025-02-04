@@ -10,6 +10,8 @@
 -export([
     init/1,
     close/0,
+    get/1,
+    set/2,
     get_fun_ast/1,
     get_localview/1,
     get_lv_graph/1,
@@ -17,7 +19,16 @@
     inc_spawn_counter/1
 ]).
 
--define(DB_NAMESL, [?DBMANAGER, ?CLINE, ?FUNAST, ?LOCALVIEW, ?REGISTERDB, ?ARGUMENTS, ?SPAWNCOUNT]).
+-define(ALL, [
+    ?DBMANAGER,
+    ?CLINE,
+    ?FUNAST,
+    ?LOCALVIEW,
+    ?REGISTERDB,
+    ?ARGUMENTS,
+    ?SPAWNCOUNT,
+    ?GLOBALSTATE
+]).
 
 %%%===================================================================
 %%% API
@@ -26,15 +37,21 @@
 init(Settings) ->
     lists:foreach(
         fun(DbName) -> ets:new(DbName, [set, named_table]) end,
-        ?DB_NAMESL
+        ?ALL
     ),
     ets:insert(?DBMANAGER, {?SETTINGS, Settings}).
 
 close() ->
     lists:foreach(
         fun(DbName) -> ets:delete(DbName) end,
-        ?DB_NAMESL
+        ?ALL
     ).
+
+get(Key) ->
+    lookup(?DBMANAGER, Key).
+
+set(Key, Value) ->
+    ets:insert(?DBMANAGER, {Key, Value}).
 
 get_fun_ast(FunName) ->
     lookup(?FUNAST, share:atol(FunName)).

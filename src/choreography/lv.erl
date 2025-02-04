@@ -20,13 +20,13 @@
 generate() ->
     ActorList = get_actors(),
     lists:foldl(
-        fun(Actor, Acc) ->
+        fun(Actor, Error) ->
             case create_localview(Actor, ?ANYDATA, true) of
-                no_graph -> false;
-                _ -> Acc
+                no_graph -> true;
+                _ -> Error
             end
         end,
-        true,
+        false,
         ActorList
     ).
 

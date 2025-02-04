@@ -95,9 +95,10 @@ generate(InputFile, EntryPoint, OutDir, MinG, GState, MinL) ->
     Settings = settings:new_settings(InputFile, EntryPoint, OutDir, MinL, MinG, GState),
     db:init(Settings),
     md:extract(),
-    NoError = lv:generate(),
-    case NoError of
-        true -> gv:generate();
-        false -> done
+    ErrorIsPresent = lv:generate(),
+    case ErrorIsPresent of
+        false -> gv:generate();
+        true -> done
     end,
+    md:show_data(InputFile),
     db:close().
