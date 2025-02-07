@@ -10,11 +10,7 @@ def read_csv_file(filepath):
     with open(filepath, mode="r") as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
-            if len(row) != 2:
-                continue
             key, value = row
-            # if key not in data:
-            #     data[key] = []
             data[key] = value
     return data
 
@@ -23,11 +19,9 @@ def generate_latex_table(columns, rows, caption):
     headers = " & ".join(columns)
     table = "\\begin{table}[h]\n\\centering\n\\begin{tabular}{lccc}\n\\hline\n"
     table += headers + " \\\\ \n\\hline\n"
-
     for row in rows:
-        print(row)
+        # print(row)
         table += " & ".join(row) + " \\\\ \n"
-
     table += "\\hline\n\\end{tabular}\n\\caption{" + caption + "}\n\\end{table}"
     return table
 
@@ -79,7 +73,6 @@ test_list = [
 # compile the tool
 os.system("rebar3 escriptize")
 
-outputs = []
 csvs = []
 add_data = {}
 
@@ -89,11 +82,11 @@ for item in test_list:
     csvfile = item[3] + "/output.csv"
     csvs.append(csvfile)
     print("Executing ", " ".join(item))
+    # get time
     start_time = time.time()
     output = subprocess.check_output(item).decode("utf-8")
     runtime = time.time() - start_time
-    outputs.append(output)
-    # get data
+    # get some data
     warns = output.count("WARNING")
     errs = output.count("ERROR")
     add_data[item[3].rsplit("/", 1)[-1]] = {
@@ -101,7 +94,6 @@ for item in test_list:
         "errs": str(errs),
         "runtime": "{:.3f}".format(runtime),
     }
-
     # print(f"{output}\ntime {runtime}\nwarns {warns}\nerrs {errs}")
     # time.sleep(1)
 
@@ -112,6 +104,7 @@ for c in csvs:
     data = read_csv_file(c)
     filetmp = c.rsplit("/", 1)[0] if "/" in c else c
     file = filetmp.rsplit("/", 1)[-1] if "/" in c else c
+    # merge the 2 dictionaries
     datas.append((file, data | add_data[file]))
 
 # generate global view table
