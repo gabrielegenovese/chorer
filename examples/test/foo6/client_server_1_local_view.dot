@@ -6,7 +6,7 @@ digraph client_server_1 {
 	n_2 [id="4", shape=doublecircle, label="3"];
 	n_3 [id="2", shape=circle, label="2"];
 
-	n_3 -> n_3 [id="[$e|6]", label="spawn client/1.1 args [server/0.0]"];
 	n_1 -> n_3 [id="[$e|3]", label="spawn server/0.0 args nil"];
 	n_3 -> n_2 [id="[$e|1]", label="spawn client/1.0 args [S]"];
+	n_3 -> n_3 [id="[$e|6]", label="spawn client/1.1 args [server/0.0]"];
 }

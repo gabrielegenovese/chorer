@@ -1,0 +1,9 @@
+line,17
+lv_dummy/1_nodes,3
+lv_dummy/1_edges,2
+lv_main/0_nodes,3
+lv_main/0_edges,2
+lv_recv_dummy/0_nodes,2
+lv_recv_dummy/0_edges,1
+gv_nodes,3
+gv_edges,3

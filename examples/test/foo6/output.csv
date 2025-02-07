@@ -1,0 +1,13 @@
+line,24
+lv_client_gen/2_nodes,2
+lv_client_gen/2_edges,2
+lv_client_server/1_nodes,3
+lv_client_server/1_edges,3
+lv_server/0_nodes,1
+lv_server/0_edges,1
+lv_client/1_nodes,2
+lv_client/1_edges,1
+lv_test/0_nodes,3
+lv_test/0_edges,3
+gv_nodes,6
+gv_edges,7

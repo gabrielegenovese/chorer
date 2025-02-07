@@ -6,9 +6,9 @@ digraph main_0 {
 	n_2 [id="2", shape=doublecircle, label="3"];
 	n_3 [id="5", shape=circle, label="2"];
 
-	n_3 -> n_2 [id="[$e|8]", label="spawn foo/0.2 args nil"];
-	n_3 -> n_2 [id="[$e|5]", label="spawn foo/0.1 args nil"];
 	n_3 -> n_2 [id="[$e|10]", label="foo/0.0 ! msg1"];
-	n_1 -> n_3 [id="[$e|3]", label="spawn foo/0.0 args nil"];
+	n_3 -> n_2 [id="[$e|5]", label="spawn foo/0.1 args nil"];
 	n_3 -> n_2 [id="[$e|7]", label="foo/0.0 ! msg2"];
+	n_3 -> n_2 [id="[$e|8]", label="spawn foo/0.2 args nil"];
+	n_1 -> n_3 [id="[$e|3]", label="spawn foo/0.0 args nil"];
 }

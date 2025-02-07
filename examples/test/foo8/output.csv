@@ -1,0 +1,13 @@
+line,29
+lv_foo/0_nodes,1
+lv_foo/0_edges,0
+lv_main/0_nodes,4
+lv_main/0_edges,3
+lv_g/1_nodes,2
+lv_g/1_edges,1
+lv_f/1_nodes,2
+lv_f/1_edges,1
+lv_h/1_nodes,2
+lv_h/1_edges,1
+gv_nodes,27
+gv_edges,95

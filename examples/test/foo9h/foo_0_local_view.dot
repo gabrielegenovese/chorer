@@ -5,6 +5,6 @@ digraph foo_0 {
 	n_0 -> n_1 [arrowhead=none];
 	n_2 [id="3", shape=doublecircle, label="2"];
 
-	n_1 -> n_2 [id="[$e|2]", label="0#receive ok"];
 	n_1 -> n_1 [id="[$e|5]", label="1#receive _"];
+	n_1 -> n_2 [id="[$e|2]", label="0#receive ok"];
 }

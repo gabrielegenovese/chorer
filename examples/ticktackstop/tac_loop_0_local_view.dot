@@ -6,9 +6,9 @@ digraph tac_loop_0 {
 	n_2 [id="4", shape=doublecircle, label="3"];
 	n_3 [id="3", shape=circle, label="2"];
 
+	n_1 -> n_2 [id="[$e|6]", label="1#receive stop"];
 	n_3 -> n_3 [id="[$e|4]", label="0#receive tic"];
-	n_3 -> n_2 [id="[$e|2]", label="1#receive stop"];
 	n_1 -> n_3 [id="[$e|5]", label="0#receive tic"];
 	n_3 -> n_1 [id="[$e|7]", label="tic_loop/0.0 ! tac"];
-	n_1 -> n_2 [id="[$e|6]", label="1#receive stop"];
+	n_3 -> n_2 [id="[$e|2]", label="1#receive stop"];
 }

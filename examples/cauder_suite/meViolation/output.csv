@@ -1,0 +1,11 @@
+line,40
+lv_main/0_nodes,5
+lv_main/0_edges,4
+lv_varManager/1_nodes,2
+lv_varManager/1_edges,3
+lv_meManager/0_nodes,3
+lv_meManager/0_edges,3
+lv_incrementer/2_nodes,7
+lv_incrementer/2_edges,6
+gv_nodes,38
+gv_edges,54

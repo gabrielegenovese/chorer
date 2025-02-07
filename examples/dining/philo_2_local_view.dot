@@ -9,10 +9,10 @@ digraph philo_2 {
 	n_5 [id="2", shape=circle, label="2"];
 	n_6 [id="5", shape=circle, label="6"];
 
-	n_6 -> n_1 [id="[$e|7]", label="F2 ! {pid_self,release}"];
-	n_1 -> n_5 [id="[$e|5]", label="F1 ! {pid_self,req}"];
-	n_4 -> n_2 [id="[$e|6]", label="F2 ! {pid_self,req}"];
-	n_2 -> n_3 [id="[$e|3]", label="0#receive ok"];
 	n_3 -> n_6 [id="[$e|2]", label="F1 ! {pid_self,release}"];
+	n_6 -> n_1 [id="[$e|7]", label="F2 ! {pid_self,release}"];
+	n_4 -> n_2 [id="[$e|6]", label="F2 ! {pid_self,req}"];
+	n_1 -> n_5 [id="[$e|5]", label="F1 ! {pid_self,req}"];
+	n_2 -> n_3 [id="[$e|3]", label="0#receive ok"];
 	n_5 -> n_4 [id="[$e|4]", label="0#receive ok"];
 }

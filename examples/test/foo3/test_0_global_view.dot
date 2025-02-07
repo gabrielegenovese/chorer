@@ -16,20 +16,20 @@ digraph global {
 	n_12 [id="13", shape=doublecircle, label="13"];
 	n_13 [id="5", shape=circle, label="5"];
 
-	n_13 -> n_1 [id="[$e|8]", label="b/1.0→test/0.0:2"];
-	n_3 -> n_9 [id="[$e|0]", label="test/0.0Δa/1.0 args [pid_self]"];
-	n_13 -> n_4 [id="[$e|7]", label="a/1.0→test/0.0:1"];
-	n_9 -> n_7 [id="[$e|1]", label="test/0.0Δb/1.0 args [pid_self]"];
-	n_7 -> n_13 [id="[$e|3]", label="a/1.0→test/0.0:3"];
-	n_6 -> n_11 [id="[$e|9]", label="a/1.0→test/0.0:1"];
-	n_7 -> n_5 [id="[$e|2]", label="a/1.0→test/0.0:1"];
 	n_2 -> n_12 [id="[$e|12]", label="a/1.0→test/0.0:3"];
-	n_10 -> n_12 [id="[$e|15]", label="a/1.0→test/0.0:1"];
-	n_4 -> n_8 [id="[$e|11]", label="b/1.0→test/0.0:2"];
-	n_7 -> n_6 [id="[$e|4]", label="b/1.0→test/0.0:2"];
-	n_6 -> n_10 [id="[$e|10]", label="a/1.0→test/0.0:3"];
 	n_1 -> n_12 [id="[$e|13]", label="a/1.0→test/0.0:1"];
-	n_5 -> n_2 [id="[$e|6]", label="b/1.0→test/0.0:2"];
-	n_11 -> n_12 [id="[$e|14]", label="a/1.0→test/0.0:3"];
+	n_7 -> n_13 [id="[$e|3]", label="a/1.0→test/0.0:3"];
+	n_3 -> n_9 [id="[$e|0]", label="test/0.0Δa/1.0 args [pid_self]"];
+	n_7 -> n_6 [id="[$e|4]", label="b/1.0→test/0.0:2"];
+	n_7 -> n_5 [id="[$e|2]", label="a/1.0→test/0.0:1"];
+	n_6 -> n_11 [id="[$e|9]", label="a/1.0→test/0.0:1"];
+	n_6 -> n_10 [id="[$e|10]", label="a/1.0→test/0.0:3"];
 	n_5 -> n_4 [id="[$e|5]", label="a/1.0→test/0.0:3"];
+	n_13 -> n_4 [id="[$e|7]", label="a/1.0→test/0.0:1"];
+	n_4 -> n_8 [id="[$e|11]", label="b/1.0→test/0.0:2"];
+	n_10 -> n_12 [id="[$e|15]", label="a/1.0→test/0.0:1"];
+	n_11 -> n_12 [id="[$e|14]", label="a/1.0→test/0.0:3"];
+	n_13 -> n_1 [id="[$e|8]", label="b/1.0→test/0.0:2"];
+	n_9 -> n_7 [id="[$e|1]", label="test/0.0Δb/1.0 args [pid_self]"];
+	n_5 -> n_2 [id="[$e|6]", label="b/1.0→test/0.0:2"];
 }

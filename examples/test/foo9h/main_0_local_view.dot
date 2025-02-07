@@ -10,11 +10,11 @@ digraph main_0 {
 	n_6 [id="5", shape=circle, label="2"];
 
 	n_5 -> n_4 [id="[$e|13]", label="foo/0.0 ! msg0"];
-	n_6 -> n_3 [id="[$e|17]", label="foo/0.0 ! msg"];
-	n_6 -> n_3 [id="[$e|2]", label="spawn foo/0.1 args nil"];
 	n_3 -> n_5 [id="[$e|15]", label="foo/0.0 ! msg"];
 	n_4 -> n_2 [id="[$e|5]", label="foo/0.0 ! ok"];
-	n_3 -> n_5 [id="[$e|3]", label="spawn foo/0.1 args nil"];
+	n_6 -> n_3 [id="[$e|17]", label="foo/0.0 ! msg"];
 	n_3 -> n_4 [id="[$e|7]", label="foo/0.0 ! msg1"];
 	n_1 -> n_6 [id="[$e|12]", label="spawn foo/0.0 args nil"];
+	n_3 -> n_5 [id="[$e|3]", label="spawn foo/0.1 args nil"];
+	n_6 -> n_3 [id="[$e|2]", label="spawn foo/0.1 args nil"];
 }

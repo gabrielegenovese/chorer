@@ -1,0 +1,9 @@
+line,23
+lv_main/0_nodes,4
+lv_main/0_edges,4
+lv_agent/1_nodes,2
+lv_agent/1_edges,2
+lv_seats/1_nodes,2
+lv_seats/1_edges,2
+gv_nodes,12
+gv_edges,20

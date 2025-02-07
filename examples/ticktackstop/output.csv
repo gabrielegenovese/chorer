@@ -1,0 +1,13 @@
+line,46
+lv_random/0_nodes,2
+lv_random/0_edges,1
+lv_spawn_process/0_nodes,4
+lv_spawn_process/0_edges,3
+lv_tac_loop/0_nodes,3
+lv_tac_loop/0_edges,5
+lv_start/0_nodes,5
+lv_start/0_edges,4
+lv_tic_loop/0_nodes,4
+lv_tic_loop/0_edges,4
+gv_nodes,12
+gv_edges,19

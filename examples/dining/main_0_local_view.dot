@@ -8,8 +8,8 @@ digraph main_0 {
 	n_4 [id="2", shape=circle, label="2"];
 	n_5 [id="5", shape=circle, label="3"];
 
-	n_5 -> n_3 [id="[$e|0]", label="spawn philo/2.0 args [fork/0.0,fork/0.1]"];
-	n_4 -> n_5 [id="[$e|3]", label="spawn fork/0.1 args nil"];
 	n_1 -> n_4 [id="[$e|2]", label="spawn fork/0.0 args nil"];
+	n_5 -> n_3 [id="[$e|0]", label="spawn philo/2.0 args [fork/0.0,fork/0.1]"];
 	n_3 -> n_2 [id="[$e|1]", label="spawn philo/2.1 args [fork/0.1,fork/0.0]"];
+	n_4 -> n_5 [id="[$e|3]", label="spawn fork/0.1 args nil"];
 }

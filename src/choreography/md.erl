@@ -41,7 +41,8 @@ show_data(InputFile) ->
         LocalViewData
     ),
     io:fwrite("Data of global view: ~n"),
-    print_map(GlobalViewMap).
+    print_map(GlobalViewMap),
+    print_to_csv(TotLine, LocalViewData, GlobalViewMap).
 
 %%%===================================================================
 %%% Internal Functions
@@ -93,11 +94,7 @@ get_lv_data() ->
     AllLovalViewList = ets:tab2list(?LOCALVIEW),
     lists:map(
         fun({FunName, FunData}) ->
-            G = FunData#localview.min_graph,
-            LvNodes = length(digraph:vertices(G)),
-            LvEdges = length(digraph:edges(G)),
-            Map = maps:put(num_nodes, LvNodes, #{}),
-            RetMap = maps:put(num_edges, LvEdges, Map),
+            RetMap = extract_info_from_data(FunData),
             {FunName, RetMap}
         end,
         AllLovalViewList
@@ -105,6 +102,9 @@ get_lv_data() ->
 
 get_gv_data() ->
     Data = db:get(?GLOBALVIEW),
+    extract_info_from_data(Data).
+
+extract_info_from_data(Data) ->
     G = Data#localview.min_graph,
     GvNodes = length(digraph:vertices(G)),
     GvEdges = length(digraph:edges(G)),
@@ -118,3 +118,32 @@ print_map(Map) ->
         end,
         Map
     ).
+
+print_to_csv(TotLine, LocalViewData, GvMap) ->
+    CsvData = ["line", integer_to_list(TotLine)],
+    TempCsvData = lists:foldl(
+        fun({FunName, LvMap}, Acc) ->
+            BaseS = "lv_" ++ FunName,
+            Acc ++ [BaseS ++ "_nodes", maps:get(num_nodes, LvMap)] ++
+                [BaseS ++ "_edges", maps:get(num_edges, LvMap)]
+        end,
+        CsvData,
+        LocalViewData
+    ),
+    RetCsvData =
+        TempCsvData ++ ["gv_nodes", maps:get(num_nodes, GvMap)] ++
+            ["gv_edges", maps:get(num_edges, GvMap)],
+    D = format_to_string(RetCsvData, ""),
+    Out = settings:get(output_dir),
+    ok = file:write_file(Out ++ "/output.csv", unicode:characters_to_binary(D)).
+
+format_to_string([], S) ->
+    S;
+format_to_string([K | T], S) ->
+    [V | Rest] = T,
+    format_to_string(Rest, S ++ K ++ "," ++ itol(V) ++ "\n").
+
+itol(I) when is_list(I) ->
+    I;
+itol(I) when is_integer(I) ->
+    integer_to_list(I).

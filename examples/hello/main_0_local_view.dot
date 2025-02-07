@@ -8,10 +8,10 @@ digraph main_0 {
 	n_4 [id="2", shape=doublecircle, label="2"];
 	n_5 [id="5", shape=circle, label="2"];
 
-	n_3 -> n_5 [id="[$e|10]", label="pid_self ! N"];
-	n_5 -> n_3 [id="[$e|3]", label="0#receive _"];
-	n_2 -> n_3 [id="[$e|12]", label="0#receive _"];
-	n_1 -> n_2 [id="[$e|0]", label="pid_self ! N"];
-	n_1 -> n_5 [id="[$e|16]", label="pid_self ! N"];
 	n_3 -> n_5 [id="[$e|15]", label="pid_self ! N"];
+	n_1 -> n_5 [id="[$e|16]", label="pid_self ! N"];
+	n_1 -> n_2 [id="[$e|0]", label="pid_self ! N"];
+	n_2 -> n_3 [id="[$e|12]", label="0#receive _"];
+	n_5 -> n_3 [id="[$e|3]", label="0#receive _"];
+	n_3 -> n_5 [id="[$e|10]", label="pid_self ! N"];
 }

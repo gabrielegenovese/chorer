@@ -1,0 +1,13 @@
+line,54
+lv_customer/0_nodes,5
+lv_customer/0_edges,6
+lv_main/0_nodes,3
+lv_main/0_edges,2
+lv_store/0_nodes,5
+lv_store/0_edges,6
+lv_purchase/0_nodes,3
+lv_purchase/0_edges,3
+lv_payment/0_nodes,3
+lv_payment/0_edges,3
+gv_nodes,12
+gv_edges,16
