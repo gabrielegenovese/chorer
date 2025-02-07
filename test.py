@@ -139,5 +139,5 @@ rows = [
 
 latex_code = generate_latex_table(columns, rows, "Global view data")
 
-with open("assets/output.tex", "w", encoding="utf-8") as f:
+with open("assets/table.tex", "w", encoding="utf-8") as f:
     f.write(latex_code)
