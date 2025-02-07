@@ -17,12 +17,16 @@ def read_csv_file(filepath):
 
 def generate_latex_table(columns, rows, caption):
     headers = " & ".join(columns)
-    table = "\\begin{table}[h]\n\\centering\n\\begin{tabular}{lccc}\n\\hline\n"
+    table = (
+        "\\begin{table}[h]\n\\centering\n\\begin{tabular}{|"
+        + "c|" * len(columns)
+        + "}\n\\hline\n"
+    )
     table += headers + " \\\\ \n\\hline\n"
     for row in rows:
         # print(row)
         table += " & ".join(row) + " \\\\ \n"
-    table += "\\hline\n\\end{tabular}\n\\caption{" + caption + "}\n\\end{table}"
+    table += "\\hline\n\\end{tabular}\n\\caption{" + caption + "}\n\\label{tab:gvbench}\n\\end{table}"
     return table
 
 
@@ -92,7 +96,7 @@ for item in test_list:
     add_data[item[3].rsplit("/", 1)[-1]] = {
         "warns": str(warns),
         "errs": str(errs),
-        "runtime": "{:.3f}".format(runtime),
+        "runtime": "{:.3f}s".format(runtime),
     }
     # print(f"{output}\ntime {runtime}\nwarns {warns}\nerrs {errs}")
     # time.sleep(1)
