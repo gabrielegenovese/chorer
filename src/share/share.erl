@@ -171,7 +171,8 @@ and_rec([{B, L} | T]) ->
 format_name(Name) -> string:replace(atol(Name), "/", "_").
 
 format_local_name(Name) -> format_name(Name) ++ "_local_view.dot".
-format_global_name(Name) -> format_name(Name) ++ "_global_view.dot".
+% format_global_name(Name) -> format_name(Name) ++ "_global_view.dot".
+format_global_name(_Name) -> "global_view.dot".
 
 %%% Get a new label for a given graph
 new_label(Graph) -> length(digraph:vertices(Graph)) + 1.

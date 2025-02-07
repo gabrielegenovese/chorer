@@ -3,6 +3,53 @@ import os
 import subprocess
 import time
 import csv
+import pydot
+import networkx as nx
+
+
+def load_graph_from_dot(file_path):
+    graph = pydot.graph_from_dot_file(file_path)[0]
+    G = nx.DiGraph()
+
+    for node in graph.get_nodes():
+        node_id = node.get_name()
+        label = node.get_label()
+        G.add_node(node_id, label=label)
+
+    for edge in graph.get_edges():
+        source = edge.get_source()
+        destination = edge.get_destination()
+        label = edge.get_label()
+        G.add_edge(source, destination, label=label)
+
+    return G
+
+
+def are_graphs_equivalent(G1, G2):
+    if set(G1.nodes) != set(G2.nodes):
+        return False
+
+    if set(G1.edges) != set(G2.edges):
+        return False
+
+    for node in G1.nodes:
+        if G1.nodes[node].get("label") != G2.nodes[node].get("label"):
+            return False
+
+    for edge in G1.edges:
+        if G1[edge[0]][edge[1]].get("label") != G2[edge[0]][edge[1]].get("label"):
+            return False
+
+    return True
+
+
+def check_correctedness(file1, file2):
+    G1 = load_graph_from_dot(file1)
+    try:
+        G2 = load_graph_from_dot(file2)
+        return str(are_graphs_equivalent(G1, G2))
+    except Exception as e:
+        return "Not present"
 
 
 def read_csv_file(filepath):
@@ -26,7 +73,11 @@ def generate_latex_table(columns, rows, caption):
     for row in rows:
         # print(row)
         table += " & ".join(row) + " \\\\ \n"
-    table += "\\hline\n\\end{tabular}\n\\caption{" + caption + "}\n\\label{tab:gvbench}\n\\end{table}"
+    table += (
+        "\\hline\n\\end{tabular}\n\\caption{"
+        + caption
+        + "}\n\\label{tab:gvbench}\n\\end{table}"
+    )
     return table
 
 
@@ -84,6 +135,8 @@ add_data = {}
 for item in test_list:
     item = ["./_build/default/bin/chorer"] + item[:-1]  # remove minimize of global view
     csvfile = item[3] + "/output.csv"
+    gvfile = item[3] + "/global_view.dot"
+    correct_gvfile = item[3] + "/correct_gv.dot"
     csvs.append(csvfile)
     print("Executing ", " ".join(item))
     # get time
@@ -97,6 +150,7 @@ for item in test_list:
         "warns": str(warns),
         "errs": str(errs),
         "runtime": "{:.3f}s".format(runtime),
+        "correct": check_correctedness(gvfile, correct_gvfile),
     }
     # print(f"{output}\ntime {runtime}\nwarns {warns}\nerrs {errs}")
     # time.sleep(1)
@@ -114,12 +168,13 @@ for c in csvs:
 # generate global view table
 columns = [
     "Example",
-    "#Lines",
-    "#GV Nodes",
-    "#GV Edges",
-    "#Warnings",
-    "#Errors",
+    "Lines",
+    "GV Nodes",
+    "GV Edges",
+    "Warnings",
+    "Errors",
     "Runtime",
+    # "Check",
 ]
 rows = [
     [
@@ -130,6 +185,7 @@ rows = [
         data["warns"],
         data["errs"],
         data["runtime"],
+        # data["correct"],
     ]
     for (file, data) in datas
 ]
