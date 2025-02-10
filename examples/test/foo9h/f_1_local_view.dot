@@ -8,9 +8,9 @@ digraph f_1 {
 	n_4 [id="2", shape=doublecircle, label="4"];
 
 	n_2 -> n_3 [id="[$e|13]", label="foo/0.0 ! msg"];
-	n_3 -> n_4 [id="[$e|6]", label="foo/0.0 ! msg0"];
-	n_2 -> n_4 [id="[$e|11]", label="foo/0.0 ! msg1"];
-	n_1 -> n_2 [id="[$e|12]", label="spawn foo/0.1 args nil"];
-	n_1 -> n_2 [id="[$e|1]", label="foo/0.0 ! msg"];
 	n_2 -> n_3 [id="[$e|2]", label="spawn foo/0.1 args nil"];
+	n_2 -> n_4 [id="[$e|11]", label="foo/0.0 ! msg1"];
+	n_1 -> n_2 [id="[$e|1]", label="foo/0.0 ! msg"];
+	n_1 -> n_2 [id="[$e|12]", label="spawn foo/0.1 args nil"];
+	n_3 -> n_4 [id="[$e|6]", label="foo/0.0 ! msg0"];
 }

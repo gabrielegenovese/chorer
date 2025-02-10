@@ -6,6 +6,6 @@ digraph account_1 {
 	n_2 [id="2", shape=circle, label="2"];
 
 	n_2 -> n_1 [id="[$e|7]", label="P ! Value"];
-	n_1 -> n_2 [id="[$e|0]", label="0#receive {get,P}"];
 	n_1 -> n_1 [id="[$e|8]", label="1#receive {set,NewValue}"];
+	n_1 -> n_2 [id="[$e|0]", label="0#receive {get,P}"];
 }

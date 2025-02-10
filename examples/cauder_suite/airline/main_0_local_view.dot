@@ -10,10 +10,10 @@ digraph main_0 {
 	n_6 [id="5", shape=circle, label="5"];
 
 	n_2 -> n_3 [id="[$e|5]", label="spawn agent/2.0 args [1,pid_self]"];
-	n_3 -> n_5 [id="[$e|14]", label="spawn agent/2.1 args [2,pid_self]"];
-	n_5 -> n_4 [id="[$e|8]", label="0#receive {numOfSeats,Pid}"];
-	n_6 -> n_5 [id="[$e|9]", label="Pid ! {booked,3}"];
-	n_5 -> n_1 [id="[$e|12]", label="2#receive stop"];
-	n_5 -> n_6 [id="[$e|2]", label="1#receive {sell,Pid}"];
 	n_4 -> n_5 [id="[$e|13]", label="Pid ! {seats,3}"];
+	n_3 -> n_5 [id="[$e|14]", label="spawn agent/2.1 args [2,pid_self]"];
+	n_5 -> n_1 [id="[$e|12]", label="2#receive stop"];
+	n_5 -> n_4 [id="[$e|8]", label="0#receive {numOfSeats,Pid}"];
+	n_5 -> n_6 [id="[$e|2]", label="1#receive {sell,Pid}"];
+	n_6 -> n_5 [id="[$e|9]", label="Pid ! {booked,3}"];
 }

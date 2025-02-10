@@ -6,7 +6,7 @@ digraph meManager_0 {
 	n_2 [id="3", shape=circle, label="3"];
 	n_3 [id="2", shape=circle, label="2"];
 
-	n_3 -> n_2 [id="[$e|3]", label="Pid ! answer"];
 	n_2 -> n_1 [id="[$e|4]", label="0#receive {release}"];
 	n_1 -> n_3 [id="[$e|1]", label="0#receive {request,Pid}"];
+	n_3 -> n_2 [id="[$e|3]", label="Pid ! answer"];
 }

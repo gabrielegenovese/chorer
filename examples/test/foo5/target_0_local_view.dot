@@ -8,8 +8,8 @@ digraph target_0 {
 	n_4 [id="2", shape=circle, label="3"];
 	n_5 [id="5", shape=doublecircle, label="5"];
 
+	n_3 -> n_4 [id="[$e|2]", label="0#receive B"];
 	n_2 -> n_5 [id="[$e|0]", label="0#receive D"];
 	n_1 -> n_3 [id="[$e|1]", label="0#receive A"];
 	n_4 -> n_2 [id="[$e|3]", label="0#receive C"];
-	n_3 -> n_4 [id="[$e|2]", label="0#receive B"];
 }

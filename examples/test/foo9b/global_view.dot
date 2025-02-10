@@ -9,6 +9,6 @@ digraph global {
 
 	n_1 -> n_4 [id="[$e|0]", label="main/0.0Δfoo/0.0 args nil"];
 	n_2 -> n_3 [id="[$e|3]", label="main/0.0→foo/0.0:3"];
-	n_4 -> n_2 [id="[$e|2]", label="main/0.0→foo/0.0:3"];
 	n_4 -> n_3 [id="[$e|1]", label="main/0.0→foo/0.0:3"];
+	n_4 -> n_2 [id="[$e|2]", label="main/0.0→foo/0.0:3"];
 }

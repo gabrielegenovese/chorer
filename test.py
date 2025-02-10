@@ -1,6 +1,6 @@
 #!/bin/python
 import os
-import subprocess
+import subprocess as sp
 import time
 import csv
 import pydot
@@ -25,19 +25,24 @@ def load_graph_from_dot(file_path):
     return G
 
 
-# TODO: COMMENT
 def are_graphs_equivalent(G1, G2):
+    # check that the nodes are the same
     if set(G1.nodes) != set(G2.nodes):
         return False
 
+    # check that the edges are the same
     if set(G1.edges) != set(G2.edges):
         return False
 
+    # for each nodes in the first graph
     for node in G1.nodes:
+        # if the labels are different then they are not equal
         if G1.nodes[node].get("label") != G2.nodes[node].get("label"):
             return False
 
+    # for each edges in the first graph
     for edge in G1.edges:
+        # if the labels are different then they are not equal
         if G1[edge[0]][edge[1]].get("label") != G2[edge[0]][edge[1]].get("label"):
             return False
 
@@ -62,11 +67,17 @@ def read_csv_file(filepath):
             data[key] = value
     return data
 
+def lv_number(csvdata):
+    c = 0
+    for k in csvdata.keys():
+        if "lv" in k:
+            c += 1
+    return str(int(c/2)) # every lv is double counted 
 
 def generate_latex_table(columns, rows, caption):
     headers = " & ".join(columns)
     table = (
-        "\\begin{table}[h]\n\\centering\n\\begin{tabular}{|"
+        "\\begin{table}[!ht]\n\\centering\n\\begin{tabular}{|"
         + "c|" * len(columns)
         + "}\n\\hline\n"
     )
@@ -142,9 +153,9 @@ for item in test_list:
     print("Executing ", " ".join(item))
     # get time
     start_time = time.time()
-    output = subprocess.check_output(item).decode("utf-8")
+    output = sp.check_output(item).decode("utf-8")
     runtime = time.time() - start_time
-    # get some data
+    # get some additional data
     warns = output.count("WARNING")
     errs = output.count("ERROR")
     add_data[item[3].rsplit("/", 1)[-1]] = {
@@ -163,13 +174,14 @@ for c in csvs:
     data = read_csv_file(c)
     filetmp = c.rsplit("/", 1)[0] if "/" in c else c
     file = filetmp.rsplit("/", 1)[-1] if "/" in c else c
-    # merge the 2 dictionaries
+    # merge the 2 dictionaries with data
     datas.append((file, data | add_data[file]))
-
+    
 # generate global view table
 columns = [
     "Example",
     "Lines",
+    "Tot LV",
     "GV Nodes",
     "GV Edges",
     "Warnings",
@@ -181,6 +193,7 @@ rows = [
     [
         file,
         data["line"],
+        lv_number(data),
         data["gv_nodes"],
         data["gv_edges"],
         data["warns"],
@@ -191,7 +204,25 @@ rows = [
     for (file, data) in datas
 ]
 
-latex_code = generate_latex_table(columns, rows, "Global view data")
+gv_table_code = generate_latex_table(columns, rows, "Global view empirical data")
 
 with open("assets/table.tex", "w", encoding="utf-8") as f:
-    f.write(latex_code)
+    f.write(gv_table_code)
+
+# Correctness table
+columns = [
+    "Example",
+    "Check",
+]
+rows = [
+    [
+        file,
+        data["correct"],
+    ]
+    for (file, data) in datas if "Not present" != data["correct"]
+]
+
+correct_table_code = generate_latex_table(columns, rows, "Global view correctness data")
+
+with open("assets/correct.tex", "w", encoding="utf-8") as f:
+    f.write(correct_table_code)

@@ -5,6 +5,6 @@ digraph g_2 {
 	n_0 -> n_1 [arrowhead=none];
 	n_2 [id="2", shape=doublecircle, label="2"];
 
-	n_1 -> n_2 [id="[$e|0]", label="S ! 0"];
 	n_1 -> n_1 [id="[$e|4]", label="foo/0.0 ! 3"];
+	n_1 -> n_2 [id="[$e|0]", label="S ! 0"];
 }

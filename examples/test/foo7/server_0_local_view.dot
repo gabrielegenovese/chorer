@@ -5,7 +5,7 @@ digraph server_0 {
 	n_0 -> n_1 [arrowhead=none];
 	n_2 [id="2", shape=doublecircle, label="2"];
 
-	n_1 -> n_1 [id="[$e|9]", label="1#receive 2"];
 	n_1 -> n_1 [id="[$e|13]", label="0#receive 1"];
+	n_1 -> n_1 [id="[$e|9]", label="1#receive 2"];
 	n_1 -> n_2 [id="[$e|1]", label="2#receive 3"];
 }

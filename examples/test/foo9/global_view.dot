@@ -8,6 +8,6 @@ digraph global {
 	n_4 [id="2", shape=circle, label="2", fillcolor="#FF0000FF", style=filled];
 
 	n_1 -> n_4 [id="[$e|0]", label="main/0.0Δfoo/0.0 args nil"];
-	n_1 -> n_2 [id="[$e|2]", label="main/0.0Δfoo/0.0 args nil"];
 	n_1 -> n_3 [id="[$e|1]", label="main/0.0Δfoo/0.0 args nil"];
+	n_1 -> n_2 [id="[$e|2]", label="main/0.0Δfoo/0.0 args nil"];
 }

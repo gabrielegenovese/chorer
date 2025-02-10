@@ -7,7 +7,7 @@ digraph consumer_0 {
 	n_3 [id="3", shape=doublecircle, label="3"];
 	n_4 [id="2", shape=circle, label="2"];
 
-	n_2 -> n_4 [id="[$e|9]", label="producer/0.0 ! {req,pid_self}"];
-	n_4 -> n_2 [id="[$e|5]", label="0#receive D"];
 	n_1 -> n_4 [id="[$e|10]", label="producer/0.0 ! {req,pid_self}"];
+	n_4 -> n_2 [id="[$e|5]", label="0#receive D"];
+	n_2 -> n_4 [id="[$e|9]", label="producer/0.0 ! {req,pid_self}"];
 }

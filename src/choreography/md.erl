@@ -9,7 +9,7 @@
 -include("../share/common_data.hrl").
 
 %%% API
--export([extract/0, parse_file/1, show_data/1]).
+-export([extract/0, parse_file/1, show_data/1, print_data/3]).
 
 %%%===================================================================
 %%% API
@@ -31,17 +31,8 @@ parse_file(Path) ->
 %%% Print some information about the local and global views.
 show_data(InputFile) ->
     TotLine = get_tot_line(InputFile),
-    io:fwrite("~nTotal numeber of lines: ~p~n", [TotLine]),
     {LocalViewData, GlobalViewMap} = get_graph_data(),
-    lists:foreach(
-        fun({FunName, LvMap}) ->
-            io:fwrite("Data of ~p localview:~n", [FunName]),
-            print_map(LvMap)
-        end,
-        LocalViewData
-    ),
-    io:fwrite("Data of global view: ~n"),
-    print_map(GlobalViewMap),
+    % print_data(LocalViewData, GlobalViewMap),
     print_to_csv(TotLine, LocalViewData, GlobalViewMap).
 
 %%%===================================================================
@@ -71,6 +62,18 @@ gen_fun_ast_and_exported(Ast) ->
             Ast
         ),
     ets:insert(?DBMANAGER, {?ACTORLIST, ActorList}).
+
+print_data(TotLine, LocalViewData, GlobalViewMap) ->
+    io:fwrite("~nTotal numeber of lines: ~p~n", [TotLine]),
+    lists:foreach(
+        fun({FunName, LvMap}) ->
+            io:fwrite("Data of ~p localview:~n", [FunName]),
+            print_map(LvMap)
+        end,
+        LocalViewData
+    ),
+    io:fwrite("Data of global view: ~n"),
+    print_map(GlobalViewMap).
 
 get_tot_line(FileName) ->
     {ok, Device} = file:open(FileName, [read]),
