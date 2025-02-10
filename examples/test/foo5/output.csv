@@ -1,9 +1,9 @@
 line,18
-lv_target/0_nodes,5
-lv_target/0_edges,4
-lv_proxy/1_nodes,3
-lv_proxy/1_edges,2
-lv_test/0_nodes,8
-lv_test/0_edges,7
-gv_nodes,39
-gv_edges,87
+lv_target/0_nodes,10
+lv_target/0_edges,9
+lv_proxy/1_nodes,5
+lv_proxy/1_edges,4
+lv_test/0_nodes,9
+lv_test/0_edges,8
+gv_nodes,79
+gv_edges,165

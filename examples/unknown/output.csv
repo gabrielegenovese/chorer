@@ -1,7 +1,7 @@
 line,13
-lv_counter/1_nodes,3
-lv_counter/1_edges,3
-lv_main/0_nodes,3
-lv_main/0_edges,3
-gv_nodes,1
-gv_edges,1
+lv_counter/1_nodes,6
+lv_counter/1_edges,6
+lv_main/0_nodes,8
+lv_main/0_edges,8
+gv_nodes,2
+gv_edges,2

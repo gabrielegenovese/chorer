@@ -1,9 +1,9 @@
 line,36
-lv_ping/1_nodes,3
-lv_ping/1_edges,3
-lv_start/0_nodes,4
-lv_start/0_edges,3
-lv_pong/0_nodes,4
-lv_pong/0_edges,4
+lv_ping/1_nodes,6
+lv_ping/1_edges,6
+lv_start/0_nodes,5
+lv_start/0_edges,4
+lv_pong/0_nodes,7
+lv_pong/0_edges,7
 gv_nodes,6
 gv_edges,5

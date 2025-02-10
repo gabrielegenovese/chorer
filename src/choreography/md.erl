@@ -105,7 +105,8 @@ get_gv_data() ->
     extract_info_from_data(Data).
 
 extract_info_from_data(Data) ->
-    G = Data#localview.min_graph,
+    % G = Data#localview.min_graph,
+    G = Data#localview.graph,
     GvNodes = length(digraph:vertices(G)),
     GvEdges = length(digraph:edges(G)),
     Map = maps:put(num_nodes, GvNodes, #{}),

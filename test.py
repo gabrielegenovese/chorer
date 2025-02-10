@@ -25,6 +25,7 @@ def load_graph_from_dot(file_path):
     return G
 
 
+# TODO: COMMENT
 def are_graphs_equivalent(G1, G2):
     if set(G1.nodes) != set(G2.nodes):
         return False
@@ -43,7 +44,7 @@ def are_graphs_equivalent(G1, G2):
     return True
 
 
-def check_correctedness(file1, file2):
+def check_correctness(file1, file2):
     G1 = load_graph_from_dot(file1)
     try:
         G2 = load_graph_from_dot(file2)
@@ -150,7 +151,7 @@ for item in test_list:
         "warns": str(warns),
         "errs": str(errs),
         "runtime": "{:.3f}s".format(runtime),
-        "correct": check_correctedness(gvfile, correct_gvfile),
+        "correct": check_correctness(gvfile, correct_gvfile),
     }
     # print(f"{output}\ntime {runtime}\nwarns {warns}\nerrs {errs}")
     # time.sleep(1)
