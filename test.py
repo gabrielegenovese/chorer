@@ -67,12 +67,14 @@ def read_csv_file(filepath):
             data[key] = value
     return data
 
+
 def lv_number(csvdata):
     c = 0
     for k in csvdata.keys():
         if "lv" in k:
             c += 1
-    return str(int(c/2)) # every lv is double counted 
+    return str(int(c / 2))  # every lv is double counted
+
 
 def generate_latex_table(columns, rows, caption, label):
     headers = " & ".join(columns)
@@ -178,7 +180,8 @@ for c in csvs:
     file = filetmp.rsplit("/", 1)[-1] if "/" in c else c
     # merge the 2 dictionaries with data
     datas.append((file, data | add_data[file]))
-    
+
+# sort by number of lines
 sorted_data = sorted(datas, key=lambda x: x[1]["line"])
 
 # generate global view table
@@ -208,12 +211,14 @@ rows = [
     for (file, data) in sorted_data
 ]
 
-gv_table_code = generate_latex_table(columns, rows, "Global view empirical data", "tab:gvbench")
+gv_table_code = generate_latex_table(
+    columns, rows, "Global view empirical data", "tab:gvbench"
+)
 
 with open("assets/table.tex", "w", encoding="utf-8") as f:
     f.write(gv_table_code)
 
-# Correctness table
+# generate correctness view table
 columns = [
     "Example",
     "Check",
@@ -223,10 +228,13 @@ rows = [
         file,
         data["correct"],
     ]
-    for (file, data) in sorted_data if "Not present" != data["correct"]
+    for (file, data) in sorted_data
+    if "Not present" != data["correct"]
 ]
 
-correct_table_code = generate_latex_table(columns, rows, "Global view correctness data", "tab:corrbench")
+correct_table_code = generate_latex_table(
+    columns, rows, "Global view correctness data", "tab:corrbench"
+)
 
 with open("assets/correct.tex", "w", encoding="utf-8") as f:
     f.write(correct_table_code)
