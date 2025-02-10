@@ -1,4 +1,4 @@
--module(conditional_case).
+-module(conditional).
 -export([main/0, dummy/1]).
 
 dummy(Pid) ->

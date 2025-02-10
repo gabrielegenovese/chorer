@@ -74,7 +74,7 @@ def lv_number(csvdata):
             c += 1
     return str(int(c/2)) # every lv is double counted 
 
-def generate_latex_table(columns, rows, caption):
+def generate_latex_table(columns, rows, caption, label):
     headers = " & ".join(columns)
     table = (
         "\\begin{table}[!ht]\n\\centering\n\\begin{tabular}{|"
@@ -88,7 +88,9 @@ def generate_latex_table(columns, rows, caption):
     table += (
         "\\hline\n\\end{tabular}\n\\caption{"
         + caption
-        + "}\n\\label{tab:gvbench}\n\\end{table}"
+        + "}\n\\label{"
+        + label
+        + "}\n\\end{table}"
     )
     return table
 
@@ -105,10 +107,10 @@ test_list = [
     ["./examples/serverclient/serverclient.erl","main/0","examples/serverclient", "true"],
     ["./examples/trick/trick.erl","main/0","examples/trick", "true"],
     ["./examples/airline/airline.erl","main/0","examples/airline", "true"],
-    ["./examples/conditional-case/conditional_case.erl","main/0","examples/conditional-case", "true"],
-    ["./examples/for-loop-recursion/forloop.erl","main/0","examples/for-loop-recursion", "true"],
-    ["./examples/function-call/funny.erl","main/0","examples/function-call", "true"],
-    ["./examples/high-order-fun/hof.erl","greet/0","examples/high-order-fun", "true"],
+    ["./examples/conditional/conditional.erl","main/0","examples/conditional", "true"],
+    ["./examples/forloop/forloop.erl","main/0","examples/forloop", "true"],
+    ["./examples/funcall/funcall.erl","main/0","examples/funcall", "true"],
+    ["./examples/hof/hof.erl","greet/0","examples/hof", "true"],
     ["./examples/if-cases/ifcases.erl","main/0","examples/if-cases", "true"],
     ["./examples/pass/pass.erl","main/0","examples/pass", "true"],
     ["./examples/producer/producer.erl","main/0","examples/producer", "true"],
@@ -150,7 +152,7 @@ for item in test_list:
     gvfile = item[3] + "/global_view.dot"
     correct_gvfile = item[3] + "/correct_gv.dot"
     csvs.append(csvfile)
-    print("Executing ", " ".join(item))
+    print("Executing", " ".join(item))
     # get time
     start_time = time.time()
     output = sp.check_output(item).decode("utf-8")
@@ -177,6 +179,8 @@ for c in csvs:
     # merge the 2 dictionaries with data
     datas.append((file, data | add_data[file]))
     
+sorted_data = sorted(datas, key=lambda x: x[1]["line"])
+
 # generate global view table
 columns = [
     "Example",
@@ -184,9 +188,9 @@ columns = [
     "Tot LV",
     "GV Nodes",
     "GV Edges",
-    "Warnings",
+    "Warns",
     "Errors",
-    "Runtime",
+    "Time",
     # "Check",
 ]
 rows = [
@@ -201,10 +205,10 @@ rows = [
         data["runtime"],
         # data["correct"],
     ]
-    for (file, data) in datas
+    for (file, data) in sorted_data
 ]
 
-gv_table_code = generate_latex_table(columns, rows, "Global view empirical data")
+gv_table_code = generate_latex_table(columns, rows, "Global view empirical data", "tab:gvbench")
 
 with open("assets/table.tex", "w", encoding="utf-8") as f:
     f.write(gv_table_code)
@@ -219,10 +223,10 @@ rows = [
         file,
         data["correct"],
     ]
-    for (file, data) in datas if "Not present" != data["correct"]
+    for (file, data) in sorted_data if "Not present" != data["correct"]
 ]
 
-correct_table_code = generate_latex_table(columns, rows, "Global view correctness data")
+correct_table_code = generate_latex_table(columns, rows, "Global view correctness data", "tab:corrbench")
 
 with open("assets/correct.tex", "w", encoding="utf-8") as f:
     f.write(correct_table_code)

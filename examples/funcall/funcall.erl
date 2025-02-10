@@ -1,4 +1,4 @@
--module(funny).
+-module(funcall).
 -export([main/0, dummy/1]).
 
 recv_dummy() ->
