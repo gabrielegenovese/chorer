@@ -1,4 +1,4 @@
--module(simple).
+-module(async).
 -export([main/0, dummy1/0, dummy2/0]).
 
 dummy1() ->

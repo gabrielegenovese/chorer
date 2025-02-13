@@ -81,7 +81,8 @@ proc_loop(Data) ->
     ProcName = Data#actor_info.fun_name,
     % io:fwrite("[EMUL] ID ~p~n", [ProcName]),
     LV = db:get_localview(ProcName),
-    %%% DUP
+    %%% Using the minimized version of the normal verion greetly improves efficiency
+    % G = LV#localview.min_graph,
     G = LV#localview.graph,
     % timer:sleep(200),
     VCurr = Data#actor_info.current_state,

@@ -102,7 +102,7 @@ test_list = [
     ["./examples/account/account.erl", "main/0", "examples/account", "true"],
     ["./examples/dining/dining.erl", "main/0", "examples/dining", "true"],
     ["./examples/hello/hello.erl", "main/0", "examples/hello", "true"],
-    ["./examples/async/simple.erl", "main/0", "examples/async", "true"],
+    ["./examples/async/async.erl", "main/0", "examples/async", "true"],
     ["./examples/ticktackstop/tictacstop.erl","start/0","examples/ticktackstop", "true"],
     ["./examples/ticktackloop/tictacloop.erl","start/0","examples/ticktackloop", "true"],
     ["./examples/customer/customer.erl","main/0","examples/customer", "true"],
