@@ -1,6 +1,6 @@
 {application, chorer, [
     {description, "A library for analyzing Erlang code and building Choreography Automata"},
-    {vsn, "1.0.2"},
+    {vsn, "1.0.3"},
     {registered, []},
     {applications, [
         kernel,

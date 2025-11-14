@@ -26,8 +26,11 @@ extract(Code) ->
     gen_fun_ast_and_exported(parse_string(Code)).
 
 parse_string(CodeString) ->
-    Forms = [string:trim(F) || F <- string:split(CodeString, ".", all), F =/= ""],
-    ASTs = [parse_one(Form) ++ "." || Form <- Forms],
+    Str1 = lists:flatten(string:replace(CodeString, "\n", "", all)),
+    Str2 = lists:flatten(string:replace(Str1, "\r", "", all)),
+    io:format("~p~n",[Str2]),
+    Forms = [string:trim(F) || F <- string:split(Str2, ".", all), F =/= ""],
+    ASTs = [parse_one(Form ++ ".") || Form <- Forms],
     ASTs.
 
 parse_one(FormString) ->
