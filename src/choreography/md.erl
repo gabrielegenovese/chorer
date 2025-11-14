@@ -26,8 +26,8 @@ extract(Code) ->
     gen_fun_ast_and_exported(parse_string(Code)).
 
 parse_string(CodeString) ->
-    Forms = [string:trim(F) || F <- string:split(CodeString, "\n", all), F =/= ""],
-    ASTs = [parse_one(Form) || Form <- Forms],
+    Forms = [string:trim(F) || F <- string:split(CodeString, ".", all), F =/= ""],
+    ASTs = [parse_one(Form) ++ "." || Form <- Forms],
     ASTs.
 
 parse_one(FormString) ->

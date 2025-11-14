@@ -116,5 +116,6 @@ analyse(Code, EntryPoint, MinLV, MinGV, GStates) ->
             db:close(),
             maps:put("gv", GVStr, ActorLVsMap);
         true -> 
+            db:close(),
             error
     end.
