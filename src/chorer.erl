@@ -113,6 +113,7 @@ analyse(Code, EntryPoint, MinLV, MinGV, GStates) ->
             gv:generate(false),
             ActorLVsMap =  lv:get_all_lvs_string(),
             GVStr = gv:get_gv_str(),
+            db:close(),
             maps:put("gv", GVStr, ActorLVsMap);
         true -> 
             error
