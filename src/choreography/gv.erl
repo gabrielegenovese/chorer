@@ -8,7 +8,7 @@
 -include("../share/common_data.hrl").
 
 %%% API
--export([generate/0]).
+-export([generate/1, get_gv_str/0]).
 
 %%% Record used in this module
 -record(message, {from, data}).
@@ -19,7 +19,7 @@
 
 %%% @doc
 %%% Generate the glabal view from an entrypoint and save it in a specified folder.
-generate() ->
+generate(Save) ->
     EntryPoint = settings:get(entrypoint),
     MainGraph = db:get_localview(EntryPoint),
     case MainGraph of
@@ -32,10 +32,17 @@ generate() ->
             MinG = fsa:minimize(G),
             Data = #localview{graph = G, min_graph = MinG},
             db:set(?GLOBALVIEW, Data),
-            share:save_graph(Data, EntryPoint, global, settings:get(minimizeG)),
+            case Save of
+                true -> share:save_graph(Data, EntryPoint, global, settings:get(minimizeG));
+                false -> nothing_to_do
+            end,
             log:info("Finished!~n", []),
             finished
     end.
+
+get_gv_str() ->
+    GV = db:get(?GLOBALVIEW),
+    digraph_to_dot:convert(GV#localview.graph, "gv").
 
 %%%===================================================================
 %%% Internal Functions

@@ -15,7 +15,7 @@
 -define(DEFGSTATE, true).
 
 %%% API
--export([main/1, generate/2, generate/6]).
+-export([main/1, generate/2, generate/6, analyse/5]).
 
 %%%===================================================================
 %%% API
@@ -95,10 +95,25 @@ generate(InputFile, EntryPoint, OutDir, MinG, GState, MinL) ->
     Settings = settings:new_settings(InputFile, EntryPoint, OutDir, MinL, MinG, GState),
     db:init(Settings),
     md:extract(),
-    ErrorIsPresent = lv:generate(),
+    ErrorIsPresent = lv:generate(true),
     case ErrorIsPresent of
-        false -> gv:generate();
+        false -> gv:generate(true);
         true -> done
     end,
     md:show_data(InputFile),
     db:close().
+
+analyse(Code, EntryPoint, MinLV, MinGV, GStates) ->
+    Settings = settings:new_settings("", EntryPoint, "", MinLV, MinGV, GStates),
+    db:init(Settings),
+    md:extract(Code),
+    ErrorIsPresent = lv:generate(false),
+    case ErrorIsPresent of
+        false ->
+            gv:generate(false),
+            ActorLVsMap =  lv:get_all_lvs_string(),
+            GVStr = gv:get_gv_str(),
+            maps:put("gv", GVStr, ActorLVsMap);
+        true -> 
+            error
+    end.

@@ -8,7 +8,7 @@
 -include("../share/common_data.hrl").
 
 %%% API
--export([generate/0, create_localview/3, eval_codeline/2]).
+-export([generate/1, get_all_lvs_string/0, create_localview/3, eval_codeline/2]).
 
 %%%===================================================================
 %%% API
@@ -17,16 +17,30 @@
 %%% @doc
 %%% A localview is generated for each possible actor.
 %%% `md:extract' must be used before this function.
-generate() ->
+generate(SaveToFile) ->
     ActorList = get_actors(),
     lists:foldl(
         fun(Actor, Error) ->
-            case create_localview(Actor, ?ANYDATA, true) of
+            case create_localview(Actor, ?ANYDATA, SaveToFile) of
                 no_graph -> true;
                 _ -> Error
             end
         end,
         false,
+        ActorList
+    ).
+
+get_all_lvs_string() ->
+    ActorList = get_actors(),
+    lists:foldl(
+        fun(Actor, AccM) ->
+            [{_, ActorLV}] = ets:lookup(?LOCALVIEW, Actor),
+            Str = digraph_to_dot:convert(ActorLV#localview.min_graph, ActorLV#localview.fun_name),
+            Str1 = string:replace(Str, "\t", "", all),
+            ActorLVDotStr = string:replace(lists:flatten(Str1), "\n", "", all),
+            maps:put(Actor, lists:flatten(ActorLVDotStr), AccM)
+        end,
+        #{},
         ActorList
     ).
 

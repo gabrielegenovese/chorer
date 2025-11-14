@@ -112,7 +112,10 @@ save_graph(Data, FunName, Mode, SaveMinimize) ->
             true -> Data#localview.min_graph;
             false -> Data#localview.graph
         end,
-    save_graph_to_file(ToSaveG, OutputDir, FunName, Mode).
+    case OutputDir of
+        "" -> nothing_to_do;
+        _ -> save_graph_to_file(ToSaveG, OutputDir, FunName, Mode)
+    end.
 
 remove_counter(S) ->
     [Rest, _] = string:split(atol(S), ?NSEQSEP),

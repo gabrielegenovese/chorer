@@ -9,7 +9,7 @@
 -include("../share/common_data.hrl").
 
 %%% API
--export([extract/0, parse_file/1, show_data/1, print_data/3]).
+-export([extract/0, extract/1, parse_file/1, show_data/1, print_data/3]).
 
 %%%===================================================================
 %%% API
@@ -21,6 +21,19 @@
 extract() ->
     InputFile = settings:get(inputfile),
     gen_fun_ast_and_exported(parse_file(InputFile)).
+
+extract(Code) ->
+    gen_fun_ast_and_exported(parse_string(Code)).
+
+parse_string(CodeString) ->
+    Forms = [string:trim(F) || F <- string:split(CodeString, "\n", all), F =/= ""],
+    ASTs = [parse_one(Form) || Form <- Forms],
+    ASTs.
+
+parse_one(FormString) ->
+    {ok, Tokens, _} = erl_scan:string(FormString),
+    {ok, AST} = erl_parse:parse_form(Tokens),
+    AST.
 
 %%% @doc
 %%% Return the AST of the file localted in Path.
@@ -139,7 +152,10 @@ print_to_csv(TotLine, LocalViewData, GvMap) ->
             ["gv_edges", maps:get(num_edges, GvMap)],
     D = format_to_string(RetCsvData, ""),
     Out = settings:get(output_dir),
-    ok = file:write_file(Out ++ "/output.csv", unicode:characters_to_binary(D)).
+    case Out of
+        "" -> nothing_to_do;
+        _ -> ok = file:write_file(Out ++ "/output.csv", unicode:characters_to_binary(D))
+    end.
 
 format_to_string([], S) ->
     S;
