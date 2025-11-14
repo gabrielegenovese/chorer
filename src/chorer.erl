@@ -105,6 +105,7 @@ generate(InputFile, EntryPoint, OutDir, MinG, GState, MinL) ->
 
 analyse(Code, EntryPoint, MinLV, MinGV, GStates) ->
     Settings = settings:new_settings("", EntryPoint, "", MinLV, MinGV, GStates),
+    io:fwrite("Analysing ~p~n Entrypoint: ~p, output: string function~n", [Code, EntryPoint]),
     db:init(Settings),
     md:extract(Code),
     ErrorIsPresent = lv:generate(false),
