@@ -1,12 +1,11 @@
 {application, chorer, [
-    {description, "A library for analyzing Erlang code and building graphs"},
+    {description, "A library for analyzing Erlang code and building Choreography Automata"},
     {vsn, "1.0.0"},
     {registered, []},
     {applications, [
         kernel,
         stdlib
     ]},
-    {mod, {chorer_app, []}},
     {env, []},
     {modules, [chorer]},
 
