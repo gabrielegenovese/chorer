@@ -1,14 +1,15 @@
 {application, chorer, [
-    {description, "An OTP application"},
-    {vsn, "0.1.0"},
+    {description, "A library for analyzing Erlang code and building graphs"},
+    {vsn, "1.0.0"},
     {registered, []},
     {applications, [
         kernel,
         stdlib
     ]},
+    {mod, {chorer_app, []}},
     {env, []},
-    {modules, []},
+    {modules, [chorer]},
 
-    {licenses, ["GPLv3"]},
-    {links, []}
+    {licenses, ["GPL-3.0"]},
+    {links, [{"GitHub", "https://github.com/gabrielegenovese/chorer"}]}
 ]}.
