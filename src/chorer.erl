@@ -103,6 +103,12 @@ generate(InputFile, EntryPoint, OutDir, MinG, GState, MinL) ->
     md:show_data(InputFile),
     db:close().
 
+-spec analyse(Code, EntryPoint, MinLV, MinGV, GStates) -> map() when 
+    Code :: string(),
+    EntryPoint :: atom(),
+    MinG :: boolean(),
+    GState :: boolean(),
+    MinL :: boolean().
 analyse(Code, EntryPoint, MinLV, MinGV, GStates) ->
     Settings = settings:new_settings("", EntryPoint, "", MinLV, MinGV, GStates),
     io:fwrite("Analysing ~p~n Entrypoint: ~p, output: string function~n", [Code, EntryPoint]),
