@@ -35,7 +35,7 @@ get_all_lvs_string() ->
     lists:foldl(
         fun(Actor, AccM) ->
             [{_, ActorLV}] = ets:lookup(?LOCALVIEW, Actor),
-            Str = digraph_to_dot:convert(ActorLV#localview.min_graph, ActorLV#localview.fun_name),
+            Str = digraph_to_dot:convert(ActorLV#localview.min_graph, share:remove_last(Actor)),
             Str1 = string:replace(Str, "\t", "", all),
             ActorLVDotStr = string:replace(lists:flatten(Str1), "\n", "", all),
             maps:put(Actor, lists:flatten(ActorLVDotStr), AccM)
