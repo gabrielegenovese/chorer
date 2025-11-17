@@ -42,7 +42,10 @@ generate(Save) ->
 
 get_gv_str() ->
     GV = db:get(?GLOBALVIEW),
-    digraph_to_dot:convert(GV#localview.graph, "gv").
+    case settings:get(minimizeG) of
+        true -> digraph_to_dot:convert(GV#localview.min_graph, "gv");
+        false -> digraph_to_dot:convert(GV#localview.graph, "gv")
+    end.
 
 %%%===================================================================
 %%% Internal Functions

@@ -112,17 +112,23 @@ generate(InputFile, EntryPoint, OutDir, MinG, GState, MinL) ->
 analyse(Code, EntryPoint, MinLV, MinGV, GStates) ->
     Settings = settings:new_settings("", EntryPoint, "", MinLV, MinGV, GStates),
     io:fwrite("Analysing ~p~n Entrypoint: ~p, output: string function~n", [Code, EntryPoint]),
-    db:init(Settings),
-    md:extract(Code),
-    ErrorIsPresent = lv:generate(false),
-    case ErrorIsPresent of
-        false ->
-            gv:generate(false),
-            ActorLVsMap =  lv:get_all_lvs_string(),
-            GVStr = gv:get_gv_str(),
+    try
+        db:init(Settings),
+        md:extract(Code),
+        ErrorIsPresent = lv:generate(false),
+        case ErrorIsPresent of
+            false ->
+                gv:generate(false),
+                ActorLVsMap =  lv:get_all_lvs_string(),
+                GVStr = gv:get_gv_str(),
+                db:close(),
+                maps:put("gv", GVStr, ActorLVsMap);
+            true -> 
+                db:close(),
+                error_in_lv
+        end
+    catch
+        E ->
             db:close(),
-            maps:put("gv", GVStr, ActorLVsMap);
-        true -> 
-            db:close(),
-            error
+            E
     end.
