@@ -1,6 +1,7 @@
 # ChorEr
 
 ChorEr is a static analyzer to generate Choreography Automata from Erlang source code.
+A web version is also [available](https://chorer.cappuccino.ovh/).
 
 ## Requirements
 
