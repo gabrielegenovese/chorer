@@ -111,7 +111,8 @@ generate(InputFile, EntryPoint, OutDir, MinG, GState, MinL) ->
     GStates :: boolean().
 analyse(Code, EntryPoint, MinLV, MinGV, GStates) ->
     Settings = settings:new_settings("", EntryPoint, "", MinLV, MinGV, GStates),
-    io:fwrite("Analysing ~p~n Entrypoint: ~p, output: string function~n", [Code, EntryPoint]),
+    io:fwrite("Analysing ~p~n Entrypoint: ~p, output: string function~nwith MinLV ~p, MinGV ~p, GStates ~p~n", 
+        [Code, EntryPoint,MinLV, MinGV, GStates]),
     try
         db:init(Settings),
         md:extract(Code),
