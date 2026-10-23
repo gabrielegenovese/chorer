@@ -1,9 +1,9 @@
 line,41
+lv_foo/2_nodes,9
+lv_foo/2_edges,10
 lv_main/0_nodes,6
 lv_main/0_edges,5
 lv_server/0_nodes,6
 lv_server/0_edges,7
-lv_foo/2_nodes,9
-lv_foo/2_edges,10
 gv_nodes,149
 gv_edges,229

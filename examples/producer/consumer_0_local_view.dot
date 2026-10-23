@@ -1,13 +1,23 @@
 digraph consumer_0 {
 	rankdir="LR";
 	n_0 [label="consumer_0", shape="plaintext"];
-	n_1 [id="1", shape=circle, label="1"];
-	n_0 -> n_1 [arrowhead=none];
-	n_2 [id="6", shape=circle, label="3"];
-	n_3 [id="3", shape=doublecircle, label="3"];
+	n_1 [id="9", shape=doublecircle, label="9"];
+	n_2 [id="4", shape=circle, label="4"];
+	n_3 [id="3", shape=circle, label="3"];
 	n_4 [id="2", shape=circle, label="2"];
+	n_5 [id="5", shape=circle, label="5"];
+	n_6 [id="8", shape=circle, label="8"];
+	n_7 [id="1", shape=circle, label="1"];
+	n_0 -> n_7 [arrowhead=none];
+	n_8 [id="7", shape=circle, label="7"];
+	n_9 [id="6", shape=circle, label="6"];
 
-	n_1 -> n_4 [id="[$e|10]", label="producer/0.0 ! {req,pid_self}"];
-	n_4 -> n_2 [id="[$e|5]", label="0#receive D"];
-	n_2 -> n_4 [id="[$e|9]", label="producer/0.0 ! {req,pid_self}"];
+	n_7 -> n_4 [id="[$e|0]", label="producer/0.0 ! {req,pid_self}"];
+	n_5 -> n_9 [id="[$e|4]", label="producer/0.0 ! {req,pid_self}"];
+	n_6 -> n_1 [id="[$e|7]", label="0#receive D"];
+	n_3 -> n_2 [id="[$e|2]", label="producer/0.0 ! {req,pid_self}"];
+	n_8 -> n_6 [id="[$e|6]", label="producer/0.0 ! {req,pid_self}"];
+	n_9 -> n_8 [id="[$e|5]", label="0#receive D"];
+	n_4 -> n_3 [id="[$e|1]", label="0#receive D"];
+	n_2 -> n_5 [id="[$e|3]", label="0#receive D"];
 }

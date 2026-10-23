@@ -1,11 +1,11 @@
 line,20
-lv_r/0_nodes,8
-lv_r/0_edges,7
 lv_w1/1_nodes,5
 lv_w1/1_edges,4
 lv_w2/1_nodes,5
 lv_w2/1_edges,4
 lv_test/0_nodes,7
 lv_test/0_edges,6
-gv_nodes,16
+lv_r/0_nodes,8
+lv_r/0_edges,7
+gv_nodes,15
 gv_edges,19
