@@ -17,6 +17,10 @@
 %%% @doc
 %%% A localview is generated for each possible actor.
 %%% `md:extract' must be used before this function.
+
+-spec generate(SaveToFile) -> ErrorIsPresent when
+      SaveToFile :: boolean(),
+      ErrorIsPresent :: boolean().
 generate(SaveToFile) ->
     ActorList = get_actors(),
     lists:foldl(
@@ -30,6 +34,8 @@ generate(SaveToFile) ->
         ActorList
     ).
 
+-spec get_all_lvs_string() -> ActorMap when
+    ActorMap :: #{atom() => string()}.
 get_all_lvs_string() ->
     ActorList = get_actors(),
     lists:foldl(
@@ -51,10 +57,17 @@ get_all_lvs_string() ->
 %%% Internal Functions
 %%%===================================================================
 
+-spec get_actors() -> ActorList when
+      ActorList :: [atom()].
 get_actors() ->
     [{_, ActorList}] = ets:lookup(?DBMANAGER, ?ACTORLIST),
     ActorList.
 
+-spec create_localview(ActorName, StartingVars, SaveToFile) -> RetLV when
+      ActorName :: atom() | string(),
+      StartingVars :: atom() | [],
+      SaveToFile :: boolean(),
+      RetLV :: no_graph | #localview{}.
 create_localview(ActorName, StartingVars, SaveToFile) ->
     RetLV =
         case does_actor_exist(ActorName) of
@@ -92,6 +105,9 @@ create_localview(ActorName, StartingVars, SaveToFile) ->
     end,
     RetLV.
 
+-spec does_actor_exist(ActorName) -> Response when
+      ActorName :: atom(),
+      Response :: boolean() | tuple().
 does_actor_exist(ActorName) ->
     ActorAst = db:get_fun_ast(share:atol(ActorName)),
     case ActorAst of
@@ -99,6 +115,15 @@ does_actor_exist(ActorName) ->
         A -> A
     end.
 
+-spec eval_codeline(CodeLine, Data) -> ModifiedData when
+    CodeLine :: erl_parse:abstract_expr() |
+                erl_parse:abstract_form() |
+                erl_parse:abstract_clause() |
+                [erl_parse:abstract_expr()] |
+                [erl_parse:abstract_form()] |
+                [erl_parse:abstract_clause()],
+    Data :: #localview{},
+    ModifiedData :: #localview{}.
 eval_codeline(CodeLine, Data) ->
     debug_print(CodeLine),
     case CodeLine of
@@ -127,6 +152,14 @@ eval_codeline(CodeLine, Data) ->
         _ -> log:warning("LV", "couldn't parse code line", CodeLine, Data, line)
     end.
 
+-spec debug_print(CodeLine) -> Response when
+      CodeLine :: erl_parse:abstract_expr() |
+                  erl_parse:abstract_form() |
+                  erl_parse:abstract_clause() |
+                  [erl_parse:abstract_expr()] |
+                  [erl_parse:abstract_form()] |
+                  [erl_parse:abstract_clause()],
+      Response :: done | true.
 debug_print(CodeLine) ->
     if
         is_tuple(CodeLine) ->
@@ -137,6 +170,9 @@ debug_print(CodeLine) ->
             done
     end.
 
+-spec set_final_state(Graph) -> Response when
+    Graph :: digraph:graph(),
+    Response :: ok.
 %%% Set vertices as a final state if they do not have out edges
 set_final_state(Graph) ->
     VL = digraph:vertices(Graph),
