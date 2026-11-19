@@ -106,7 +106,7 @@ create_localview(ActorName, StartingVars, SaveToFile) ->
     RetLV.
 
 -spec does_actor_exist(ActorName) -> Response when
-      ActorName :: atom(),
+      ActorName :: atom() | string(),
       Response :: boolean() | tuple().
 does_actor_exist(ActorName) ->
     ActorAst = db:get_fun_ast(share:atol(ActorName)),
