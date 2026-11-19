@@ -26,6 +26,13 @@
     variable/2
 ]).
 
+-type code_line() :: erl_parse:abstract_expr() |
+                     erl_parse:abstract_form() |
+                     erl_parse:abstract_clause() |
+                     [erl_parse:abstract_expr()] |
+                     [erl_parse:abstract_form()] |
+                     [erl_parse:abstract_clause()].
+
 %%%===================================================================
 %%% API
 %%%===================================================================
@@ -33,6 +40,10 @@
 %%% @doc
 %%% Evaluate the clauses of a function.
 %%% The counter is used to eval in order the pattern matching.
+-spec function_list(ContentList, Data) -> NewLVState when
+      ContentList :: [erl_parse:abstract_clause()],
+      Data :: #localview{},
+      NewLVState :: #localview{}.
 function_list(ContentList, Data) ->
     Param = Data#localview.param,
     element(
@@ -77,6 +88,10 @@ function_list(ContentList, Data) ->
         )
     ).
 
+-spec check_matching(Pattern, Params) -> Response when
+      Pattern :: [#variable{}],
+      Params :: [#variable{}] | ?ANYDATA,
+      Response :: {boolean(), [#variable{}] | []}.
 check_matching(Pattern, Params) ->
     case share:unpack(Params) of
         ?ANYDATA ->
@@ -93,6 +108,10 @@ check_matching(Pattern, Params) ->
             share:and_rec(BoolList)
     end.
 
+-spec check_msg_comp(PatVar, ParVar) -> Response when
+      PatVar :: #variable{},
+      ParVar :: #variable{},
+      Response :: {boolean(), [#variable{}] | []}.
 check_msg_comp(PatVar, ParVar) ->
     PatType = PatVar#variable.type,
     ParType = ParVar#variable.type,
@@ -110,6 +129,9 @@ check_msg_comp(PatVar, ParVar) ->
             {false, []}
     end.
 
+-spec get_all_var(Pattern) -> VarList when
+      Pattern :: [#variable{}],
+      VarList :: [#variable{}].
 get_all_var(Pattern) ->
     lists:filter(
         fun(P) ->
@@ -123,6 +145,14 @@ get_all_var(Pattern) ->
 
 %%% @doc
 %%% Evaluate a single clause (might be from `case', `receive' or `if').
+-spec clause(Code, Pattern, Guards, LVState, BaseLabel, Counter) -> NewLVState when
+      Code :: [erl_parse:abstract_expr()],
+      Pattern :: [erl_parse:abstract_expr()],
+      Guards :: [[erl_parse:abstract_expr()]] | [],
+      LVState :: #localview{},
+      BaseLabel :: string(),
+      Counter :: integer(),
+      NewLVState :: #localview{}.
 clause(Code, Pattern, Guards, Data, BaseLabel, Counter) ->
     % io:fwrite("[CLAUSE] Code ~p~n Vars ~p~n Guards ~p~n", [Code, Pattern, Guards]),
     LocalV = Data#localview.local_vars,
@@ -143,6 +173,11 @@ clause(Code, Pattern, Guards, Data, BaseLabel, Counter) ->
 
 %%% @doc
 %%% Evaluate a variable declaration.
+-spec match(RightContent, LeftContent, LVState) -> NewLVState when
+      RightContent :: erl_parse:abstract_expr(),
+      LeftContent :: erl_parse:abstract_expr(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 match(RightContent, LeftContent, Data) ->
     case RightContent of
         {var, _, VarName} -> match_with_var(VarName, LeftContent, Data);
@@ -153,6 +188,11 @@ match(RightContent, LeftContent, Data) ->
 
 %%% @doc
 %%% Evaluate a `case' expression.
+-spec case_pm(Content, PMList, LVState) -> NewLVState when
+      Content :: erl_parse:abstract_expr(),
+      PMList :: [erl_parse:abstract_clause()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 case_pm(Content, PMList, Data) ->
     NewData = lv:eval_codeline(Content, Data),
     %% TODO: save the returning variable?
@@ -160,16 +200,30 @@ case_pm(Content, PMList, Data) ->
 
 %%% @doc
 %%% Evaluate a `if' expression.
+-spec if_pm(PMList, LVState) -> NewLVState when
+      PMList :: [erl_parse:abstract_clause()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 if_pm(PMList, Data) ->
     pattern_matching(PMList, "if", Data).
 
 %%% @doc
 %%% Evaluate a `receive' expression.
+-spec receive_pm(PMList, LVState) -> NewLVState when
+      PMList :: [erl_parse:abstract_clause()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 receive_pm(PMList, Data) ->
     pattern_matching(PMList, "receive", Data).
 
 %%% @doc
 %%% Evaluate an operation.
+-spec operation(Symbol, LeftContent, RightContent, LVState) -> NewLVState when
+      Symbol :: atom(),
+      RightContent :: erl_parse:abstract_expr(),
+      LeftContent :: erl_parse:abstract_expr(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 operation(Symbol, LeftContent, RightContent, Data) ->
     case Symbol of
         '!' ->
@@ -188,6 +242,11 @@ operation(Symbol, LeftContent, RightContent, Data) ->
 
 %%% @doc
 %%% Evaluate the call of a function.
+-spec function_call(Function, ArgList, LVState) -> NewLVState when
+      Function :: erl_parse:abstract_expr(),
+      ArgList :: [erl_parse:abstract_expr()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 function_call(Function, ArgList, Data) ->
     case Function of
         {atom, _, Name} -> call_by_atom(Name, ArgList, Data);
@@ -199,6 +258,11 @@ function_call(Function, ArgList, Data) ->
 %%% @doc
 %%% Evaluate the definition of an anonymous function.
 %%% Naming convention: anon_LineNumber.SequentialNumber
+-spec anon_function(Content, Line, LVState) -> NewLVState when
+      Content :: {clauses, [erl_parse:abstract_clause()]},
+      Line :: erl_anno:anno(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 anon_function(Content, Line, Data) ->
     case Content of
         {clauses, A} ->
@@ -211,12 +275,21 @@ anon_function(Content, Line, Data) ->
 
 %%% @doc
 %%% Evaluate a basic type.
+-spec simple_type(Type, Val, LVState) -> NewLVState when
+      Type :: atom(),
+      Val :: any(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 simple_type(Type, Val, Data) ->
     VarRet = #variable{type = Type, value = Val},
     Data#localview{ret_var = VarRet}.
 
 %%% @doc
 %%% Evaluate an atom.
+-spec atom(Val, LVState) -> NewLVState when
+      Val :: atom(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 atom(Val, Data) ->
     %%% check if is a registerd atom, return the pid
     case ets:lookup(?REGISTERDB, Val) of
@@ -226,6 +299,11 @@ atom(Val, Data) ->
 
 %%% @doc
 %%% Evaluate a list.
+-spec list(HeadList, TailList, LVState) -> NewLVState when
+      HeadList :: erl_parse:abstract_expr(),
+      TailList :: erl_parse:abstract_expr() | [erl_parse:abstract_expr()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 list(HeadList, TailList, Data) ->
     NDH = lv:eval_codeline(HeadList, Data),
     NDT = lv:eval_codeline(TailList, NDH),
@@ -236,11 +314,19 @@ list(HeadList, TailList, Data) ->
 
 %%% @doc
 %%% Evaluate a map.
+-spec map(Val, LVState) -> NewLVState when
+      Val :: [erl_parse:abstract_expr()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 map(Val, Data) ->
     log:warning("LV", "TODO map evaluation", Val, Data, line).
 
 %%% @doc
 %%% Evaluate a tuple.
+-spec tuple(Val, LVState) -> NewLVState when
+      Val :: [erl_parse:abstract_expr()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 tuple(Val, Data) ->
     {NewVal, NewData} = lists:foldl(
         fun(I, {A, D}) ->
@@ -254,6 +340,10 @@ tuple(Val, Data) ->
 
 %%% @doc
 %%% Evaluate a variable.
+-spec variable(VarName, LVState) -> NewLVState when
+      VarName :: atom(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 variable(VarName, Data) ->
     Var = share:find_var(Data#localview.local_vars, VarName),
     RetV =
@@ -267,6 +357,10 @@ variable(VarName, Data) ->
 %%% Internal Functions
 %%%===================================================================
 
+-spec decide_label(Base, Label) -> ReturnedLabel when
+      Base :: string(),
+      Label :: string(),
+      ReturnedLabel :: string() | atom().
 decide_label(Base, Label) ->
     MoreInfo = settings:get(more_info_lv),
     ToWriteL =
@@ -284,14 +378,22 @@ decide_label(Base, Label) ->
                 Label
         end,
     % for testing purposes add: or (Base =:= "arg"),
-    Cond = (Base =:= "receive") or MoreInfo,
+    Cond = (Base =:= "receive") orelse MoreInfo,
     share:get_base_label(Cond, ToWriteL).
 
+-spec remove_square_parenthesis(Label) -> ModifiedLabel when
+      Label :: string(),
+      ModifiedLabel :: {string(), string()}.
 remove_square_parenthesis(Label) ->
     [L | _] = string:split(Label, "]"),
     [H | [T]] = string:split(L, "["),
     {H, T}.
 
+-spec match_with_var(VarName, LeftContent, LVState) -> NewLVState when
+      VarName :: atom(),
+      LeftContent :: code_line(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 match_with_var(VarName, LeftContent, Data) ->
     NewData = lv:eval_codeline(LeftContent, Data),
     Var = NewData#localview.ret_var,
@@ -300,6 +402,11 @@ match_with_var(VarName, LeftContent, Data) ->
     % io:fwrite("New var ~p~n", [NewVarEntry]),
     NewData#localview{ret_var = NewVarEntry, local_vars = L ++ [NewVarEntry]}.
 
+-spec match_with_tuple(VarList, LeftContent, LVState) -> NewLVState when
+      VarList :: list(),
+      LeftContent :: code_line(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 match_with_tuple(VarList, LeftContent, Data) ->
     NewData = lv:eval_codeline(LeftContent, Data),
     Var = NewData#localview.ret_var,
@@ -329,9 +436,18 @@ match_with_tuple(VarList, LeftContent, Data) ->
             log:warning("LV", "right content is a tuple but left content is", Var, ND, line)
     end.
 
+-spec match_with_list(List, LVState) -> NewLVState when
+      List :: list(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 match_with_list(List, Data) ->
     log:warning("LV", "[MATCH] TODO match with list", List, Data, line).
 
+-spec call_by_atom(Name, ArgList, LVState) -> NewLVState when
+      Name :: atom(),
+      ArgList :: [erl_parse:abstract_expr()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 call_by_atom(Name, ArgList, Data) ->
     FunName = Data#localview.fun_name,
     [RealNameS | _] = string:split(share:atol(FunName), ?ARITYSEP),
@@ -345,20 +461,28 @@ call_by_atom(Name, ArgList, Data) ->
         _ -> generic_call(Name, ArgList, Data)
     end.
 
+-spec recursive(ArgList, LVState) -> NewLVState when
+      ArgList :: [erl_parse:abstract_expr()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 recursive(ArgList, Data) ->
     % io:fwrite("[RECURSIVE] from vertex ~p~n", [Data#localview.last_vertex]),
     LV = Data#localview.last_vertex,
-    NA = Data#localview.edge_additional_info,
+    EdgeMap = Data#localview.edge_additional_info,
     E = digraph:add_edge(Data#localview.graph, LV, 1, 'ɛ'),
     %%% TODO: add recursion eval in actor_emul
-    NewNA = maps:put(E, {recursion, ArgList}, NA),
+    NewEM = maps:put(E, {recursion, ArgList}, EdgeMap),
     % generic_call(share:remove_last(share:remove_last((Data#localview.fun_name))), ArgList, Data).
     %%% TODO: what to do with last_vertex? update with 1 or nothing? now it just lose all the information after the call
     % overapprox: return variable is unkwown
     % putting last_vertex = ?UNDEFINED the evaluation is stopped after an recursive call
-    % Data#localview{ret_var = ?ANYDATA, edge_additional_info = NewNA}.
-    Data#localview{last_vertex = ?UNDEFINED, ret_var = ?ANYDATA, edge_additional_info = NewNA}.
+    % Data#localview{ret_var = ?ANYDATA, edge_additional_info = NewEM}.
+    Data#localview{last_vertex = ?UNDEFINED, ret_var = ?ANYDATA, edge_additional_info = NewEM}.
 
+-spec spawn_call(ArgList, LVState) -> NewLVState when
+      ArgList :: [erl_parse:abstract_expr()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 spawn_call(ArgList, Data) ->
     case ArgList of
         [Content] -> spawn_one(Content, Data);
@@ -368,6 +492,10 @@ spawn_call(ArgList, Data) ->
         _ -> log:warning("LV", "couldn't recognize spawn call pattern", ArgList, Data, line)
     end.
 
+-spec spawn_one(Content, LVState) -> NewLVState when
+      Content :: erl_parse:abstract_expr(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 spawn_one(Content, Data) ->
     NewData = lv:eval_codeline(Content, Data),
     VarFound = NewData#localview.ret_var,
@@ -379,6 +507,11 @@ spawn_one(Content, Data) ->
     RetVar = #variable{type = pid, value = S},
     RetData#localview{ret_var = RetVar}.
 
+-spec spawn_three(Name, ArgList, LVState) -> NewLVState when
+      Name :: atom(),
+      ArgList :: erl_parse:abstract_expr(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 spawn_three(Name, ArgList, Data) ->
     NewData = lv:eval_codeline(ArgList, Data),
     NewDataRetVar = NewData#localview.ret_var,
@@ -392,6 +525,10 @@ spawn_three(Name, ArgList, Data) ->
 
 %%% Naming convention for process: Name/Arity.SequentialNumber
 %%% Naming convention for spawn label: spawn ProcName args ArgList
+-spec format_spawn_label(Name, NewDataRetVar) -> SpawnLabel when
+      Name :: atom(),
+      NewDataRetVar :: #variable{},
+      SpawnLabel :: {string(), string()}.
 format_spawn_label(Name, NewDataRetVar) ->
     C = db:inc_spawn_counter(Name),
     Arity = length(NewDataRetVar#variable.value),
@@ -399,15 +536,26 @@ format_spawn_label(Name, NewDataRetVar) ->
     Label = "spawn " ++ ProcId ++ " args " ++ var_to_string(NewDataRetVar),
     {Label, ProcId}.
 
+-spec spawn_monitor_call(ArgList, LVState) -> NewLVState when
+      ArgList :: [erl_parse:abstract_expr()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 spawn_monitor_call(ArgList, Data) ->
-    log:warning("LV", "spawn_monitor not yet implemted. Arguments =", ArgList, Data, line).
+    log:warning("LV", "spawn_monitor not yet implemented. Arguments =", ArgList, Data, line).
 
+-spec self_call(LVState) -> NewLVState when
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 self_call(Data) ->
     RetVar = #variable{type = pid, value = "pid_self"},
     Data#localview{ret_var = RetVar}.
 
 %%% TODO: now the register function is implemented with a static behaviour,
 %%% but should be dynamic.
+-spec register_call(ArgList, LVState) -> NewLVState when
+      ArgList :: [erl_parse:abstract_expr()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 register_call(ArgList, Data) ->
     [{atom, _, AtomName}, {var, _, VarName}] = ArgList,
     VarFound = share:find_var(Data, VarName),
@@ -422,6 +570,11 @@ register_call(ArgList, Data) ->
     end,
     simple_type(atom, true, Data).
 
+-spec generic_call(Name, ArgList, LVState) -> NewLVState when
+      Name :: atom(),
+      ArgList :: [erl_parse:abstract_expr()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 generic_call(Name, ArgList, Data) ->
     % TODO: how to evaluate argument list?
     NewData = lv:eval_codeline(ArgList, Data),
@@ -447,6 +600,11 @@ generic_call(Name, ArgList, Data) ->
             }
     end.
 
+-spec call_by_var(VarName, ArgList, LVState) -> NewLVState when
+      VarName :: atom(),
+      ArgList :: [erl_parse:abstract_expr()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 %%% TODO: eval argument list
 call_by_var(VarName, ArgList, Data) ->
     G = Data#localview.graph,
@@ -467,6 +625,12 @@ call_by_var(VarName, ArgList, Data) ->
             Data#localview{ret_var = NewRet, last_vertex = NewLastV}
     end.
 
+-spec call_by_package(Package, FunName, ArgList, LVState) -> NewLVState when
+      Package :: erl_parse:abstract_expr(),
+      FunName :: erl_parse:abstract_expr(),
+      ArgList :: [erl_parse:abstract_expr()],
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 call_by_package(Package, FunName, _ArgList, Data) ->
     {atom, _, Pack} = Package,
     {atom, _, Name} = FunName,
@@ -476,12 +640,21 @@ call_by_package(Package, FunName, _ArgList, Data) ->
         _ -> log:warning("LV", "package not yet implemented:", Pack, Data, line)
     end.
 
+-spec rand_package(FunName, LVState) -> NewLVState when
+      FunName :: atom(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 rand_package(FunName, Data) ->
     case FunName of
         uniform -> simple_type(integer, ?ANYDATA, Data);
         _ -> log:warning("LV", "rand's function not yet implemented:", FunName, Data, line)
     end.
 
+-spec send(Destination, MessageContent, LVState) -> NewLVState when
+      Destination :: erl_parse:abstract_expr(),
+      MessageContent :: erl_parse:abstract_expr(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 send(Destination, MessageContent, Data) ->
     TempData = lv:eval_codeline(Destination, Data),
     VarProcName = TempData#localview.ret_var,
@@ -496,9 +669,15 @@ send(Destination, MessageContent, Data) ->
         edge_additional_info = maps:put(SLabel, {VarProcName, VarDataSent}, EM)
     }).
 
+-spec format_send_local_label(Proc, Data) -> string() when
+      Proc :: atom() | string(),
+      Data :: string().
 format_send_local_label(Proc, Data) ->
     share:atol(Proc) ++ " " ++ ?SENDSEP ++ " " ++ share:atol(Data).
 
+-spec get_pid(Var) -> Pid when
+      Var :: #variable{},
+      Pid :: string() | atom().
 get_pid(Var) ->
     case Var#variable.type of
         pid ->
@@ -510,6 +689,8 @@ get_pid(Var) ->
             end
     end.
 
+-spec var_to_string(Var) -> string() when
+      Var :: [] | ?ANYDATA | #variable{}.
 var_to_string(Var) ->
     case Var of
         [] ->
@@ -548,14 +729,23 @@ var_to_string(Var) ->
             end
     end.
 
+-spec format_tuple(VarL, Fun) -> string() when
+      VarL :: [#variable{}],
+      Fun :: function().
 format_tuple(VarL, Fun) ->
     Label = join_list(VarL, Fun),
     "{" ++ Label ++ "}".
 
+-spec format_list(VarL, Fun) -> string() when
+      VarL :: [#variable{}],
+      Fun :: function().
 format_list(VarL, Fun) ->
     Label = join_list(VarL, Fun),
     "[" ++ Label ++ "]".
 
+-spec join_list(VarL, Fun) -> string() when
+      VarL :: [#variable{}],
+      Fun :: function().
 join_list(VarL, Fun) ->
     L = lists:foldl(fun(I, A) -> A ++ "," ++ Fun(I) end, "", VarL),
     case L of
@@ -568,6 +758,11 @@ join_list(VarL, Fun) ->
 %%% Firstly, we add to G1 as many vertex as G2's vertex number.
 %%% With a map, we associate every vertex of G2 to one of the new G1'vertex
 %%% Secondly, we collect each G2's edge info and then we rebuild it in G1 using the previous map
+-spec merge_graph(MainG, GToAdd, VLast) -> LastVAdded when
+      MainG :: digraph:graph(),
+      GToAdd :: digraph:graph(),
+      VLast :: digraph:vertex(),
+      LastVAdded :: digraph:vertex().
 merge_graph(MainG, GToAdd, VLast) ->
     VertexGToAdd = digraph:vertices(GToAdd),
     % Add a number of vertex equal to VertexGToAdd
@@ -592,6 +787,10 @@ merge_graph(MainG, GToAdd, VLast) ->
     % return last added vertex, which is the max number in the key list
     maps:get(lists:max(maps:keys(VEquiMap)), VEquiMap).
 
+-spec get_function_graph(FuncName, Arguments) -> Response when
+      FuncName :: atom() | string(),
+      Arguments :: atom() | list(),
+      Response :: no_graph | #localview{}.
 get_function_graph(FuncName, Arguments) ->
     FunAst = db:get_fun_ast(FuncName),
     case FunAst of
@@ -604,6 +803,11 @@ get_function_graph(FuncName, Arguments) ->
 
 %%% Evaluate Pattern Matching's list of clauses: evaluate every branch alone, then
 %%% link every last vertex's branch to a shared vertex with epsilon transaction
+-spec pattern_matching(PMList, Label, LVState) -> NewLVState when
+      PMList :: [erl_parse:abstract_clause()],
+      Label :: string(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 pattern_matching(PMList, Label, Data) ->
     VLast = Data#localview.last_vertex,
     G = Data#localview.graph,
@@ -613,6 +817,11 @@ pattern_matching(PMList, Label, Data) ->
     Data#localview{graph = G, last_vertex = VRet}.
 
 %%% Explore every pm's branch and returns the list of last added vertex
+-spec explore_pm(PMList, Label, LVState) -> AddedVertexList when
+      PMList :: [erl_parse:abstract_clause()],
+      Label :: string(),
+      LVState :: #localview{},
+      AddedVertexList :: [digraph:vertex()].
 explore_pm(PMList, Base, Data) ->
     element(
         1,
@@ -633,6 +842,10 @@ explore_pm(PMList, Base, Data) ->
         )
     ).
 
+-spec add_vertex_edge(Label, LVState) -> NewLVState when
+      Label :: string() | atom(),
+      LVState :: #localview{},
+      NewLVState :: #localview{}.
 add_vertex_edge(Label, Data) ->
     G = Data#localview.graph,
     LastV = Data#localview.last_vertex,
@@ -641,6 +854,8 @@ add_vertex_edge(Label, Data) ->
     Data#localview{last_vertex = V}.
 
 %%% Convert the guard (ast format) to a string
+-spec guards_to_string(GlobalToVal) -> string() when
+      GlobalToVal :: [[erl_parse:abstract_expr()]] | [].
 guards_to_string(GlobalToVal) ->
     case GlobalToVal of
         %%% Add guards if there's a guard
@@ -650,6 +865,12 @@ guards_to_string(GlobalToVal) ->
     end.
 
 %%% Link each vertex of a vertex's list to a given vertex, with a defined label
+-spec add_edges_recursive(Graph, VertexList, VertexToLink, Label, Except) -> ok when
+      Graph :: digraph:graph(),
+      VertexList :: [digraph:vertex()],
+      VertexToLink :: digraph:vertex(),
+      Label :: string() | atom(),
+      Except :: digraph:vertex().
 add_edges_recursive(G, VertexList, VertexToLink, Label, Except) ->
     lists:foreach(
         fun(V) ->
